@@ -1,0 +1,6 @@
+/.idea/
+/data/module_graphs/*
+/data/cache.pkl
+/data/errors.txt
+__pycache__/
+!**/.gitkeep
