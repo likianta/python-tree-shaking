@@ -1,0 +1,68 @@
+
+numpy:
+  files:
+    - ./  # FIXME
+    - ../numpy.libs/
+    - ../numpy-1.26.4.dist-info/
+    - ../numpy-1.26.4-cp312-cp312-win_amd64.whl
+pyexcel:
+  files:
+    - plugins/
+    - ../pyexcel_io/database/
+    - ../pyexcel_io/readers/
+    - ../pyexcel_io/writers/
+PySide6:
+  files:
+    - plugins/
+    - qml/
+    - QtCore.pyi
+    - QtDataVisualization.pyi
+    - QtGui.pyi
+    - QtNetwork.pyi
+    - QtOpenGL.pyi
+    - QtOpenGLWidgets.pyi
+    - QtPrintSupport.pyi
+    - QtQml.pyi
+    - QtQuick.pyi
+    - QtSvg.pyi
+    - QtWidgets.pyi
+    - ./  # FIXME
+qmlease:
+  files:
+    - qmlside/hot_reloader/hot_reloader.qml
+    - qmlside/hot_reloader/hot_reloader_legacy.qml
+    - qmlside/js_evaluator.mjs
+    - qmlside/js_evaluator.qml
+    - qmlside/qml_eval.qml
+    - style/stylesheet/
+    - widgets/
+qmlease._env:
+  imports:
+    - PySide6
+    - PySide6.QtCore
+rich.syntax:
+  imports:
+    # for rendering trackback panel
+    - pygments.lexers
+    - pygments.unistring
+shiboken6:
+  files:
+    - concrt140.dll
+    - msvcp140.dll
+    - msvcp140_1.dll
+    - msvcp140_2.dll
+    - msvcp140_codecvt_ids.dll
+    - py.typed
+    - Shiboken.pyd
+    - Shiboken.pyi
+    - shiboken6.abi3.dll
+    - shiboken6.abi3.lib
+    - vcamp140.dll
+    - vccorlib140.dll
+    - vcomp140.dll
+    - vcruntime140.dll
+    - vcruntime140_1.dll
+zmq:
+  files:
+    - backend/cython/
+    - ../pyzmq.libs/
