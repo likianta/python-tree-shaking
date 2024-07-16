@@ -171,14 +171,15 @@ class ModuleInspector:
                         if x := self._quick_check_path(
                             '{}/{}/{}'.format(
                                 module.base_dir,
-                                a := module.name1.replace('.', '/'),
-                                b := module.name2
+                                module.name1.replace('.', '/'),
+                                module.name2
                             ),
                             case_sensitive=True
                         ):
                             # module.full_name = module.id
-                            module.full_name = \
-                                '{}/{}'.format(a, b).replace('/', '.')
+                            module.full_name = '{}.{}'.format(
+                                module.name0, fs.barename(x)
+                            )
                             self.module_name_2_file[module.id] = x
                             return x
                     if x := self._quick_check_path('{}/{}'.format(
@@ -210,17 +211,19 @@ class ModuleInspector:
                         if x := self._quick_check_path(
                             '{}/{}/{}'.format(
                                 top_path,
-                                a := module.name0
+                                module.name0
                                     .replace(module.top, '', 1)
                                     .lstrip('.')
                                     .replace('.', '/'),
-                                b := module.name2
+                                module.name2
                             ).replace('//', '/'),
                             case_sensitive=True
                         ):
+                            module.base_dir = fs.parent(x)
                             # module.full_name = module.id
-                            module.full_name = \
-                                '{}/{}'.format(a, b).replace('/', '.')
+                            module.full_name = '{}.{}'.format(
+                                module.name0, fs.barename(x)
+                            )
                             self.module_name_2_file[module.id] = x
                             return x
                     if x := self._quick_check_path(
@@ -233,14 +236,13 @@ class ModuleInspector:
                                 .replace('.', '/'),
                         ).rstrip('/')
                     ):
-                        # if module.name0 == 'lk_utils':
-                        #     print(':v', module, x)
-                        #     _debug_interrupt()
+                        module.base_dir = fs.parent(x)
                         module.full_name = module.name0
                         self.module_name_2_file[module.name0] = x
                         self.module_name_2_file[module.id] = x
                         return x
                 else:
+                    module.base_dir = fs.parent(top_path)
                     module.full_name = module.top
                     self.module_name_2_file[module.name0] = top_path
                     self.module_name_2_file[module.id] = top_path
@@ -248,6 +250,7 @@ class ModuleInspector:
             raise ModuleNotFound(module)
         
         assert (out := determine_path())
+        # assert module.base_dir
         return out
     
     def _quick_check_path(

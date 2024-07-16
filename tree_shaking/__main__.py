@@ -32,19 +32,16 @@ def batch_dump_module_graphs(config_file: str) -> None:
         dump_module_graph(p, n)
 
 
-# @cli.cmd()
-# def make_tree(config_file: str, output_dir: str, copyfiles: bool = False) -> None:
-#     cfg = fs.load(config_file)
-
 cli.add_cmd(make_tree)
 
 if __name__ == '__main__':
-    # pox -m sidework.tree_shaking dump-module-graph
-    #   depsland/__main__.py depsland
+    # pox -m tree_shaking dump-module-graph depsland/__main__.py depsland
     #       prepare: make sure `chore/site_packages` latest:
     #           pox sidework/merge_external_venv_to_local_pypi.py .
     #           pox build/init.py make-site-packages --remove-exists
     
-    # pox -m sidework.tree_shaking make-tree <file_i> <dir_o>
-    # pox -m sidework.tree_shaking make-tree <file_i> <dir_o> --copyfiles
+    # pox -m tree_shaking batch-dump-module-graphs demo_config/modules.yaml
+    
+    # pox -m tree_shaking make-tree <file_i> <dir_o>
+    # pox -m tree_shaking make-tree <file_i> <dir_o> --copyfiles
     cli.run()
