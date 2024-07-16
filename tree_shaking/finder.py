@@ -41,6 +41,7 @@ def get_all_imports(
     
     if _resolved_files is None:  # first time init
         _resolved_files = set()
+        _patched_modules.clear()
     
     # each script can only be resolved once
     if script in _resolved_files:
@@ -102,21 +103,26 @@ def get_direct_imports(
         yield x.module_info, x.file
 
 
+_patched_modules = set()
+
+
 def _more_imports(module: T.ModuleInfo) -> t.Iterator[T.FilePath]:
-    if module.full_name in patch:
-        assert module.base_dir
-        # print(module.full_name, patch[module.full_name]['imports'], ':l')
-        for relpath in patch[module.full_name]['imports']:
-            if relpath.endswith('/'):
-                abspath = fs.normpath('{}/{}/__init__.py'.format(
-                    module.base_dir, relpath.rstrip('/')
-                ))
-            elif relpath.endswith(('.pyc', '.pyd')):
-                raise NotImplementedError
-            elif relpath.endswith('.py'):
-                abspath = fs.normpath(
-                    '{}/{}'.format(module.base_dir, relpath)
-                )
-            else:
-                raise Exception(module, relpath)
-            yield abspath
+    if module.top in patch:
+        if module.top not in _patched_modules:
+            _patched_modules.add(module.top)
+            assert module.base_dir
+            # print(module.full_name, patch[module.top]['imports'], ':l')
+            for relpath in patch[module.top]['imports']:
+                if relpath.endswith('/'):
+                    abspath = fs.normpath('{}/{}/__init__.py'.format(
+                        module.base_dir, relpath.rstrip('/')
+                    ))
+                elif relpath.endswith(('.pyc', '.pyd')):
+                    raise NotImplementedError
+                elif relpath.endswith('.py'):
+                    abspath = fs.normpath(
+                        '{}/{}'.format(module.base_dir, relpath)
+                    )
+                else:
+                    raise Exception(module, relpath)
+                yield abspath
