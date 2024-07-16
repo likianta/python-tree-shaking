@@ -5,6 +5,7 @@ from collections import defaultdict
 from lk_utils import fs
 
 from .config_parser import parse_config
+from .patch import patch
 from .path_scope import path_scope
 
 
@@ -54,6 +55,16 @@ def make_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     for graph_file in cfg['module_graphs']:
         datum = fs.load(graph_file)
         files.update(datum.values())
+        for k, v in datum.items():
+            if '.' not in k:
+                if k in patch:
+                    base_dir = fs.parent(v)
+                    for relpath in patch[k]['files']:
+                        abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
+                        if relpath.endswith('/'):
+                            dirs.add(abspath)
+                        else:
+                            files.add(abspath)
     for path, isdir in cfg['spec_files']:
         if isdir:
             dirs.add(path)
@@ -81,31 +92,14 @@ def make_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
             fs.copy_file(i, o)
         else:
             fs.make_link(i, o)
-    for d in dirs:
+    for d in sorted(dirs, reverse=True):
         i = d
         r, s = _split_path(d, known_roots)
-        o = '{}/{}'.format(dir_o, fs.basename(r), s)
+        o = '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if copyfiles:
             fs.copy_tree(i, o, True)
         else:
             fs.make_link(i, o, True)
-    
-    # TODO
-    # for k, v in data.get('replace', {}).items():
-    #     if isinstance(v, str):
-    #         v = (v,)
-    #     src = k
-    #     for dst in v:
-    #         if dst.endswith('/'):
-    #             if copyfiles:
-    #                 fs.copy_tree(src, dst, True)
-    #             else:
-    #                 fs.make_link(src, dst, True)
-    #         else:
-    #             if copyfiles:
-    #                 fs.copy_file(src, dst, True)
-    #             else:
-    #                 fs.make_link(src, dst, True)
     
     print('done', ':t')
 

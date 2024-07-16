@@ -4,6 +4,7 @@ from lk_utils import fs
 
 from .file_parser import FileParser
 from .file_parser import T
+from .patch import patch
 
 
 def dump_all_imports(
@@ -22,9 +23,7 @@ def dump_all_imports(
 def get_all_imports(
     script: T.FilePath,
     include_self: t.Optional[bool] = True,
-    _resolved_modules: t.Set = None,
-    # _resolved_files: t.Set = None,
-    _resolved_init_files: t.Set = None,
+    _resolved_files: t.Set = None,
 ) -> t.Iterator[t.Tuple[T.ModuleName, T.FilePath]]:
     """
     given a script file ('*.py'), return all direct and indirect modules that
@@ -40,61 +39,86 @@ def get_all_imports(
             as a caller, you should always give True or False to this param.
     """
     
-    if _resolved_modules is None:  # first time init
-        _resolved_modules = set()
-        # _resolved_files = set()
-        _resolved_init_files = set()
+    if _resolved_files is None:  # first time init
+        _resolved_files = set()
+    
+    # each script can only be resolved once
+    if script in _resolved_files:
+        return
     
     parser = FileParser(script)
     if include_self:
         yield parser.module_info.full_name, parser.file
     
+    more_files = set()
     for module, path in parser.parse_imports():
         # print(module, path)
+        if path in _resolved_files: continue
         assert module.full_name
-        if module.full_name not in _resolved_modules:
-            _resolved_modules.add(module.full_name)
-            yield module.full_name, path
-            
-            # recursive
-            if path.endswith('.py'):  # to deviate '.pyc' and '.pyd' files
-                yield from get_all_imports(
-                    path,
-                    None,
-                    _resolved_modules,
-                    _resolved_init_files,
-                )
-            
-            if path.endswith('/__init__.py'):
-                _resolved_init_files.add(path)
+        yield module.full_name, path
+        
+        # recursive
+        if path.endswith(('.pyc', '.pyd')):
+            continue
+        else:  # endswith '.py'
+            more_files.add((path, None))
+        
+        if path.endswith('/__init__.py'):
+            continue
+        else:
+            possible_init_file = '{}/__init__.py'.format(
+                path.rsplit('/', 1)[0]
+            )
+            if possible_init_file in _resolved_files:
+                continue
+            elif fs.exists(possible_init_file):
+                more_files.add((
+                    possible_init_file,
+                    True if include_self in (True, None) else False
+                ))
             else:
-                possible_init_file = '{}/__init__.py'.format(
-                    path.rsplit('/', 1)[0]
-                )
-                if possible_init_file not in _resolved_init_files:
-                    _resolved_init_files.add(possible_init_file)
-                    if fs.exists(possible_init_file):
-                        # global _auto_index
-                        # _auto_index += 1
-                        # yield (
-                        #     '__implicit_import_{:03}'.format(_auto_index),
-                        #     possible_init_file
-                        # )
-                        yield from get_all_imports(
-                            possible_init_file,
-                            True if include_self in (True, None) else False,
-                            _resolved_modules,
-                            _resolved_init_files,
-                        )
-
+                _resolved_files.add(possible_init_file)
+        
+    for path in _more_imports(parser.module_info):
+        more_files.add((path, True if include_self in (True, None) else False))
+    
+    _resolved_files.add(script)
+    
+    for p, s in more_files:
+        yield from get_all_imports(p, s, _resolved_files)
+    
 
 _auto_index = 0  # DELETE
 
 
+# DELETE
 def get_direct_imports(
     script: T.FilePath, include_self: bool = True
 ) -> T.ImportsInfo:
+    script = fs.abspath(script)
     parser = FileParser(script)
     if include_self:
         yield parser.module_info, parser.file
     yield from parser.parse_imports()
+    for path in _more_imports(parser.module_info):
+        x = FileParser(path)
+        yield x.module_info, x.file
+
+
+def _more_imports(module: T.ModuleInfo) -> t.Iterator[T.FilePath]:
+    if module.full_name in patch:
+        assert module.base_dir
+        for relpath in patch[module.full_name]['imports']:
+            if relpath.endswith('/'):
+                abspath = fs.normpath('{}/{}/__init__.py'.format(
+                    module.base_dir, relpath.rstrip('/')
+                ))
+            elif relpath.endswith(('.pyc', '.pyd')):
+                raise NotImplementedError
+            elif relpath.endswith('.py'):
+                abspath = fs.normpath(
+                    '{}/{}'.format(module.base_dir, relpath)
+                )
+            else:
+                raise Exception(module, relpath)
+            yield abspath

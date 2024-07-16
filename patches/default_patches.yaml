@@ -1,4 +1,11 @@
 
+
+
+IPython:
+  imports:
+    # - ../pygments/lexers/
+    - ../pygments/lexers/python.py
+    - ../pygments/unistring.py
 numpy:
   files:
     - ./  # FIXME
@@ -8,9 +15,13 @@ numpy:
 pyexcel:
   files:
     - plugins/
-    - ../pyexcel_io/database/
-    - ../pyexcel_io/readers/
-    - ../pyexcel_io/writers/
+    - ../pyexcel_io/
+    # - ../pyexcel_io/database/
+    # - ../pyexcel_io/readers/
+    # - ../pyexcel_io/writers/
+  imports:
+    - ../pyexcel_io/plugins.py
+    - ../pyexcel_io/utils.py
 PySide6:
   files:
     - plugins/
@@ -26,7 +37,6 @@ PySide6:
     - QtQuick.pyi
     - QtSvg.pyi
     - QtWidgets.pyi
-    - ./  # FIXME
 qmlease:
   files:
     - qmlside/hot_reloader/hot_reloader.qml
@@ -36,15 +46,11 @@ qmlease:
     - qmlside/qml_eval.qml
     - style/stylesheet/
     - widgets/
-qmlease._env:
+rich:
   imports:
-    - PySide6
-    - PySide6.QtCore
-rich.syntax:
-  imports:
-    # for rendering trackback panel
-    - pygments.lexers
-    - pygments.unistring
+    # for `rich.syntax` to render traceback panel
+    - ../pygments/lexers/
+    - ../pygments/unistring.py
 shiboken6:
   files:
     - concrt140.dll
