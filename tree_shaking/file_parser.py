@@ -53,6 +53,23 @@ class FileParser:
                     'file should be existed in registered path scopes', file
                 )
     
+    @property
+    def module_info(self) -> ModuleInfo:
+        if self.base_module_segs:
+            module_name = '{}.{}'.format(
+                '.'.join(self.base_module_segs), fs.barename(self.file)
+            )
+        else:
+            module_name = fs.barename(self.file)
+        return ModuleInfo(
+            name0=module_name,
+            name1='',
+            name2='',
+            level=0,
+            base_dir=self.base_dir,
+            full_name=module_name,
+        )
+    
     def parse_imports(self) -> T.ImportsInfo:
         # print(':dv2sp', 'start', self.file)
         for node, line in file_cache.parse_nodes(self.file):
