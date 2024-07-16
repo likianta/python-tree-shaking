@@ -256,18 +256,34 @@ class ModuleInspector:
     def _quick_check_path(
         self, possible_path: str, case_sensitive: bool = False
     ) -> t.Optional[T.FilePath]:
-        if fs.isdir(possible_path):
-            if fs.exists(x := f'{possible_path}/__init__.py'):
-                return x
+        # if fs.isdir(possible_path):
+        #     if fs.exists(x := f'{possible_path}/__init__.py'):
+        #         return fs.normpath(x) if case_sensitive else x
+        # else:
+        #     for ext in ('.py', '.pyc', '.pyd'):
+        #         if fs.exists(x := possible_path + ext):
+        #             return fs.normpath(x) if case_sensitive else x
         if case_sensitive:
+            # https://stackoverflow.com/questions/3692261/in-python-how-can-i
+            # -get-the-correctly-cased-path-for-a-file
             a, b = possible_path.rsplit('/', 1)
+            for d in fs.find_dirs(a):
+                if d.name == b:
+                    if fs.exists(x := f'{d.path}/__init__.py'):
+                        return x
             for f in fs.find_files(a, ('.py', '.pyc', '.pyd')):
-                if f.stem == b:
+                # if f.stem == b:
+                #     return f.path
+                if f.name.startswith(b + '.'):
                     return f.path
         else:
-            for ext in ('.py', '.pyc', '.pyd'):
-                if fs.exists(x := possible_path + ext):
+            if fs.isdir(possible_path):
+                if fs.exists(x := f'{possible_path}/__init__.py'):
                     return x
+            else:
+                for ext in ('.py', '.pyc', '.pyd'):
+                    if fs.exists(x := possible_path + ext):
+                        return x
 
 
 def _debug_interrupt() -> None:

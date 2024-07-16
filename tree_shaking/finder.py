@@ -88,9 +88,6 @@ def get_all_imports(
         yield from get_all_imports(p, s, _resolved_files)
     
 
-_auto_index = 0  # DELETE
-
-
 # DELETE
 def get_direct_imports(
     script: T.FilePath, include_self: bool = True
@@ -108,6 +105,7 @@ def get_direct_imports(
 def _more_imports(module: T.ModuleInfo) -> t.Iterator[T.FilePath]:
     if module.full_name in patch:
         assert module.base_dir
+        # print(module.full_name, patch[module.full_name]['imports'], ':l')
         for relpath in patch[module.full_name]['imports']:
             if relpath.endswith('/'):
                 abspath = fs.normpath('{}/{}/__init__.py'.format(
