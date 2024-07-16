@@ -171,12 +171,14 @@ class ModuleInspector:
                         if x := self._quick_check_path(
                             '{}/{}/{}'.format(
                                 module.base_dir,
-                                module.name1.replace('.', '/'),
-                                module.name2
+                                a := module.name1.replace('.', '/'),
+                                b := module.name2
                             ),
                             case_sensitive=True
                         ):
-                            module.full_name = module.id
+                            # module.full_name = module.id
+                            module.full_name = \
+                                '{}/{}'.format(a, b).replace('/', '.')
                             self.module_name_2_file[module.id] = x
                             return x
                     if x := self._quick_check_path('{}/{}'.format(
@@ -194,7 +196,7 @@ class ModuleInspector:
                             '{}/{}'.format(module.base_dir, module.name2),
                             case_sensitive=True
                         ):
-                            module.full_name = module.id
+                            module.full_name = module.id  # FIXME?
                             self.module_name_2_file[module.id] = x
                             return x
             else:
@@ -208,15 +210,17 @@ class ModuleInspector:
                         if x := self._quick_check_path(
                             '{}/{}/{}'.format(
                                 top_path,
-                                module.name0
+                                a := module.name0
                                     .replace(module.top, '', 1)
                                     .lstrip('.')
                                     .replace('.', '/'),
-                                module.name2
+                                b := module.name2
                             ).replace('//', '/'),
                             case_sensitive=True
                         ):
-                            module.full_name = module.id
+                            # module.full_name = module.id
+                            module.full_name = \
+                                '{}/{}'.format(a, b).replace('/', '.')
                             self.module_name_2_file[module.id] = x
                             return x
                     if x := self._quick_check_path(
