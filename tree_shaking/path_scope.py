@@ -32,7 +32,9 @@ class PathScope:
                 module_2_path[module_name] = (d.path, True)
                 path_2_module[d.path] = module_name
         for f in fs.find_files(scope, ('.py', '.pyc', '.pyd'), filter=True):
-            module_name = f.stem
+            # module_name = f.stem
+            module_name = f.name.split('.', 1)[0]
+            #   '_cffi_backend.cp312-win_amd64.pyd' -> '_cffi_backend'
             module_2_path[module_name] = (f.path, False)
             path_2_module[f.path] = module_name
         self.module_2_path.update(module_2_path)
