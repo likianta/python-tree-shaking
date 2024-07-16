@@ -1,9 +1,7 @@
 
-
-
 IPython:
   imports:
-    # - ../pygments/lexers/
+    - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/unistring.py
 numpy:
@@ -13,30 +11,57 @@ numpy:
     - ../numpy-1.26.4.dist-info/
     - ../numpy-1.26.4-cp312-cp312-win_amd64.whl
 pyexcel:
+  imports:
+    - ../pyexcel_io/plugins.py
+    - ../pyexcel_io/utils.py
   files:
     - plugins/
     - ../pyexcel_io/
     # - ../pyexcel_io/database/
     # - ../pyexcel_io/readers/
     # - ../pyexcel_io/writers/
-  imports:
-    - ../pyexcel_io/plugins.py
-    - ../pyexcel_io/utils.py
 PySide6:
   files:
     - plugins/
     - qml/
-    - QtCore.pyi
-    - QtDataVisualization.pyi
-    - QtGui.pyi
-    - QtNetwork.pyi
-    - QtOpenGL.pyi
-    - QtOpenGLWidgets.pyi
-    - QtPrintSupport.pyi
-    - QtQml.pyi
-    - QtQuick.pyi
-    - QtSvg.pyi
-    - QtWidgets.pyi
+    - __feature__.pyi
+    - _config.py
+    - _git_pyside_version.py
+    - msvcp140.dll
+    - msvcp140_1.dll
+    - msvcp140_2.dll
+    - msvcp140_codecvt_ids.dll
+    - py.typed
+    - pyside6.abi3.dll
+    - pyside6.abi3.lib
+    - Qt6Core.dll
+    - Qt6Gui.dll
+    - Qt6Network.dll
+    - Qt6Qml.dll
+    # - Qt6QmlCompiler.dll
+    # - Qt6QmlCore.dll
+    - Qt6Quick.dll
+    - Qt6QuickEffects.dll
+    - Qt6QuickLayouts.dll
+    - Qt6Widgets.dll
+    - QtCore.pyd
+    # - QtDataVisualization.pyd
+    - QtGui.pyd
+    # - QtNetwork.pyd
+    # - QtOpenGL.pyd
+    # - QtOpenGLWidgets.pyd
+    # - QtPrintSupport.pyd
+    - QtQml.pyd
+    - QtQuick.pyd
+    - QtQuickControls2.pyd
+    # - QtSvg.pyd
+    - QtWidgets.pyd
+    # - vcamp140.dll
+    # - vccorlib140.dll
+    # - vcomp140.dll
+    # - vcruntime140.dll
+    # - vcruntime140_1.dll
+    - ../shiboken6/
 qmlease:
   files:
     - qmlside/hot_reloader/hot_reloader.qml
@@ -49,7 +74,12 @@ qmlease:
 rich:
   imports:
     # for `rich.syntax` to render traceback panel
-    - ../pygments/lexers/
+    - ../pygments/lexers/__init__.py
+    - ../pygments/lexers/python.py
+    - ../pygments/unistring.py
+  files:
+    - ../pygments/lexers/__init__.py
+    - ../pygments/lexers/python.py
     - ../pygments/unistring.py
 shiboken6:
   files:
