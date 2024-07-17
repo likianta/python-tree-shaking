@@ -1,7 +1,7 @@
 # how to use:
 #   py -m tree_shaking batch-dump-module-graphs examples/depsland_modules.yaml
 #   py -m tree_shaking build-tree examples/depsland_modules.yaml <output_dir>
-root: C:/Likianta/workspace/dev_master_likianta/depsland
+root: C:/Likianta/workspace/likianta.master.dev/depsland
 search_paths:
   - <root>/chore/site_packages
   - <root>
@@ -19,11 +19,7 @@ build:
     - <root>/depsland/
     # - <root>/README.md
 # after todo:
-#   1. remove numpy and pandas from built tree
+#   1. remove 'numpy', 'numpy.libs' and 'pandas' from built tree.
 #   2. create empty dirs for numpy and pandas, and add empty "__init__.py" to
-#      them
-#   3. move built tree to <depsland>/chore/minified_site_packages
-#   4. FIXME: tree_shaking may miss some files in
-#      `tree_shaking.build.build_tree` if no top module triggers the
-#      patch-maker. we need to manually check the built tree, especially oss2
-#      extended file scope.
+#      them.
+#   3. move built tree to <depsland>/chore/minified_site_packages.

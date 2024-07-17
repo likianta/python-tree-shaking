@@ -3,11 +3,28 @@ import typing as t
 
 from lk_utils import fs
 
-from .config import T
+from .config import T as T0
 from .config import parse_config
 from .finder import get_all_imports
 
 graph_dir = fs.xpath('../data/module_graphs')
+
+
+class T:
+    Config = T0.Config
+    DumpedModuleGraph = t.TypedDict('DumpedModuleGraph', {
+        'source_roots': t.Dict[str, str],
+        'modules'     : t.Dict[str, str],
+    })
+    '''
+    {
+        'source_roots': {uid: root_path, ...},
+            uid: 8-char md5 hash of root_path.
+            root_path: absolute dirpath.
+        'modules': {module: short_path, ...}
+            short_path: `<uid>/path/to/module.py`
+    }
+    '''
 
 
 # FIXME
@@ -47,10 +64,7 @@ def batch_dump_module_graphs(config_file: str) -> None:
 
 
 def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
-    out = {
-        'source_roots': {},
-        'modules'     : {},
-    }
+    out: T.DumpedModuleGraph = {'source_roots': {}, 'modules': {}}
     
     def hash_content(text: str) -> str:
         return hashlib.md5(text.encode()).hexdigest()[::4]  # length: 8

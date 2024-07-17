@@ -156,6 +156,9 @@ streamlit:
     - static/
     - __main__.py
     - ../streamlit-1.36.0.dist-info/
+streamlit_extras:
+  imports:
+    - grid/__init__.py
 toga:
   files:
     - ../clr_loader/

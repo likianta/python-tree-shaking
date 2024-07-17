@@ -4,12 +4,10 @@ from collections import defaultdict
 
 from lk_utils import fs
 
-from .config import parse_config, T
+from .config import parse_config
+from .dump import T
 from .patch import patch
 from .path_scope import path_scope
-
-
-_patched_modules = set()
 
 
 def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
@@ -41,25 +39,45 @@ def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
         dir_o: an empty folder to store the tree. it can be an inexistent path.
     """
     dir_o = fs.abspath(dir_o)
-    
     cfg: T.Config = parse_config(file_i)
     
     files = set()  # a set of absolute paths
     dirs = set()  # a set of absolute paths
-    _patched_modules.clear()
+    patched_modules = set()
+    
     for graph_file in cfg['build']['module_graphs']:
-        datum = fs.load(graph_file)
-        files.update(datum.values())
-        for m, f in datum.items():
-            if '.' not in m:
-                if m in patch:
-                    base_dir = fs.parent(f)
-                    for relpath in patch[m]['files']:
-                        abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
-                        if relpath.endswith('/'):
-                            dirs.add(abspath)
+        graph: T.DumpedModuleGraph = fs.load(graph_file)
+        for module_name, relpath in graph['modules'].items():
+            uid, relpath = relpath.split('/', 1)
+            uid = uid[1:-1]
+            abspath = '{}/{}'.format(graph['source_roots'][uid], relpath)
+            files.add(abspath)
+            
+            top_name = module_name.split('.', 1)[0]
+            if top_name in patch:
+                if top_name not in patched_modules:
+                    patched_modules.add(top_name)
+                    # assert relpath.startswith(top)
+                    base_dir = '{}/{}'.format(
+                        graph['source_roots'][uid], top_name
+                    )
+                    for relpath1 in patch[top_name]['files']:
+                        abspath1 = fs.normpath(
+                            '{}/{}'.format(base_dir, relpath1)
+                        )
+                        if relpath1.endswith('/'):
+                            dirs.add(abspath1)
                         else:
-                            files.add(abspath)
+                            files.add(abspath1)
+            # if '.' not in m:
+            #     if m in patch:
+            #         base_dir = fs.parent(f)
+            #         for relpath in patch[m]['files']:
+            #             abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
+            #             if relpath.endswith('/'):
+            #                 dirs.add(abspath)
+            #             else:
+            #                 files.add(abspath)
         # for m, f in datum.items():
         #     k = m.split('.', 1)[0]
         #     if k in patch:
