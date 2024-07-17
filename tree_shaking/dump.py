@@ -1,11 +1,16 @@
+import hashlib
+import typing as t
+
 from lk_utils import fs
 
+from .config import T
 from .config import parse_config
 from .finder import get_all_imports
 
 graph_dir = fs.xpath('../data/module_graphs')
 
 
+# FIXME
 def dump_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     file_i = fs.abspath(script)
     file_o = '{}/{}.yaml'.format(graph_dir, graph_id)
@@ -28,4 +33,52 @@ def batch_dump_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
     for p, n in cfg['modules'].items():
         print(':dv2', p, n)
-        dump_module_graph(p, n)
+        # dump_module_graph(p, n)
+        file_i = fs.abspath(p)
+        file_o = '{}/{}.yaml'.format(graph_dir, n)
+        result = dict(get_all_imports(file_i))
+        result = dict(sorted(result.items()))
+        result = _reformat_paths(result, cfg)
+        fs.dump(result, file_o)
+        print(
+            ':v2t', 'dumped {} items. see result at "{}"'
+            .format(len(result), file_o)
+        )
+
+
+def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
+    out = {
+        'source_roots': {},
+        'modules'     : {},
+    }
+    
+    def hash_content(text: str) -> str:
+        return hashlib.md5(text.encode()).hexdigest()[::4]  # length: 8
+    
+    temp = out['source_roots']
+    for root in sorted(config['search_paths'], reverse=True):
+        temp[hash_content(root)] = root
+    _frozen_source_roots = tuple((k, v + '/') for k, v in temp.items())
+    used_source_roots = set()
+    
+    def reformat_path(path: str) -> str:
+        for uid, root in _frozen_source_roots:
+            if path.startswith(root):
+                used_source_roots.add(uid)
+                return '<{}>/{}'.format(uid, path[len(root):])
+        else:
+            print(':lv4', _frozen_source_roots, path)
+            raise Exception(path)
+    
+    temp = out['modules']
+    for m, p in modules.items():
+        temp[m] = reformat_path(p)
+    
+    # remove unused source roots
+    assert 0 < len(used_source_roots) <= len(out['source_roots'])
+    if len(used_source_roots) < len(out['source_roots']):
+        for k in tuple(out['source_roots'].keys()):
+            if k not in used_source_roots:
+                out['source_roots'].pop(k)
+    
+    return out

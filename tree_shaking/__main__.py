@@ -6,6 +6,11 @@ from .dump import dump_module_graph
 
 cli.add_cmd(batch_dump_module_graphs)
 cli.add_cmd(dump_module_graph)
+#   FIXME: cannot use this commnad, `path_scope` won't be updated because no
+#       given config file.
+#       related:
+#           tree_shaking.config.parse_config : [code] path_scope.add_scope(p)
+#           tree_shaking.path_scope.path_scope.add_scope
 cli.add_cmd(build_tree)
 
 if __name__ == '__main__':
