@@ -4,11 +4,22 @@ IPython:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/unistring.py
-# numpy:
-#   files:
-#     - ../numpy.libs/
-#     # - ../numpy-1.26.4.dist-info/
-#     # - ../numpy-1.26.4-cp312-cp312-win_amd64.whl
+numpy:
+  files:
+    - core/_multiarray_tests.cp312-win_amd64.pyd
+    - core/_multiarray_umath.cp312-win_amd64.pyd
+    - fft/_pocketfft_internal.cp312-win_amd64.pyd
+    - linalg/_umath_linalg.cp312-win_amd64.pyd
+    - random/_bounded_integers.cp312-win_amd64.pyd
+    - random/_common.cp312-win_amd64.pyd
+    - random/_generator.cp312-win_amd64.pyd
+    - random/_mt19937.cp312-win_amd64.pyd
+    - random/_pcg64.cp312-win_amd64.pyd
+    - random/_philox.cp312-win_amd64.pyd
+    - random/_sfc64.cp312-win_amd64.pyd
+    - random/bit_generator.cp312-win_amd64.pyd
+    - random/mtrand.cp312-win_amd64.pyd
+    - ../numpy.libs/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
