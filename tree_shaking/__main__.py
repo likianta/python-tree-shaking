@@ -1,37 +1,11 @@
-import hashlib
-
 from argsense import cli
-from lk_utils import fs
 
-from . import finder
 from .build import make_tree
-from .config_parser import parse_config
+from .dump import batch_dump_module_graphs
+from .dump import dump_module_graph
 
-
-@cli.cmd()
-def dump_module_graph(script: str, base_name_o: str = None) -> None:
-    result_file = fs.xpath('../data/module_graphs/{}.yaml'.format(
-        base_name_o or '{}-{}'.format(
-            fs.barename(script), _get_content_hash(script)[::4]
-        )
-    ))
-    result, file = finder.dump_all_imports(script, result_file, sort=True)
-    print(':v2t', 'dumped {} items. see result at "{}"'
-          .format(len(result), file))
-
-
-def _get_content_hash(content: str) -> str:
-    return hashlib.md5(content.encode()).hexdigest()
-
-
-@cli.cmd()
-def batch_dump_module_graphs(config_file: str) -> None:
-    cfg = parse_config(config_file)
-    for p, n in cfg['modules'].items():
-        print(':dv2', p, n)
-        dump_module_graph(p, n)
-
-
+cli.add_cmd(batch_dump_module_graphs)
+cli.add_cmd(dump_module_graph)
 cli.add_cmd(make_tree)
 
 if __name__ == '__main__':

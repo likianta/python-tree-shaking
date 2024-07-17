@@ -7,19 +7,6 @@ from .file_parser import T
 from .patch import patch
 
 
-def dump_all_imports(
-    script: T.FilePath, result_file: str, sort: bool = False
-) -> t.Tuple[t.Dict[T.ModuleName, T.FilePath], T.FilePath]:
-    script = fs.abspath(script)
-    result = dict(get_all_imports(script))
-    if sort:
-        result = dict(sorted(result.items()))
-    # for module in result:
-    #     print(':i', module)
-    fs.dump(result, result_file)
-    return result, result_file
-
-
 def get_all_imports(
     script: T.FilePath,
     include_self: t.Optional[bool] = True,
