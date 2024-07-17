@@ -4,12 +4,11 @@ IPython:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/unistring.py
-numpy:
-  files:
-    - ./  # FIXME
-    - ../numpy.libs/
-    - ../numpy-1.26.4.dist-info/
-    - ../numpy-1.26.4-cp312-cp312-win_amd64.whl
+# numpy:
+#   files:
+#     - ../numpy.libs/
+#     # - ../numpy-1.26.4.dist-info/
+#     # - ../numpy-1.26.4-cp312-cp312-win_amd64.whl
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -22,45 +21,76 @@ pyexcel:
     # - ../pyexcel_io/writers/
 PySide6:
   files:
-    - plugins/
+    - plugins/iconengines/
+    - plugins/imageformats/
+    - plugins/platforms/
     - qml/
-    - __feature__.pyi
-    - _config.py
-    - _git_pyside_version.py
-    - msvcp140.dll
-    - msvcp140_1.dll
-    - msvcp140_2.dll
-    - msvcp140_codecvt_ids.dll
-    - py.typed
+    - __init__.py
     - pyside6.abi3.dll
     - pyside6.abi3.lib
+    - pyside6qml.abi3.dll
+    - pyside6qml.abi3.lib
+    - Qt3DAnimation.pyi
+    - Qt3DCore.pyd
+    - Qt3DCore.pyi
+    - Qt3DExtras.pyi
+    - Qt3DRender.pyd
+    - Qt3DRender.pyi
+    - Qt6Charts.dll
+    - Qt6Concurrent.dll
     - Qt6Core.dll
+    - Qt6DataVisualization.dll
+    - Qt6DataVisualizationQml.dll
+    - Qt6DBus.dll
+    - Qt6Graphs.dll
     - Qt6Gui.dll
     - Qt6Network.dll
+    - Qt6NetworkAuth.dll
+    - Qt6OpenGL.dll
+    - Qt6OpenGLWidgets.dll
     - Qt6Qml.dll
-    # - Qt6QmlCompiler.dll
-    # - Qt6QmlCore.dll
+    - Qt6QmlCompiler.dll
+    - Qt6QmlCore.dll
+    - Qt6QmlLocalStorage.dll
+    - Qt6QmlModels.dll
+    - Qt6QmlWorkerScript.dll
+    - Qt6QmlXmlListModel.dll
     - Qt6Quick.dll
+    - Qt6Quick3D.dll
+    - Qt6Quick3DAssetImport.dll
+    - Qt6Quick3DAssetUtils.dll
+    - Qt6QuickControls2.dll
+    - Qt6QuickControls2Basic.dll
+    - Qt6QuickControls2BasicStyleImpl.dll
+    - Qt6QuickControls2Fusion.dll
+    - Qt6QuickControls2FusionStyleImpl.dll
+    - Qt6QuickControls2Imagine.dll
+    - Qt6QuickControls2ImagineStyleImpl.dll
+    - Qt6QuickControls2Impl.dll
+    - Qt6QuickControls2Material.dll
+    - Qt6QuickControls2MaterialStyleImpl.dll
+    - Qt6QuickControls2Universal.dll
+    - Qt6QuickControls2UniversalStyleImpl.dll
     - Qt6QuickEffects.dll
     - Qt6QuickLayouts.dll
+    - Qt6QuickParticles.dll
+    - Qt6QuickShapes.dll
+    - Qt6QuickTemplates2.dll
+    - Qt6QuickTest.dll
+    - Qt6QuickTimeline.dll
+    - Qt6QuickWidgets.dll
+    - Qt6Svg.dll
+    - Qt6SvgWidgets.dll
     - Qt6Widgets.dll
     - QtCore.pyd
-    # - QtDataVisualization.pyd
     - QtGui.pyd
-    # - QtNetwork.pyd
-    # - QtOpenGL.pyd
-    # - QtOpenGLWidgets.pyd
-    # - QtPrintSupport.pyd
+    - QtNetwork.pyd
+    - QtOpenGL.pyd
     - QtQml.pyd
     - QtQuick.pyd
     - QtQuickControls2.pyd
-    # - QtSvg.pyd
+    - QtQuickWidgets.pyd
     - QtWidgets.pyd
-    # - vcamp140.dll
-    # - vccorlib140.dll
-    # - vcomp140.dll
-    # - vcruntime140.dll
-    # - vcruntime140_1.dll
     - ../shiboken6/
 qmlease:
   files:
