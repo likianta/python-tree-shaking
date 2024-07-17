@@ -4,21 +4,15 @@ from collections import defaultdict
 
 from lk_utils import fs
 
-from .config_parser import parse_config
+from .config import parse_config, T
 from .patch import patch
 from .path_scope import path_scope
 
 
-class T:
-    Config = t.TypedDict('Config', {
-        'cwd'          : str,
-        'search_paths' : t.List[str],
-        'module_graphs': t.List[str],
-        'spec_files'   : t.List[str],
-    })
+_patched_modules = set()
 
 
-def make_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
+def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     """
     params:
         file_i:
@@ -52,20 +46,36 @@ def make_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     
     files = set()  # a set of absolute paths
     dirs = set()  # a set of absolute paths
-    for graph_file in cfg['module_graphs']:
+    _patched_modules.clear()
+    for graph_file in cfg['build']['module_graphs']:
         datum = fs.load(graph_file)
         files.update(datum.values())
-        for k, v in datum.items():
-            if '.' not in k:
-                if k in patch:
-                    base_dir = fs.parent(v)
-                    for relpath in patch[k]['files']:
+        for m, f in datum.items():
+            if '.' not in m:
+                if m in patch:
+                    base_dir = fs.parent(f)
+                    for relpath in patch[m]['files']:
                         abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
                         if relpath.endswith('/'):
                             dirs.add(abspath)
                         else:
                             files.add(abspath)
-    for path, isdir in cfg['spec_files']:
+        # for m, f in datum.items():
+        #     k = m.split('.', 1)[0]
+        #     if k in patch:
+        #         if k not in _patched_modules:
+        #             _patched_modules.add(k)
+        #             # base_dir = fs.parent(f)
+        #             base_dir = fs.normpath('{}/{}'.format(
+        #                 fs.parent(f), '../' * m.count('.')
+        #             ))
+        #             for relpath in patch[k]['files']:
+        #                 abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
+        #                 if relpath.endswith('/'):
+        #                     dirs.add(abspath)
+        #                 else:
+        #                     files.add(abspath)
+    for path, isdir in cfg['build']['spec_files']:
         if isdir:
             dirs.add(path)
         else:
@@ -137,7 +147,7 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
                 break
         else:
             raise Exception('path should be under one of the search roots', d)
-    print(':l', search_roots, tuple(out.keys()))
+    # print(':l', search_roots, tuple(out.keys()))
     # print(':vl', out)
     return out
 

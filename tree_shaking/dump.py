@@ -1,6 +1,6 @@
 from lk_utils import fs
 
-from .config_parser import parse_config
+from .config import parse_config
 from .finder import get_all_imports
 
 graph_dir = fs.xpath('../data/module_graphs')

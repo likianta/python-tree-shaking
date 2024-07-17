@@ -4,6 +4,12 @@ IPython:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/unistring.py
+matplotlib:
+  files:
+    - backends/_backend_agg.cp312-win_amd64.pyd
+    - mpl-data/
+    - ../kiwisolver/_cext.cp312-win_amd64.pyd
+    - ../matplotlib.libs/
 numpy:
   files:
     - core/_multiarray_tests.cp312-win_amd64.pyd
@@ -20,6 +26,11 @@ numpy:
     - random/bit_generator.cp312-win_amd64.pyd
     - random/mtrand.cp312-win_amd64.pyd
     - ../numpy.libs/
+oss2:
+  files:
+    - ../aliyunsdkcore/data/
+    - ../Crypto/
+    - ../cryptography/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -139,6 +150,23 @@ shiboken6:
     - vcomp140.dll
     - vcruntime140.dll
     - vcruntime140_1.dll
+streamlit:
+  files:
+    - runtime/scriptrunner/magic_funcs.py
+    - static/
+    - __main__.py
+    - ../streamlit-1.36.0.dist-info/
+toga:
+  files:
+    - ../clr_loader/
+    - ../clr_loader-0.2.6.dist-info/
+    - ../pythonnet/
+    - ../toga_core-0.4.5.dist-info/
+    - ../toga_winforms/
+    - ../toga_winforms-0.4.5.dist-info/
+    - ../travertino-0.3.0.dist-info/
+    - ../_cffi_backend.cp312-win_amd64.pyd
+    - ../clr.py
 zmq:
   files:
     - backend/cython/
