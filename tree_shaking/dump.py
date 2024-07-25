@@ -58,8 +58,9 @@ def batch_dump_module_graphs(config_file: str) -> None:
         result = _reformat_paths(result, cfg)
         fs.dump(result, file_o)
         print(
-            ':v2t', 'dumped {} items. see result at "{}"'
-            .format(len(result), file_o)
+            ':v2t',
+            'found {} source roots, dumped {} items. see result at "{}"'
+            .format(len(result['source_roots']), len(result['modules']), file_o)
         )
 
 
