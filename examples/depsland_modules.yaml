@@ -1,7 +1,7 @@
 # how to use:
 #   py -m tree_shaking batch-dump-module-graphs examples/depsland_modules.yaml
 #   py -m tree_shaking build-tree examples/depsland_modules.yaml <output_dir>
-root: C:/Likianta/workspace/likianta.master.dev/depsland
+root: C:/Likianta/workspace/dev_master_likianta/depsland
 search_paths:
   - <root>/chore/site_packages
   - <root>
