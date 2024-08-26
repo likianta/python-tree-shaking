@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tree-shaking"
-version = "0.1.0"
+version = "0.1.0a0"
 description = ""
 authors = ["likianta <likianta@foxmail.com>"]
 # readme = "README.md"
@@ -9,7 +9,9 @@ packages = [{ include = "tree_shaking" }]
 [tool.poetry.dependencies]
 python = "^3.12"
 argsense = "^0.5.8"
-lk-utils = { version = "^2.10.8a2", source = "likianta-host" }
+lk-utils = { version = "^2.10.9b0", source = "likianta-host" }
+
+lk-logger = { version = "^6.0.0a6", source = "likianta-host" }
 
 [[tool.poetry.source]]
 name = "tsinghua"
@@ -18,7 +20,7 @@ priority = "primary"
 
 [[tool.poetry.source]]
 name = "likianta-host"
-url = "http://likianta.pro:2006/"
+url = "http://likianta.pro:2131/"
 priority = "supplemental"
 
 [build-system]

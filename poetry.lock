@@ -23,12 +23,12 @@ reference = "tsinghua"
 
 [[package]]
 name = "lk-logger"
-version = "5.7.6"
-description = "Python print with source and varnames."
+version = "6.0.0a6"
+description = "Python print with source map and varnames."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "lk_logger-5.7.6-py3-none-any.whl", hash = "sha256:47147af796e1dae1ecbfe4023a23a5d6342dfe913e3d2880809e0059d81c5aae"},
+    {file = "lk_logger-6.0.0a6-py3-none-any.whl", hash = "sha256:7f10c27aabcf5505edde074e06a943a2e11b80ba0e600a0ed672c84b7e2a7aa6"},
 ]
 
 [package.dependencies]
@@ -36,22 +36,22 @@ rich = ">=13.0,<14.0"
 
 [package.source]
 type = "legacy"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-reference = "tsinghua"
+url = "http://likianta.pro:2131"
+reference = "likianta-host"
 
 [[package]]
 name = "lk-utils"
-version = "2.10.8a2"
+version = "2.10.9b0"
 description = "LK Utils is a set of utility wrappers made for data processing."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "lk_utils-2.10.8a2-py3-none-any.whl", hash = "sha256:9ff90427267cd835f658a302d5b5c435dd7d81c967956f8a12a3f712acc79e65"},
+    {file = "lk_utils-2.10.9b0-py3-none-any.whl", hash = "sha256:be53cdd02d01e1059eb9b47e4e2f75657b87a60e6458a1382660dec7a90a3ebf"},
 ]
 
 [package.dependencies]
 argsense = ">=0.5.8,<0.6.0"
-lk-logger = ">=5.7.6,<6.0.0"
+lk-logger = ">=5.7.6,<7.0.0"
 psutil = ">=6.0.0,<7.0.0"
 pyyaml = ">=6.0.0,<7.0.0"
 rich = ">=13.0.0,<14.0.0"
@@ -59,7 +59,7 @@ typing-extensions = ">=4.0.0,<5.0.0"
 
 [package.source]
 type = "legacy"
-url = "http://likianta.pro:2006"
+url = "http://likianta.pro:2131"
 reference = "likianta-host"
 
 [[package]]
@@ -267,4 +267,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "377f09a41e9b3b8196ecc45fc6996e12eb4b3637a5a2987ce5bc1852a7e5c580"
+content-hash = "68ea5bd10f05f4f4ecd594b0327339435977f233c5e3bca3576fb4789f50ac18"
