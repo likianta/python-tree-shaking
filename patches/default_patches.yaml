@@ -10,12 +10,19 @@ IPython:
 jaraco:
   files:
     - text/Lorem ipsum.txt
+# matplotlib:
+#   version: ???
+#   files:
+#     - backends/_backend_agg.cp312-win_amd64.pyd
+#     - mpl-data/
+#     - ../kiwisolver/_cext.cp312-win_amd64.pyd
+#     - ../matplotlib.libs/
 matplotlib:
+  version: 3.9.2
   files:
     - backends/_backend_agg.cp312-win_amd64.pyd
     - mpl-data/
     - ../kiwisolver/_cext.cp312-win_amd64.pyd
-    - ../matplotlib.libs/
 # numpy:
 #   files:
 #     - core/_multiarray_tests.cp312-win_amd64.pyd
@@ -33,8 +40,9 @@ matplotlib:
 #     - random/mtrand.cp312-win_amd64.pyd
 #     - ../numpy.libs/
 numpy:
-  version: 2.0.1
+  version: 2.0.2
   files:
+    - _core/_multiarray_tests.cp312-win_amd64.pyd
     - fft/_pocketfft_umath.cp312-win_amd64.pyd
     - linalg/_umath_linalg.cp312-win_amd64.pyd
     - random/_bounded_integers.cp312-win_amd64.pyd
@@ -52,6 +60,16 @@ oss2:
     - ../aliyunsdkcore/data/
     - ../Crypto/
     - ../cryptography/
+plotly:
+  # imports:
+  #   - express/trendline_functions/__init__.py
+  files:
+    - ../plotly/
+    - ../pandas/
+    - ../pandas.libs/
+    - ../scipy/
+    - ../scipy.libs/
+    - ../statsmodels/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -144,6 +162,9 @@ qmlease:
     - qmlside/qml_eval.qml
     - style/stylesheet/
     - widgets/
+requests:
+  files:
+    - ../certifi/cacert.pem
 rich:
   imports:
     - ../pygments/lexers/__init__.py
