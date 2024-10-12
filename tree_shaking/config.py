@@ -22,6 +22,16 @@ class T:
     #   must be a '.py' script file.
     #   other rules same as `AnyPath`.
     GraphName = str
+    IgnoredName = str
+    #   - must be lower case.
+    #   - use underscore, not hyphen.
+    #   - use correct name.
+    #   for example:
+    #       wrong       right
+    #       -----       -------
+    #       IPython     ipython
+    #       lk-utils    lk_utils
+    #       pillow      pil
     NormPath = str
     #   normalized path, must be absolute path.
     
@@ -30,6 +40,7 @@ class T:
         'root'        : AnyDirPath,
         'search_paths': t.List[AnyDirPath],
         'entries'     : t.Dict[AnyScriptPath, GraphName],
+        'ignores'     : t.List[IgnoredName],
         # TODO: simplify 'export' definition.
         'export'      : t.TypedDict('Export', {
             'module_graphs': t.Union[t.Literal['*'], t.List[str]],
@@ -43,6 +54,8 @@ class T:
             'entries': {
                 script: custom_graph_name, ...
             },
+            'ignores': [module_name, ...],
+            #   module_name is case sensitive.
             'export': {
                 'module_graphs': '*' | (custom_graph_name, ...),
                 'spec_files': (path, ...),
@@ -55,6 +68,7 @@ class T:
         'root'        : NormPath,
         'search_paths': t.List[NormPath],
         'entries'     : t.Dict[NormPath, GraphName],
+        'ignores'     : t.FrozenSet[str],
         'export'      : t.TypedDict('Export', {
             'module_graphs': t.List[NormPath],
             'spec_files'   : t.List[t.Tuple[NormPath, bool]],
@@ -79,14 +93,17 @@ def parse_config(file: str) -> T.Config:
         'root'        : '',
         'search_paths': [],
         'entries'     : {},
+        'ignores'     : (),
         'export'      : {'module_graphs': [], 'spec_files': []}
     }
     
+    # 1
     if isabs(cfg['root']):
         out['root'] = fs.normpath(cfg['root'])
     else:
         out['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg['root']))
     
+    # 2
     pathfmt = partial(_format_path, root=out['root'], base=cfg_dir)
     
     temp = out['search_paths']
@@ -94,22 +111,27 @@ def parse_config(file: str) -> T.Config:
         temp.append(p)
         path_scope.add_scope(p)
     
+    # 3
     temp = out['entries']
     for p, n in cfg.get('entries', {}).items():
         p = pathfmt(p)
         temp[p] = n
     
-    # 1/3
-    if 'build' not in cfg:
-        # noinspection PyTypedDict
-        cfg['build'] = {'module_graphs': '*', 'spec_files': ()}
-    else:
+    # 4
+    out['ignores'] = frozenset(cfg.get('ignores', []))
+    
+    # 5
+    # 5.1
+    if 'export' in cfg:
         if 'module_graphs' not in cfg['export']:
             # noinspection PyTypedDict
-            cfg['build']['module_graphs'] = '*'
+            cfg['export']['module_graphs'] = '*'
         if 'spec_files' not in cfg['export']:
             cfg['export']['spec_files'] = ()
-    # 2/3
+    else:
+        # noinspection PyTypedDict
+        cfg['export'] = {'module_graphs': '*', 'spec_files': ()}
+    # 5.2
     if cfg['export']['module_graphs'] == '*':
         graph_names = out['entries'].values()
     else:
@@ -117,7 +139,7 @@ def parse_config(file: str) -> T.Config:
     for n in graph_names:
         graph_file = '{}/{}.yaml'.format(_graph_dir, n)
         out['export']['module_graphs'].append(graph_file)
-    # 3/3
+    # 5.3
     for f in cfg['export']['spec_files']:
         out['export']['spec_files'].append((pathfmt(f), f.endswith('/')))
     

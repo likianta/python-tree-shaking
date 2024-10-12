@@ -7,8 +7,8 @@ class Patch:
     
     def __init__(self) -> None:
         # cfg_dir = fs.xpath('../patches')
-        # cfg = fs.load(f'{cfg_dir}/default_patches.yaml')
-        cfg = fs.load(fs.xpath('../patches/default_patches.yaml'))
+        # cfg = fs.load(f'{cfg_dir}/implicit_imports_list.yaml')
+        cfg = fs.load(fs.xpath('../patches/implicit_imports_list.yaml'))
         
         # {module: {'imports': (relpath, ...), 'files': (relpath, ...)}, ...}
         # # {module: (abspath, ...), ...}

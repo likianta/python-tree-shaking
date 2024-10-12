@@ -194,12 +194,12 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.38.0
+  version: 1.39.0
   files:
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - __main__.py
-    - ../streamlit-1.38.0.dist-info/
+    - ../streamlit-1.39.0.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py

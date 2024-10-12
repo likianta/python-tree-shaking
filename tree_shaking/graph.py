@@ -5,8 +5,7 @@ from lk_utils import fs
 
 from .config import T as T0
 from .config import parse_config
-from .finder import get_all_imports
-from .finder import get_references
+from .finder import Finder
 
 graph_dir = fs.xpath('../data/module_graphs')
 
@@ -33,7 +32,8 @@ def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     file_i = fs.abspath(script)
     file_o = '{}/{}.yaml'.format(graph_dir, graph_id)
     
-    result = dict(get_all_imports(file_i))
+    finder = Finder(())
+    result = dict(finder.get_all_imports(file_i))
     if sort:
         result = dict(sorted(result.items()))
     # for module in result:
@@ -49,21 +49,19 @@ def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
 
 def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
+    finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
         print(':dv2', p, n)
         # build_module_graph(p, n)
         file_i = fs.abspath(p)
         file_o = '{}/{}.yaml'.format(graph_dir, n)
-        result = dict(get_all_imports(file_i))
+        result = dict(finder.get_all_imports(file_i))
         # prettify result data for reader friendly
         result = dict(sorted(result.items()))
         result = _reformat_paths(result, cfg)
         # add refs info to result
-        refs = get_references()
-        result['references'] = {
-            'forward': {k: sorted(refs[0][k]) for k in sorted(refs[0].keys())},
-            'backward': {k: sorted(refs[1][k]) for k in sorted(refs[1].keys())},
-        }
+        refs = finder.references
+        result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
         fs.dump(result, file_o)
         print(
             ':v2t',

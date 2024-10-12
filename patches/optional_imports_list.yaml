@@ -1,0 +1,13 @@
+# library A imports library B, but in `if` case.
+# we will mark A.B is optional import.
+# we recommand you to check the optional imports after module graphs generated.
+IPython:
+  - PySide6
+  - matplotlib
+  - numpy
+PIL:
+  - PySide6
+pandas:
+  - qtpy
+webview:
+  - qtpy
