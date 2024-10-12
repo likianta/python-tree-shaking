@@ -1,4 +1,5 @@
 import typing as t
+from collections import defaultdict
 
 from lk_utils import fs
 
@@ -18,29 +19,37 @@ def get_all_imports(
     params:
         script: must be formalized and absolute path.
         include_self:
-            values:
-                True: yield module of script itself.
-                False: not yield module of script itself.
-                None: not yield itself, but yield its children-selves if needed.
-                    note: None is for internal use!
+            True: yield module of script itself.
+            False: not yield itself.
+            None: not yield itself, but yield its children-selves if needed.
+                note: None is only for internal use!
             as a caller, you should always give True or False to this param.
+    yields:
+        ((module_name, file_path), ...)
     """
     
     if _resolved_files is None:  # first time init
         _resolved_files = set()
+        # init/reset global holders
         _patched_modules.clear()
+        _references[0].clear()
+        _references[1].clear()
     
     # each script can only be resolved once
     if script in _resolved_files:
         return
     
     parser = FileParser(script)
+    self_module_name = parser.module_info.full_name
     if include_self:
-        yield parser.module_info.full_name, parser.file
+        yield self_module_name, parser.file
     
     more_files = set()
     for module, path in parser.parse_imports():
         # print(module, path)
+        _references[0][self_module_name].add(module.full_name)
+        _references[1][module.full_name].add(self_module_name)
+        
         if path in _resolved_files: continue
         assert module.full_name
         yield module.full_name, path
@@ -54,9 +63,7 @@ def get_all_imports(
         if path.endswith('/__init__.py'):
             continue
         else:
-            possible_init_file = '{}/__init__.py'.format(
-                path.rsplit('/', 1)[0]
-            )
+            possible_init_file = '{}/__init__.py'.format(path.rsplit('/', 1)[0])
             if possible_init_file in _resolved_files:
                 continue
             elif fs.exists(possible_init_file):
@@ -72,7 +79,7 @@ def get_all_imports(
     
     _resolved_files.add(script)
     
-    for p, s in more_files:
+    for p, s in more_files:  # 'p': path, 's': self included
         yield from get_all_imports(p, s, _resolved_files)
     
 
@@ -90,7 +97,26 @@ def get_direct_imports(
         yield x.module_info, x.file
 
 
+def get_references() -> t.Tuple[dict, dict]:
+    assert _references[0] and _references[1], \
+        'get_references() should be called after get_all_imports().'
+    return _references
+
+
 _patched_modules = set()
+
+# (forward_refs, backward_refs)
+#   forward_refs: {
+#       module_name_a: set[module_name_b, ...],
+#       module_name_b: empty_set,
+#       ...
+#   }
+#   backward_refs: {
+#       module_name_a: empty_set,
+#       module_name_b: set[module_name_a, ...],
+#       ...
+#   }
+_references = (defaultdict(set), defaultdict(set))
 
 
 def _more_imports(module: T.ModuleInfo) -> t.Iterator[T.FilePath]:

@@ -9,31 +9,29 @@ from .path_scope import path_scope
 
 class T:
     AnyPath = str
-    """
-        - absolute or relative to the config file itself.
-        - separate with '/'.
-        - for relative path, must start with './' or '../'.
-        - directory must end with '/'.
-        - use '<root>' to indicate the root directory.
-            for example '<root>/venv'
-        - use '<module>' to indicate the module directory.
-            (it locates at `<python-tree-shaking-project>/data/module_graphs`)
-    """
+    #   - absolute path, or relative path based on the config file itself.
+    #   - separated by '/', no '\\'.
+    #   - for relative path, must start with './' or '../'.
+    #   - for directory, path must end with '/'.
+    #   - use '<root>' to indicate the root directory.
+    #       for example: '<root>/venv'
+    #   - use '<module>' to indicate the module directory.
+    #       (it locates at `<python-tree-shaking-project>/data/module_graphs`)
     AnyDirPath = str
     AnyScriptPath = str
-    """
-        - must be a '.py' script file.
-        - other rules same as `AnyDirPath`.
-    """
+    #   must be a '.py' script file.
+    #   other rules same as `AnyPath`.
     GraphName = str
     NormPath = str
+    #   normalized path, must be absolute path.
     
     # noinspection PyTypedDict
     Config0 = t.TypedDict('Config0', {
         'root'        : AnyDirPath,
         'search_paths': t.List[AnyDirPath],
-        'modules'     : t.Dict[AnyScriptPath, GraphName],
-        'build'       : t.TypedDict('Build', {
+        'entries'     : t.Dict[AnyScriptPath, GraphName],
+        # TODO: simplify 'export' definition.
+        'export'      : t.TypedDict('Export', {
             'module_graphs': t.Union[t.Literal['*'], t.List[str]],
             'spec_files'   : t.Iterable[AnyPath],
         }),
@@ -42,11 +40,11 @@ class T:
         {
             'root': str dirpath,
             'search_paths': (dirpath, ...),
-            'modules': {
-                script: graph_name, ...
+            'entries': {
+                script: custom_graph_name, ...
             },
-            'build': {
-                'module_graphs': '*' | (graph_name, ...),
+            'export': {
+                'module_graphs': '*' | (custom_graph_name, ...),
                 'spec_files': (path, ...),
             }
         }
@@ -56,8 +54,8 @@ class T:
     Config1 = t.TypedDict('Config1', {
         'root'        : NormPath,
         'search_paths': t.List[NormPath],
-        'modules'     : t.Dict[NormPath, GraphName],
-        'build'       : t.TypedDict('Build', {
+        'entries'     : t.Dict[NormPath, GraphName],
+        'export'      : t.TypedDict('Export', {
             'module_graphs': t.List[NormPath],
             'spec_files'   : t.List[t.Tuple[NormPath, bool]],
             # 'spec_files'   : t.List[NormPath],
@@ -80,8 +78,8 @@ def parse_config(file: str) -> T.Config:
     out: T.Config1 = {
         'root'        : '',
         'search_paths': [],
-        'modules'     : {},
-        'build'       : {'module_graphs': [], 'spec_files': []}
+        'entries'     : {},
+        'export'      : {'module_graphs': [], 'spec_files': []}
     }
     
     if isabs(cfg['root']):
@@ -96,8 +94,8 @@ def parse_config(file: str) -> T.Config:
         temp.append(p)
         path_scope.add_scope(p)
     
-    temp = out['modules']
-    for p, n in cfg.get('modules', {}).items():
+    temp = out['entries']
+    for p, n in cfg.get('entries', {}).items():
         p = pathfmt(p)
         temp[p] = n
     
@@ -106,22 +104,22 @@ def parse_config(file: str) -> T.Config:
         # noinspection PyTypedDict
         cfg['build'] = {'module_graphs': '*', 'spec_files': ()}
     else:
-        if 'module_graphs' not in cfg['build']:
+        if 'module_graphs' not in cfg['export']:
             # noinspection PyTypedDict
             cfg['build']['module_graphs'] = '*'
-        if 'spec_files' not in cfg['build']:
-            cfg['build']['spec_files'] = ()
+        if 'spec_files' not in cfg['export']:
+            cfg['export']['spec_files'] = ()
     # 2/3
-    if cfg['build']['module_graphs'] == '*':
-        graph_names = out['modules'].values()
+    if cfg['export']['module_graphs'] == '*':
+        graph_names = out['entries'].values()
     else:
-        graph_names = cfg['build']['module_graphs']
+        graph_names = cfg['export']['module_graphs']
     for n in graph_names:
         graph_file = '{}/{}.yaml'.format(_graph_dir, n)
-        out['build']['module_graphs'].append(graph_file)
+        out['export']['module_graphs'].append(graph_file)
     # 3/3
-    for f in cfg['build']['spec_files']:
-        out['build']['spec_files'].append((pathfmt(f), f.endswith('/')))
+    for f in cfg['export']['spec_files']:
+        out['export']['spec_files'].append((pathfmt(f), f.endswith('/')))
     
     # print(out, ':l')
     return out

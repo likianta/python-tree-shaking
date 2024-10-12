@@ -5,12 +5,12 @@ from collections import defaultdict
 from lk_utils import fs
 
 from .config import parse_config
-from .dump import T
+from .graph import T
 from .patch import patch
 from .path_scope import path_scope
 
 
-def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
+def dump_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     """
     params:
         file_i:
@@ -45,7 +45,7 @@ def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     dirs = set()  # a set of absolute paths
     patched_modules = set()
     
-    for graph_file in cfg['build']['module_graphs']:
+    for graph_file in cfg['export']['module_graphs']:
         graph: T.DumpedModuleGraph = fs.load(graph_file)
         for module_name, relpath in graph['modules'].items():
             uid, relpath = relpath.split('/', 1)
@@ -93,7 +93,7 @@ def build_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
         #                     dirs.add(abspath)
         #                 else:
         #                     files.add(abspath)
-    for path, isdir in cfg['build']['spec_files']:
+    for path, isdir in cfg['export']['spec_files']:
         if isdir:
             dirs.add(path)
         else:

@@ -6,6 +6,7 @@ from lk_utils import fs
 from .config import T as T0
 from .config import parse_config
 from .finder import get_all_imports
+from .finder import get_references
 
 graph_dir = fs.xpath('../data/module_graphs')
 
@@ -28,7 +29,7 @@ class T:
 
 
 # FIXME
-def dump_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
+def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     file_i = fs.abspath(script)
     file_o = '{}/{}.yaml'.format(graph_dir, graph_id)
     
@@ -46,16 +47,23 @@ def dump_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     return file_o
 
 
-def batch_dump_module_graphs(config_file: str) -> None:
+def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
-    for p, n in cfg['modules'].items():
+    for p, n in cfg['entries'].items():  # 'p': path, 'n': name
         print(':dv2', p, n)
-        # dump_module_graph(p, n)
+        # build_module_graph(p, n)
         file_i = fs.abspath(p)
         file_o = '{}/{}.yaml'.format(graph_dir, n)
         result = dict(get_all_imports(file_i))
+        # prettify result data for reader friendly
         result = dict(sorted(result.items()))
         result = _reformat_paths(result, cfg)
+        # add refs info to result
+        refs = get_references()
+        result['references'] = {
+            'forward': {k: sorted(refs[0][k]) for k in sorted(refs[0].keys())},
+            'backward': {k: sorted(refs[1][k]) for k in sorted(refs[1].keys())},
+        }
         fs.dump(result, file_o)
         print(
             ':v2t',

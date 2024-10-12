@@ -149,7 +149,22 @@ class FileParser:
                     if node.module:
                         module_name = node.module
                     else:
-                        raise Exception
+                        print(
+                            ':v4l',
+                            self.file, node.lineno, line,
+                            {
+                                k: getattr(node, k)
+                                for k in dir(node)
+                                if not k.startswith('_')
+                            },
+                            {
+                                k: getattr(alias, k)
+                                for k in dir(alias)
+                                if not k.startswith('_')
+                            },
+                        )
+                        # raise Exception(self.file, node.lineno, line)
+                        continue
                 yield ModuleInfo(
                     name0=module_name,
                     name1=node.module or '',
