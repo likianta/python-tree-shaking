@@ -34,8 +34,8 @@ class Finder:
         include_self: t.Optional[bool] = True,
     ) -> t.Iterator[t.Tuple[T.ModuleName, T.FilePath]]:
         """
-        given a script file ('*.py'), return all direct and indirect modules that
-        are imported by this file.
+        given a script file ('*.py'), return all direct and indirect modules
+        that are imported by this file.
         params:
             script: must be formalized and absolute path.
             include_self:

@@ -194,23 +194,26 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.39.0
+  version: 1.40.1
   files:
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - __main__.py
-    - ../streamlit-1.39.0.dist-info/
+    - ../streamlit-1.40.1.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
+  files:
+    - ../streamlit_extras-0.5.0.dist-info/
 toga:
+  version: 0.4.8
   files:
     - ../clr_loader/
-    - ../clr_loader-0.2.6.dist-info/
+    - ../clr_loader-0.2.7.post0.dist-info/
     - ../pythonnet/
-    - ../toga_core-0.4.5.dist-info/
+    - ../toga_core-0.4.8.dist-info/
     - ../toga_winforms/
-    - ../toga_winforms-0.4.5.dist-info/
+    - ../toga_winforms-0.4.8.dist-info/
     - ../travertino-0.3.0.dist-info/
     - ../_cffi_backend.cp312-win_amd64.pyd
     - ../clr.py

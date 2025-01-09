@@ -10,33 +10,40 @@ from .patch import patch
 from .path_scope import path_scope
 
 
-def dump_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
+def dump_tree(
+    file_i: str,
+    dir_o: str,
+    copyfiles: bool = False,
+    incremental_updates: bool = False
+) -> t.Tuple[t.Set[str], t.Set[str]]:
     """
     params:
-        file_i:
-            data for example:
-                search_paths:
-                    - .
-                    - chore/site_packages
-                module_graphs:
-                    # the name must be existed in `data/module_graphs/<name>
-                    # .yaml`
-                    # see generation at `tree_shaking/__main__.py:dump_module
-                    # _graph`
-                    - depsland
-                    - streamlit
-                    - toga-winforms
-                spec_files:
-                    # path could be relative or absolute.
-                    # make sure path must be under one of the search paths.
-                    - chore/site_packages/streamlit/__init__.py
-                    - chore/site_packages/streamlit/__main__.py
-                    # trick: add '/' to the end of the path to indicate a
-                    # directory type.
-                    - depsland/chore/
-                    - depsland/__init__.py
-                    - depsland/__main__.py
-        dir_o: an empty folder to store the tree. it can be an inexistent path.
+        file_i (-i):
+        dir_o (-o):
+            an empty folder to store the tree. it can be an inexistent path.
+        copyfiles (-c): if true, use copy instead of symlink.
+        incremental_updates (-u):
+    
+    file content for example:
+        search_paths:
+            - .
+            - chore/site_packages
+        module_graphs:
+            # the name must be existed in `data/module_graphs/<name>.yaml`
+            # see generation at `tree_shaking/__main__.py:dump_module_graph`
+            - depsland
+            - streamlit
+            - toga-winforms
+        spec_files:
+            # path could be relative or absolute.
+            # make sure path must be under one of the search paths.
+            - chore/site_packages/streamlit/__init__.py
+            - chore/site_packages/streamlit/__main__.py
+            # trick: add '/' to the end of the path to indicate a
+            # directory type.
+            - depsland/chore/
+            - depsland/__init__.py
+            - depsland/__main__.py
     """
     dir_o = fs.abspath(dir_o)
     cfg: T.Config = parse_config(file_i)
@@ -111,25 +118,73 @@ def dump_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
         print(root, len(reldirs), ':i2')
         init_target_tree('{}/{}'.format(dir_o, fs.basename(root)), reldirs)
     
+    created_files, created_dirs = set(), set()
+    
     known_roots = tuple(sorted(roots.keys(), reverse=True))
     for f in files:
-        i = f
         r, s = _split_path(f, known_roots)
-        o = '{}/{}/{}'.format(dir_o, fs.basename(r), s)
+        i, o = f, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if copyfiles:
-            fs.copy_file(i, o)
+            fs.copy_file(i, o, overwrite=True)
         else:
-            fs.make_link(i, o)
+            fs.make_link(i, o, overwrite=None if incremental_updates else True)
+        created_files.add(o)
     for d in sorted(dirs, reverse=True):
-        i = d
         r, s = _split_path(d, known_roots)
-        o = '{}/{}/{}'.format(dir_o, fs.basename(r), s)
+        i, o = d, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if copyfiles:
-            fs.copy_tree(i, o, True)
+            fs.copy_tree(i, o, overwrite=True)
         else:
-            fs.make_link(i, o, True)
+            fs.make_link(i, o, overwrite=None if incremental_updates else True)
+        created_dirs.add(o)
     
     print('done', ':t')
+    return created_files, created_dirs
+
+
+def refresh_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
+    assert fs.exists(dir_o)
+    created_files, created_dirs = map(
+        frozenset, dump_tree(file_i, dir_o, copyfiles)
+    )
+    
+    def get_tiled_created_dirs() -> t.Set[str]:
+        def add_dirpath(path: str):
+            segs = path.split('/')
+            x = ''
+            for s in segs:
+                x += s + '/'
+                out.add(x)
+        
+        out = set()
+        for f in created_files:
+            add_dirpath(f.rsplit('/', 1)[0])
+        for d in created_dirs:
+            add_dirpath(d)
+        return out
+    
+    tiled_created_dirs = frozenset(get_tiled_created_dirs())
+    print(len(created_files), len(created_dirs), len(tiled_created_dirs))
+    
+    def collect_irrelevant_paths(dir, _check_files: bool = True):
+        for d in fs.find_dirs(dir):
+            if d.path + '/' in tiled_created_dirs:
+                yield from collect_irrelevant_paths(
+                    d.path, _check_files=d.path not in created_dirs
+                )
+            else:
+                yield d.path
+        if _check_files:
+            for f in fs.find_files(dir):
+                if f.path not in created_files:
+                    yield f.path
+    
+    irrelevant_paths = sorted(collect_irrelevant_paths(dir_o))
+    if irrelevant_paths:
+        print(len(irrelevant_paths))
+        for p in irrelevant_paths:
+            print(':v8i', 'remove', p)
+            pass
 
 
 def init_target_tree(root: str, reldirs: t.Iterable[str]) -> None:

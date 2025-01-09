@@ -1,13 +1,18 @@
 # library A imports library B, but in `if` case.
 # we will mark A.B is optional import.
 # we recommand you to check the optional imports after module graphs generated.
-IPython:
-  - PySide6
+ipython:
+  - pyside6
   - matplotlib
   - numpy
-PIL:
-  - PySide6
+pil:
+  - pyside6
 pandas:
   - qtpy
+streamlit:
+  - plotly
+  - statsmodel
+streamlit_extras:
+  - matplotlib
 webview:
   - qtpy

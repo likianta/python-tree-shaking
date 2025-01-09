@@ -1,17 +1,15 @@
 [tool.poetry]
 name = "tree-shaking"
 version = "0.1.0a0"
-description = ""
+description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = ["likianta <likianta@foxmail.com>"]
 # readme = "README.md"
 packages = [{ include = "tree_shaking" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-argsense = "^0.5.8"
-lk-utils = { version = "^2.10.9b0", source = "likianta-host" }
-
-lk-logger = { version = "^6.0.0a6", source = "likianta-host" }
+argsense = { version = "^0.6.4b1", source = "likianta-host" }
+lk-utils = { version = "^3.1.3a2", source = "likianta-host" }
 
 [[tool.poetry.source]]
 name = "tsinghua"
