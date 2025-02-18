@@ -7,22 +7,16 @@ IPython:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/unistring.py
-jaraco:
-  files:
-    - text/Lorem ipsum.txt
-# matplotlib:
-#   version: ???
+# jaraco:
 #   files:
-#     - backends/_backend_agg.cp312-win_amd64.pyd
-#     - mpl-data/
-#     - ../kiwisolver/_cext.cp312-win_amd64.pyd
-#     - ../matplotlib.libs/
+#     - text/Lorem ipsum.txt
 matplotlib:
   version: 3.9.2
   files:
     - backends/_backend_agg.cp312-win_amd64.pyd
     - mpl-data/
     - ../kiwisolver/_cext.cp312-win_amd64.pyd
+    # - ../matplotlib.libs/
 # numpy:
 #   files:
 #     - core/_multiarray_tests.cp312-win_amd64.pyd
@@ -194,12 +188,15 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.40.1
+  version: 1.42.0
   files:
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - __main__.py
-    - ../streamlit-1.40.1.dist-info/
+    - - ../streamlit-1.40.0.dist-info/
+      - ../streamlit-1.40.1.dist-info/
+      - ../streamlit-1.41.0.dist-info/
+      - ../streamlit-1.42.0.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
@@ -211,12 +208,14 @@ toga:
     - ../clr_loader/
     - ../clr_loader-0.2.7.post0.dist-info/
     - ../pythonnet/
-    - ../toga_core-0.4.8.dist-info/
     - ../toga_winforms/
-    - ../toga_winforms-0.4.8.dist-info/
     - ../travertino-0.3.0.dist-info/
     - ../_cffi_backend.cp312-win_amd64.pyd
     - ../clr.py
+    - - ../toga_core-0.4.8.dist-info/
+      - ../toga_core-0.4.9.dist-info/
+    - - ../toga_winforms-0.4.8.dist-info/
+      - ../toga_winforms-0.4.9.dist-info/
 tracerite:
   files:
     - style.css

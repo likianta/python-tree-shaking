@@ -8,8 +8,8 @@ packages = [{ include = "tree_shaking" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-argsense = { version = "^0.6.4b1", source = "likianta-host" }
-lk-utils = { version = "^3.1.3a2", source = "likianta-host" }
+argsense = { version = "^0.7.0", source = "likianta" }
+lk-utils = { version = "^3.1.3a5", source = "likianta" }
 
 [[tool.poetry.source]]
 name = "tsinghua"
@@ -17,7 +17,7 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 priority = "primary"
 
 [[tool.poetry.source]]
-name = "likianta-host"
+name = "likianta"
 url = "http://likianta.pro:2131/"
 priority = "supplemental"
 

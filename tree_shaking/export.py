@@ -69,37 +69,22 @@ def dump_tree(
                         graph['source_roots'][uid], top_name
                     )
                     for relpath1 in patch[top_name]['files']:
-                        abspath1 = fs.normpath(
-                            '{}/{}'.format(base_dir, relpath1)
-                        )
-                        if relpath1.endswith('/'):
-                            dirs.add(abspath1)
+                        # relpath1: str | [str, ...]
+                        if isinstance(relpath1, str):
+                            xlist = (relpath1,)
                         else:
-                            files.add(abspath1)
-            # if '.' not in m:
-            #     if m in patch:
-            #         base_dir = fs.parent(f)
-            #         for relpath in patch[m]['files']:
-            #             abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
-            #             if relpath.endswith('/'):
-            #                 dirs.add(abspath)
-            #             else:
-            #                 files.add(abspath)
-        # for m, f in datum.items():
-        #     k = m.split('.', 1)[0]
-        #     if k in patch:
-        #         if k not in _patched_modules:
-        #             _patched_modules.add(k)
-        #             # base_dir = fs.parent(f)
-        #             base_dir = fs.normpath('{}/{}'.format(
-        #                 fs.parent(f), '../' * m.count('.')
-        #             ))
-        #             for relpath in patch[k]['files']:
-        #                 abspath = fs.normpath('{}/{}'.format(base_dir, relpath))
-        #                 if relpath.endswith('/'):
-        #                     dirs.add(abspath)
-        #                 else:
-        #                     files.add(abspath)
+                            xlist = relpath1
+                        for x0 in xlist:
+                            x1 = fs.normpath('{}/{}'.format(base_dir, x0))
+                            if fs.exist(x1):
+                                abspath1 = x1
+                                if x0.endswith('/'):
+                                    dirs.add(abspath1)
+                                else:
+                                    files.add(abspath1)
+                                break
+                        else:
+                            raise Exception(top_name, relpath1)
     for path, isdir in cfg['export']['spec_files']:
         if isdir:
             dirs.add(path)
