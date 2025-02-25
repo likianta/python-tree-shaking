@@ -74,7 +74,11 @@ def dump_tree(
                             xlist = (relpath1,)
                         else:
                             xlist = relpath1
+                        nullable = False
                         for x0 in xlist:
+                            if x0 is None:
+                                nullable = True
+                                continue
                             x1 = fs.normpath('{}/{}'.format(base_dir, x0))
                             if fs.exist(x1):
                                 abspath1 = x1
@@ -84,7 +88,9 @@ def dump_tree(
                                     files.add(abspath1)
                                 break
                         else:
-                            raise Exception(top_name, relpath1)
+                            if not nullable:
+                                print(':v8l', top_name, relpath1)
+                                raise Exception(top_name)
     for path, isdir in cfg['export']['spec_files']:
         if isdir:
             dirs.add(path)

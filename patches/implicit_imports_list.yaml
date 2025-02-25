@@ -193,9 +193,12 @@ streamlit:
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - __main__.py
+    - - web/
+      - null
     - - ../streamlit-1.40.0.dist-info/
       - ../streamlit-1.40.1.dist-info/
       - ../streamlit-1.41.0.dist-info/
+      - ../streamlit-1.41.1.dist-info/
       - ../streamlit-1.42.0.dist-info/
 streamlit_extras:
   imports:
@@ -222,4 +225,5 @@ tracerite:
 zmq:
   files:
     - backend/cython/
-    - ../pyzmq.libs/
+    - - ../pyzmq.libs/
+      - null
