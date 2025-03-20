@@ -113,7 +113,7 @@ def parse_config(file: str) -> T.Config:
     
     # 3
     temp = out['entries']
-    for p, n in cfg.get('entries', {}).items():
+    for p, n in cfg['entries'].items():
         p = pathfmt(p)
         temp[p] = n
     

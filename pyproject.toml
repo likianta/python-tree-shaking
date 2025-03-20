@@ -2,14 +2,14 @@
 name = "tree-shaking"
 version = "0.1.0a0"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
-authors = ["likianta <likianta@foxmail.com>"]
+authors = ["Likianta <likianta@foxmail.com>"]
 # readme = "README.md"
 packages = [{ include = "tree_shaking" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-argsense = { version = "^0.7.0", source = "likianta" }
-lk-utils = { version = "^3.1.3a5", source = "likianta" }
+argsense = { version = "^0.7.1", source = "likianta" }
+lk-utils = { version = "^3.2.0a1", source = "likianta" }
 
 [[tool.poetry.source]]
 name = "tsinghua"
@@ -18,7 +18,7 @@ priority = "primary"
 
 [[tool.poetry.source]]
 name = "likianta"
-url = "http://likianta.pro:2131/"
+url = "http://47.102.108.149:2131/"
 priority = "supplemental"
 
 [build-system]

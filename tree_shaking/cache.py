@@ -22,7 +22,7 @@ class FileNodesCache:
         if file_id in self._cache:
             yield from self._cache[file_id]
             return
-        print(':vi2', 'parsing file', file)
+        print(':vi', 'parsing file', file)
         source = fs.load(file, 'plain')
         lines = source.splitlines()
         tree = ast.parse(source, file)

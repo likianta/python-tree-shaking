@@ -1,4 +1,3 @@
-import os
 import typing as t
 from collections import defaultdict
 
@@ -14,7 +13,8 @@ def dump_tree(
     file_i: str,
     dir_o: str,
     copyfiles: bool = False,
-    incremental_updates: bool = False
+    incremental_updates: bool = True,
+    dry_run: bool = False,
 ) -> t.Tuple[t.Set[str], t.Set[str]]:
     """
     params:
@@ -106,8 +106,10 @@ def dump_tree(
     
     roots = _get_common_roots(all_abs_dirs)
     for root, reldirs in roots.items():
-        print(root, len(reldirs), ':i2')
-        init_target_tree('{}/{}'.format(dir_o, fs.basename(root)), reldirs)
+        print(root, len(reldirs), ':i')
+        init_target_tree(
+            '{}/{}'.format(dir_o, fs.basename(root)), reldirs, dry_run=dry_run
+        )
     
     created_files, created_dirs = set(), set()
     
@@ -115,24 +117,47 @@ def dump_tree(
     for f in files:
         r, s = _split_path(f, known_roots)
         i, o = f, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
-        if copyfiles:
-            fs.copy_file(i, o, overwrite=True)
+        if dry_run:
+            print(
+                ':r',
+                '[magenta](dry run)[/] {}: \n'
+                '    from: [red]{}[/]\n'
+                '    to: [green]{}[/]'
+                .format('copying' if copyfiles else 'symlinking', i, o)
+            )
         else:
-            fs.make_link(i, o, overwrite=None if incremental_updates else True)
+            if copyfiles:
+                fs.copy_file(i, o, overwrite=True)
+            else:
+                fs.make_link(
+                    i, o, overwrite=None if incremental_updates else True
+                )
         created_files.add(o)
     for d in sorted(dirs, reverse=True):
         r, s = _split_path(d, known_roots)
         i, o = d, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
-        if copyfiles:
-            fs.copy_tree(i, o, overwrite=True)
+        if dry_run:
+            print(
+                ':r',
+                '[magenta](dry run)[/] {}: \n'
+                '    from: [red]{}[/]\n'
+                '    to: [green]{}[/]'
+                .format('copying' if copyfiles else 'symlinking', i, o)
+            )
         else:
-            fs.make_link(i, o, overwrite=None if incremental_updates else True)
+            if copyfiles:
+                fs.copy_tree(i, o, overwrite=True)
+            else:
+                fs.make_link(
+                    i, o, overwrite=None if incremental_updates else True
+                )
         created_dirs.add(o)
     
     print('done', ':t')
     return created_files, created_dirs
 
 
+# DELETE
 def refresh_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
     assert fs.exists(dir_o)
     created_files, created_dirs = map(
@@ -178,14 +203,19 @@ def refresh_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
             pass
 
 
-def init_target_tree(root: str, reldirs: t.Iterable[str]) -> None:
+def init_target_tree(
+    root: str, reldirs: t.Iterable[str], dry_run: bool = False
+) -> None:
     print('init making tree', root, ':p')
     paths_to_be_created = {root}
     paths_to_be_created.update((f'{root}/{x}' for x in reldirs))
     paths_to_be_created = sorted(paths_to_be_created)
-    # print(':vl', paths_to_be_created)
-    for p in paths_to_be_created:
-        os.makedirs(p, exist_ok=True)
+    if dry_run:
+        print(':l', paths_to_be_created)
+    else:
+        for p in paths_to_be_created:
+            if not fs.exists(p):
+                fs.make_dirs(p)
 
 
 def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:

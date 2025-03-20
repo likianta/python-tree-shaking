@@ -1,3 +1,11 @@
+altair:
+  files:
+    - vegalite/v5/schema/vega-lite-schema.json
+    - vegalite/v5/schema/vega-themes.json
+    - ../jsonschema-4.23.0.dist-info/
+    - ../jsonschema_specifications/schemas/
+    - ../pyarrow/
+    - ../rpds/rpds.cp312-win_amd64.pyd
 httptools:
   files:
     - parser/parser.cp312-win_amd64.pyd
@@ -49,11 +57,21 @@ numpy:
     - random/bit_generator.cp312-win_amd64.pyd
     - random/mtrand.cp312-win_amd64.pyd
     - ../numpy.libs/
+omni_driver_kit:
+  files:
+    - ../crcmod/
 oss2:
   files:
     - ../aliyunsdkcore/data/
     - ../Crypto/
     - ../cryptography/
+pandas:
+  version: 2.2.3
+  files:
+    - _libs/
+    # - _libs/pandas_datetime.cp312-win_amd64.pyd
+    # - _libs/pandas_parser.cp312-win_amd64.pyd
+    - ../pandas.libs/
 plotly:
   # imports:
   #   - express/trendline_functions/__init__.py
@@ -75,6 +93,7 @@ pyexcel:
     # - ../pyexcel_io/readers/
     # - ../pyexcel_io/writers/
 PySide6:
+  version: 6.8.2
   files:
     - plugins/iconengines/
     - plugins/imageformats/
@@ -107,7 +126,9 @@ PySide6:
     - Qt6QmlCompiler.dll
     - Qt6QmlCore.dll
     - Qt6QmlLocalStorage.dll
+    - Qt6QmlMeta.dll
     - Qt6QmlModels.dll
+    - Qt6QmlNetwork.dll
     - Qt6QmlWorkerScript.dll
     - Qt6QmlXmlListModel.dll
     - Qt6Quick.dll
@@ -117,6 +138,7 @@ PySide6:
     - Qt6QuickControls2.dll
     - Qt6QuickControls2Basic.dll
     - Qt6QuickControls2BasicStyleImpl.dll
+    - Qt6QuickControls2FluentWinUI3StyleImpl.dll
     - Qt6QuickControls2Fusion.dll
     - Qt6QuickControls2FusionStyleImpl.dll
     - Qt6QuickControls2Imagine.dll
@@ -126,6 +148,7 @@ PySide6:
     - Qt6QuickControls2MaterialStyleImpl.dll
     - Qt6QuickControls2Universal.dll
     - Qt6QuickControls2UniversalStyleImpl.dll
+    - Qt6QuickControls2WindowsStyleImpl.dll
     - Qt6QuickEffects.dll
     - Qt6QuickLayouts.dll
     - Qt6QuickParticles.dll
@@ -188,18 +211,24 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.42.0
+  version: 1.42.2
   files:
     - runtime/scriptrunner/magic_funcs.py
     - static/
-    - __main__.py
-    - - web/
-      - null
+    # - web/
+    - ../pyarrow/
+    # - ../pyarrow/lib.cp312-win_amd64.pyd
+    # - ../pyarrow/lib.h
+    # - ../pyarrow/lib.pxd
+    # - ../pyarrow/lib.pyx
+    # - ../pyarrow/lib_api.h
+    - ../tornado/
     - - ../streamlit-1.40.0.dist-info/
       - ../streamlit-1.40.1.dist-info/
       - ../streamlit-1.41.0.dist-info/
       - ../streamlit-1.41.1.dist-info/
       - ../streamlit-1.42.0.dist-info/
+      - ../streamlit-1.42.2.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
