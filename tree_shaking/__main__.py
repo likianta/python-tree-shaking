@@ -1,8 +1,29 @@
+import os
 from argsense import cli
+from lk_utils import fs
+from lk_utils import run_cmd_args
 
 from .export import dump_tree
 from .graph import build_module_graphs
 from .graph import build_module_graph
+
+
+@cli.cmd()
+def check_if_patch_worked(target_project: str):
+    os.environ.pop('VIRTUAL_ENV')
+    venv_root = run_cmd_args(
+        'poetry', 'env', 'info', '--path', cwd=target_project
+    )
+    site_packages_dir = '{}/Lib/site-packages'.format(venv_root)
+    assert fs.exist(site_packages_dir)
+    
+    patch = fs.load(fs.xpath('../patches/implicit_imports_list.yaml'))
+    for k, v in patch.items():
+        if 'files' in v:
+            for item in v['files']:
+                if isinstance(item, str):
+                    pass
+
 
 cli.add_cmd(build_module_graphs)
 cli.add_cmd(build_module_graph)
