@@ -25,6 +25,9 @@ matplotlib:
     - mpl-data/
     - ../kiwisolver/_cext.cp312-win_amd64.pyd
     # - ../matplotlib.libs/
+modbus_tk:
+  files:
+    - modbus_tcp.py
 # numpy:
 #   files:
 #     - core/_multiarray_tests.cp312-win_amd64.pyd
@@ -60,6 +63,7 @@ numpy:
 omni_driver_kit:
   files:
     - ../crcmod/
+    - ../modbus_tk/modbus_tcp.py
 oss2:
   files:
     - ../aliyunsdkcore/data/
@@ -179,6 +183,9 @@ qmlease:
     - qmlside/qml_eval.qml
     - style/stylesheet/
     - widgets/
+remote_ipython:
+  files:
+    - ../prompt_toolkit-3.0.51.dist-info/
 requests:
   files:
     - ../certifi/cacert.pem
@@ -229,11 +236,14 @@ streamlit:
       - ../streamlit-1.41.1.dist-info/
       - ../streamlit-1.42.0.dist-info/
       - ../streamlit-1.42.2.dist-info/
+      - ../streamlit-1.44.1.dist-info/
+      - ../streamlit-1.45.1.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
   files:
-    - ../streamlit_extras-0.5.0.dist-info/
+    - - ../streamlit_extras-0.5.0.dist-info/
+      - ../streamlit_extras-0.6.0.dist-info/
 toga:
   version: 0.4.8
   files:

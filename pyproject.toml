@@ -8,8 +8,8 @@ packages = [{ include = "tree_shaking" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-argsense = { version = "^0.7.1", source = "likianta" }
-lk-utils = { version = "^3.2.0a4", source = "likianta" }
+argsense = { version = "^1.0.0a1", source = "likianta" }
+lk-utils = { version = "^3.3.0a4", source = "likianta" }
 
 [[tool.poetry.source]]
 name = "tsinghua"

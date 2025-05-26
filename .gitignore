@@ -2,5 +2,6 @@
 /data/module_graphs/*
 /data/cache.pkl
 /data/errors.txt
+/test/_test_root_*
 __pycache__/
 !**/.gitkeep

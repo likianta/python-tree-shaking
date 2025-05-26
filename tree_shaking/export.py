@@ -14,6 +14,7 @@ def dump_tree(
     dir_o: str,
     copyfiles: bool = False,
     dry_run: bool = False,
+    clean_files: bool = True,
 ) -> t.Tuple[t.Set[str], t.Set[str]]:
     """
     params:
@@ -45,6 +46,7 @@ def dump_tree(
     """
     dir_o = fs.abspath(dir_o)
     cfg: T.Config = parse_config(file_i)
+    is_dir_o_exist_before = fs.exist(dir_o) and not fs.is_empty_dir(dir_o)
     
     files = set()  # a set of absolute paths
     dirs = set()  # a set of absolute paths
@@ -58,6 +60,7 @@ def dump_tree(
             abspath = '{}/{}'.format(graph['source_roots'][uid], relpath)
             files.add(abspath)
             
+            # patch: fill extra files
             top_name = module_name.split('.', 1)[0]
             if top_name in patch:
                 if top_name not in patched_modules:
@@ -104,19 +107,18 @@ def dump_tree(
     
     roots = _get_common_roots(all_abs_dirs)
     for root, reldirs in roots.items():
-        print(root, len(reldirs), ':i')
+        # print(root, len(reldirs), ':i')
         init_target_tree(
             '{}/{}'.format(dir_o, fs.basename(root)), reldirs, dry_run=dry_run
         )
     
     created_files, created_dirs = set(), set()
-    
     known_roots = tuple(sorted(roots.keys(), reverse=True))
     for f in files:
         r, s = _split_path(f, known_roots)
         i, o = f, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if dry_run:
-            if not fs.exists(o):
+            if not fs.exist(o):
                 print(
                     ':ri',
                     '[magenta](dry run)[/] {}: \n'
@@ -128,14 +130,13 @@ def dump_tree(
             if copyfiles:
                 fs.copy_file(i, o, overwrite=True)
             else:
-                if not fs.exists(o):
-                    fs.make_link(i, o)
+                fs.make_link(i, o, overwrite=True)
         created_files.add(o)
     for d in sorted(dirs, reverse=True):
         r, s = _split_path(d, known_roots)
         i, o = d, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if dry_run:
-            if not fs.exists(o):
+            if not fs.exist(o):
                 print(
                     ':ri',
                     '[magenta](dry run)[/] {}: \n'
@@ -147,13 +148,26 @@ def dump_tree(
             if copyfiles:
                 fs.copy_tree(i, o, overwrite=True)
             else:
-                if fs.exists(o):
-                    if not fs.islink(o):
-                        fs.remove_tree(o)
-                        fs.make_link(i, o)
-                else:
-                    fs.make_link(i, o)
+                fs.make_link(i, o, overwrite=True)
         created_dirs.add(o)
+        
+    if clean_files and is_dir_o_exist_before:
+        # FIXME: does os.walk detect broken symlinks?
+        def recursive_clean(root: str) -> None:
+            for d in tuple(fs.find_dirs(root)):
+                if d not in created_dirs:
+                    print(':v8i', 'remove dir', fs.relpath(d.path, dir_o))
+                    fs.remove_tree(d.path)
+                else:
+                    recursive_clean(d.path)
+            for f in tuple(fs.find_files(root)):
+                if f.path not in created_files:
+                    print(':v8i', 'remove file', fs.relpath(f.path, dir_o))
+                    fs.remove_file(f.path)
+                # if not fs.real_exist(f.path):
+                #     fs.remove_file(f.path)
+        
+        recursive_clean(dir_o)
     
     print('done', ':t')
     return created_files, created_dirs
@@ -161,7 +175,7 @@ def dump_tree(
 
 # DELETE
 def refresh_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
-    assert fs.exists(dir_o)
+    assert fs.exist(dir_o)
     created_files, created_dirs = map(
         frozenset, dump_tree(file_i, dir_o, copyfiles)
     )
@@ -206,14 +220,14 @@ def refresh_tree(file_i: str, dir_o: str, copyfiles: bool = False) -> None:
 
 
 def init_target_tree(
-    root: str, reldirs: t.Iterable[str], dry_run: bool = False
+    root: str, reldirs: t.Set[str], dry_run: bool = False
 ) -> None:
-    print('init making tree', root, ':p')
+    print('init making tree', root, len(reldirs), ':pv')
     paths_to_be_created = {root}
     paths_to_be_created.update((f'{root}/{x}' for x in reldirs))
     paths_to_be_created = sorted(paths_to_be_created)
     for p in paths_to_be_created:
-        if not fs.exists(p):
+        if not fs.exist(p):
             if dry_run:
                 print('(dry run) make dir(s): {}'.format(p))
             else:
