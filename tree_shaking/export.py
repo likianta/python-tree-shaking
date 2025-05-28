@@ -118,52 +118,57 @@ def dump_tree(
         r, s = _split_path(f, known_roots)
         i, o = f, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if dry_run:
-            if not fs.exist(o):
-                print(
-                    ':ri',
-                    '[magenta](dry run)[/] {}: \n'
-                    '    from: [red]{}[/]\n'
-                    '    to: [green]{}[/]'
-                    .format('copying' if copyfiles else 'symlinking', i, o)
-                )
+            print(':i', '(dry run) {}: {}'.format(
+                'copying' if copyfiles else 'symlinking',
+                '.../{}'.format(o[len(dir_o) + 1:])
+            ))
         else:
             if copyfiles:
                 fs.copy_file(i, o, overwrite=True)
             else:
                 fs.make_link(i, o, overwrite=True)
         created_files.add(o)
+        created_dirs.add(fs.parent(o))
     for d in sorted(dirs, reverse=True):
         r, s = _split_path(d, known_roots)
         i, o = d, '{}/{}/{}'.format(dir_o, fs.basename(r), s)
         if dry_run:
-            if not fs.exist(o):
-                print(
-                    ':ri',
-                    '[magenta](dry run)[/] {}: \n'
-                    '    from: [red]{}[/]\n'
-                    '    to: [green]{}[/]'
-                    .format('copying' if copyfiles else 'symlinking', i, o)
-                )
+            print(':i', '(dry run) {}: {}'.format(
+                'copying' if copyfiles else 'symlinking',
+                '.../{}'.format(o[len(dir_o) + 1:])
+            ))
         else:
             if copyfiles:
                 fs.copy_tree(i, o, overwrite=True)
             else:
                 fs.make_link(i, o, overwrite=True)
         created_dirs.add(o)
-        
+    
     if clean_files and is_dir_o_exist_before:
-        # FIXME: does os.walk detect broken symlinks?
         def recursive_clean(root: str) -> None:
             for d in tuple(fs.find_dirs(root)):
-                if d not in created_dirs:
-                    print(':v8i', 'remove dir', fs.relpath(d.path, dir_o))
-                    fs.remove_tree(d.path)
-                else:
+                if d.path in created_dirs:
                     recursive_clean(d.path)
+                elif any(x.startswith(d.path + '/') for x in created_dirs):
+                    # created_dirs.add(d.path)
+                    recursive_clean(d.path)
+                else:
+                    print(
+                        ':v8i',
+                        'remove redundant dir',
+                        fs.relpath(d.path, dir_o)
+                    )
+                    if not dry_run:
+                        fs.remove_tree(d.path)
             for f in tuple(fs.find_files(root)):
                 if f.path not in created_files:
-                    print(':v8i', 'remove file', fs.relpath(f.path, dir_o))
-                    fs.remove_file(f.path)
+                    print(
+                        ':v8i',
+                        'remove redundant file',
+                        fs.relpath(f.path, dir_o)
+                    )
+                    if not dry_run:
+                        fs.remove_file(f.path)
                 # if not fs.real_exist(f.path):
                 #     fs.remove_file(f.path)
         
