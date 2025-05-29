@@ -1,7 +1,5 @@
 /.idea/
-/data/module_graphs/*
-/data/cache.pkl
-/data/errors.txt
+/dist/
 /test/_test_root_*
 /tree_shaking/_cache/**
 __pycache__/

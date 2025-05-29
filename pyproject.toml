@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.1.0a0"
+version = "0.1.0a1"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 homepage = "https://github.com/likianta/python-tree-shaking"

@@ -56,8 +56,7 @@ def dump_tree(
             - depsland/__main__.py
     """
     root = fs.abspath(dir_o)
-    is_target_exist_before = fs.exist(root) and not fs.is_empty_dir(root)
-    del dir_o
+    # del dir_o
     
     cfg: T.Config = parse_config(file_i)
     files, dirs = _mount_resources(cfg, verbose=dry_run)
@@ -65,12 +64,12 @@ def dump_tree(
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
     print(len(tobe_created_dirs), len(files), len(dirs), ':v1')
     
-    if is_target_exist_before:
-        _incremental_exports(
+    if _check_if_first_time_export(root):
+        _first_time_exports(
             root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
         )
     else:
-        _first_time_exports(
+        _incremental_exports(
             root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
         )
     fs.dump(
@@ -196,6 +195,14 @@ def _incremental_exports(
 
 
 # -----------------------------------------------------------------------------
+
+def _check_if_first_time_export(root: str) -> bool:
+    if not fs.exist(root):
+        return True
+    if not fs.find_dir_names(root):
+        return True
+    return False
+
 
 def _mount_resources(
     config: T.Config, verbose: bool = False
