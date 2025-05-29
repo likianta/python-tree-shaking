@@ -11,9 +11,12 @@ httptools:
     - parser/parser.cp312-win_amd64.pyd
     - parser/url_parser.cp312-win_amd64.pyd
 IPython:
+  version: 9.2.0
   imports:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
+    - ../pygments/styles/monokai.py
+    - ../pygments/styles/pastie.py
     - ../pygments/unistring.py
 # jaraco:
 #   files:

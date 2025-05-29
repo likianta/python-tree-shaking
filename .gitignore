@@ -3,5 +3,9 @@
 /data/cache.pkl
 /data/errors.txt
 /test/_test_root_*
+/tree_shaking/_cache/**
 __pycache__/
+!/tree_shaking/_cache/dumped_resources_maps/
+!/tree_shaking/_cache/module_graphs/
+!/tree_shaking/_cache/ignores.txt
 !**/.gitkeep

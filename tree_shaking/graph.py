@@ -7,7 +7,7 @@ from .config import T as T0
 from .config import parse_config
 from .finder import Finder
 
-graph_dir = fs.xpath('../data/module_graphs')
+graphs_dir = fs.xpath('_cache/module_graphs')
 
 
 class T:
@@ -30,7 +30,7 @@ class T:
 # FIXME
 def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     file_i = fs.abspath(script)
-    file_o = '{}/{}.yaml'.format(graph_dir, graph_id)
+    file_o = '{}/{}.yaml'.format(graphs_dir, graph_id)
     
     finder = Finder(())
     result = dict(finder.get_all_imports(file_i))
@@ -54,7 +54,7 @@ def build_module_graphs(config_file: str) -> None:
         print(':dv2', p, n)
         # build_module_graph(p, n)
         file_i = fs.abspath(p)
-        file_o = '{}/{}.yaml'.format(graph_dir, n)
+        file_o = '{}/{}.yaml'.format(graphs_dir, n)
         result = dict(finder.get_all_imports(file_i))
         # prettify result data for reader friendly
         result = dict(sorted(result.items()))
@@ -102,4 +102,4 @@ def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
     
-    return out
+    return t.cast(dict, out)

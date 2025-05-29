@@ -46,7 +46,7 @@ def get_file_id(file: str) -> str:
     )
 
 
-if not fs.exists(x := p('../data/cache.pkl')):
+if not fs.exists(x := p('_cache/cache.pkl')):
     '''
     {file: tuple nodes, ...}
         nodes: ((node, line), ...)

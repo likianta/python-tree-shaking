@@ -68,7 +68,7 @@ class T:
         'root'        : NormPath,
         'search_paths': t.List[NormPath],
         'entries'     : t.Dict[NormPath, GraphName],
-        'ignores'     : t.FrozenSet[str],
+        'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
         'export'      : t.TypedDict('Export', {
             'module_graphs': t.List[NormPath],
             'spec_files'   : t.List[t.Tuple[NormPath, bool]],
@@ -77,6 +77,9 @@ class T:
     })
     
     Config = Config1
+
+
+_graphs_dir = fs.xpath('_cache/module_graphs')
 
 
 def parse_config(file: str) -> T.Config:
@@ -137,7 +140,7 @@ def parse_config(file: str) -> T.Config:
     else:
         graph_names = cfg['export']['module_graphs']
     for n in graph_names:
-        graph_file = '{}/{}.yaml'.format(_graph_dir, n)
+        graph_file = '{}/{}.yaml'.format(_graphs_dir, n)
         out['export']['module_graphs'].append(graph_file)
     # 5.3
     for f in cfg['export']['spec_files']:
@@ -147,16 +150,13 @@ def parse_config(file: str) -> T.Config:
     return out
 
 
-_graph_dir = fs.xpath('../data/module_graphs')
-
-
 def _format_path(path: str, root: str, base: str) -> str:
     if path.startswith(('./', '../')):
         path = fs.normpath('{}/{}'.format(base, path))
     elif path.startswith('<root>'):
         path = fs.normpath(path.replace('<root>', root))
     elif path.startswith('<module>'):
-        path = fs.normpath(path.replace('<module>', _graph_dir))
+        path = fs.normpath(path.replace('<module>', _graphs_dir))
     else:
         path = fs.normpath(path)
     assert isabs(path) and fs.exists(path), path

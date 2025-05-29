@@ -15,7 +15,7 @@ from .module import T as T0
 from .path_scope import path_scope
 
 module_inspector = ModuleInspector(
-    ignores=fs.load(p('../data/ignores.txt')).splitlines()
+    ignores=fs.load(p('_cache/ignores.txt')).splitlines()
 )
 _broken = set()
 
@@ -194,10 +194,10 @@ class ErrorRecords:
     
     def save(self) -> bool:
         if self._records:
-            fs.dump(self._records, p('../data/errors.txt'))
+            fs.dump(self._records, p('_cache/errors.txt'))
             print(
-                'found {} errors. see log at "data/errors.txt"'
-                .format(len(self._records)), ':v4s'
+                'found {} errors. see log at "_cache/errors.txt"'
+                .format(len(self._records)), ':v8s'
             )
             return True
         return False

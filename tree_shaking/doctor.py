@@ -12,7 +12,7 @@ def check_lk_utils(graph_id: str) -> None:
     
     files1 = []
     for k, v in fs.load(fs.xpath(
-        '../data/module_graphs/{}.yaml'.format(graph_id)
+        '_cache/module_graphs/{}.yaml'.format(graph_id)
     )).items():
         if k.startswith('lk_utils'):
             files1.append(v.split('/lk_utils/')[1])
