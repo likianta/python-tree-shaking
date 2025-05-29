@@ -2,6 +2,7 @@ import hashlib
 import os
 import typing as t
 from collections import defaultdict
+from functools import cache
 
 from lk_utils import fs
 
@@ -96,6 +97,7 @@ def _first_time_exports(
     roots = _get_common_roots(tobe_created_dirs)
     for subroot, reldirs in roots.items():
         dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
+        fs.make_dir(dir_prefix)
         for x in sorted(reldirs):
             d = '{}/{}'.format(dir_prefix, x)
             if dry_run:
@@ -126,7 +128,7 @@ def _first_time_exports(
         #   i.e. the cross-including paths. we need to process "A/B/C" first, -
         #   then "A/B". that's why we use "sorted(dirs, reverse=True)".
         #   TODO: maybe we can eliminate cross-including paths in -
-        #       "_mount_resources()".
+        #       "_mount_resources()" stage.
         r, s = _split_path(d, known_roots)
         i, o = d, '{}/{}/{}'.format(root, fs.basename(r), s)
         if dry_run:
@@ -275,9 +277,19 @@ def _mount_resources(
 def _analyze_dirs_to_be_created(
     files: T.TodoFiles, dirs: T.TodoDirs
 ) -> t.Set[str]:
+    """
+    note: the returned value is a set of "source" paths, not "target" paths.
+    """
     out = set()
     for x in (files | dirs):
         out.update(_grind_down_dirpath(fs.parent(x)))
+    # remove existing dirs that out of search roots
+    search_roots = _get_search_roots()
+    for d in tuple(out):
+        if any(x.startswith(d + '/') for x in search_roots):
+            print('pick out high-priority existing dir', d, ':vi')
+            # assert fs.exist(d)
+            out.remove(d)
     return out
 
 
@@ -319,18 +331,7 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
                 all known roots are existing dirs.
                 the keys are ordered by length of paths in descending.
     """
-    search_roots = set()
-    for path, isdir in path_scope.module_2_path.values():
-        # e.g.
-        #   isdir = True:
-        #       '<project>/venv/site-packages/numpy'
-        #       -> '<project>/venv/site-packages'
-        #   isdir = False:
-        #       '<project>/venv/site-packages/typing_extensions.py'
-        #       -> '<project>/venv/site-packages'
-        search_roots.add(fs.parent(path))
-    search_roots = tuple(sorted(search_roots, reverse=True))
-    
+    search_roots = _get_search_roots()
     out = defaultdict(set)  # {root: {reldir, ...}, ...}
     for d in absdirs:
         if d in search_roots:
@@ -344,6 +345,21 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
     # print(':l', search_roots, tuple(out.keys()))
     # print(':vl', out)
     return out
+
+
+@cache
+def _get_search_roots() -> t.Tuple[str, ...]:
+    search_roots = set()
+    for path, isdir in path_scope.module_2_path.values():
+        # e.g.
+        #   isdir = True:
+        #       '<project>/venv/site-packages/numpy'
+        #       -> '<project>/venv/site-packages'
+        #   isdir = False:
+        #       '<project>/venv/site-packages/typing_extensions.py'
+        #       -> '<project>/venv/site-packages'
+        search_roots.add(fs.parent(path))
+    return tuple(sorted(search_roots, reverse=True))
 
 
 def _grind_down_dirpath(path: str) -> t.Iterator[str]:
