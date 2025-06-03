@@ -1,16 +1,20 @@
 [project]
 name = "tree-shaking"
-version = "0.1.0a1"
+version = "0.1.0"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 homepage = "https://github.com/likianta/python-tree-shaking"
-# readme = "README.md"
+readme = "README.md"
 packages = [{ include = "tree_shaking" }]
 requires-python = ">=3.12"
 dynamic = ["dependencies"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+argsense = ">=0.7.2"
+lk-utils = "^3.2.0"
+
+[tool.poetry.group.dev.dependencies]
 argsense = { version = "^1.0.0a1", source = "likianta" }
 lk-utils = { version = "^3.3.0a12", source = "likianta" }
 
