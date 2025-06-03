@@ -48,7 +48,7 @@ def build_module_graph(
 
 
 def build_module_graphs(config_file: T.AnyPath) -> None:
-    cfg = parse_config(config_file)
+    cfg = parse_config(config_file, _save=True)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
         print(':v2', p, n)

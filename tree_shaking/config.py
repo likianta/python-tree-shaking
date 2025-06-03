@@ -1,3 +1,4 @@
+import atexit
 import hashlib
 import typing as t
 from functools import partial
@@ -69,7 +70,7 @@ class T:
 graphs_root = fs.xpath('_cache/module_graphs')
 
 
-def parse_config(file: str) -> T.Config:
+def parse_config(file: str, _save: bool = False) -> T.Config:
     """
     file: see example at `examples/depsland_modules.yaml`.
         - the file ext must be '.yaml' or '.yml'.
@@ -78,40 +79,42 @@ def parse_config(file: str) -> T.Config:
     """
     cfg_file: str = fs.abspath(file)
     cfg_dir: str = fs.parent(cfg_file)
-    cfg: T.Config0 = fs.load(cfg_file)
-    out: T.Config1 = {
+    cfg0: T.Config0 = fs.load(cfg_file)
+    cfg1: T.Config1 = {
         'root'        : '',
         'search_paths': [],
         'entries'     : {},
         'ignores'     : (),
-        # 'exports'     : (),
     }
     
     # 1
-    if isabs(cfg['root']):
-        out['root'] = fs.normpath(cfg['root'])
+    if isabs(cfg0['root']):
+        cfg1['root'] = fs.normpath(cfg0['root'])
     else:
-        out['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg['root']))
+        cfg1['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg0['root']))
     
     # 2
-    pathfmt = partial(_format_path, root=out['root'], base=cfg_dir)
+    pathfmt = partial(_format_path, root=cfg1['root'], base=cfg_dir)
     
-    temp = out['search_paths']
-    for p in map(pathfmt, cfg['search_paths']):
+    temp = cfg1['search_paths']
+    for p in map(pathfmt, cfg0['search_paths']):
         temp.append(p)
         path_scope.add_scope(p)
     
     # 3
-    temp = out['entries']
-    for p in cfg['entries']:
+    temp = cfg1['entries']
+    for p in cfg0['entries']:
         p = pathfmt(p)
         temp[p] = hash_path_to_uid(p)
     
     # 4
-    out['ignores'] = frozenset(cfg.get('ignores', ()))
+    cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
     
-    # print(out, ':l')
-    return out
+    if _save:
+        atexit.register(partial(_save_graph_alias, cfg1))
+    
+    # print(cfg1, ':l')
+    return cfg1
 
 
 def hash_path_to_uid(abspath: str) -> str:
@@ -130,3 +133,19 @@ def _format_path(path: str, root: str, base: str) -> str:
         path = fs.normpath(path)
     assert isabs(path) and fs.exists(path), path
     return path
+
+
+def _save_graph_alias(config: T.Config1) -> None:
+    map_ = fs.load(fs.xpath('_cache/module_graphs_alias.yaml'), default={})
+    if config['root'] in map_:
+        if (
+            set(config['entries'].values()) ==
+            set(map_[config['root']].values())
+        ):
+            return
+    map_[config['root']] = {
+        # k.replace(config['root'], '<root>'): v
+        fs.relpath(k, config['root']): v
+        for k, v in config['entries'].items()
+    }
+    fs.dump(map_, fs.xpath('_cache/module_graphs_alias.yaml'), sort_keys=True)
