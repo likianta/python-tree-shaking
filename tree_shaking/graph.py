@@ -4,33 +4,33 @@ import typing as t
 from lk_utils import fs
 
 from .config import T as T0
+from .config import graphs_root
 from .config import parse_config
 from .finder import Finder
 
-graphs_dir = fs.xpath('_cache/module_graphs')
 
-
-class T:
-    Config = T0.Config
+class T(T0):
     DumpedModuleGraph = t.TypedDict('DumpedModuleGraph', {
         'source_roots': t.Dict[str, str],
         'modules'     : t.Dict[str, str],
     })
     '''
-    {
-        'source_roots': {uid: root_path, ...},
-            uid: 8-char md5 hash of root_path.
-            root_path: absolute dirpath.
-        'modules': {module: short_path, ...}
-            short_path: `<uid>/path/to/module.py`
-    }
+        {
+            'source_roots': {uid: root_path, ...},
+                uid: 8-char md5 hash of root_path.
+                root_path: absolute dirpath.
+            'modules': {module: short_path, ...}
+                short_path: `<uid>/path/to/module.py`
+        }
     '''
 
 
 # FIXME
-def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
+def build_module_graph(
+    script: T.AnyScriptPath, graph_id: T.GraphId, sort: bool = True
+) -> str:
     file_i = fs.abspath(script)
-    file_o = '{}/{}.yaml'.format(graphs_dir, graph_id)
+    file_o = '{}/{}.yaml'.format(graphs_root, graph_id)
     
     finder = Finder(())
     result = dict(finder.get_all_imports(file_i))
@@ -47,14 +47,14 @@ def build_module_graph(script: str, graph_id: str, sort: bool = True) -> str:
     return file_o
 
 
-def build_module_graphs(config_file: str) -> None:
+def build_module_graphs(config_file: T.AnyPath) -> None:
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
-        print(':dv2', p, n)
+        print(':v2', p, n)
         # build_module_graph(p, n)
         file_i = fs.abspath(p)
-        file_o = '{}/{}.yaml'.format(graphs_dir, n)
+        file_o = '{}/{}.yaml'.format(graphs_root, n)
         result = dict(finder.get_all_imports(file_i))
         # prettify result data for reader friendly
         result = dict(sorted(result.items()))

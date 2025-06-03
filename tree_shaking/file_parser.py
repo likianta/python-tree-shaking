@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from lk_logger import parallel_printing
 from lk_utils import fs
 from lk_utils import p
+
 from .cache import file_cache
 from .module import ModuleInfo
 from .module import ModuleInspector
@@ -76,7 +77,7 @@ class FileParser:
             for module in self._get_module_info(node, line):
                 try:
                     path = self._get_module_path(module)
-                except (ModuleNotFound, PathNotFound) as e:
+                except (ModuleNotFound, PathNotFound):
                     if module.id not in _broken:
                         _broken.add(module.id)
                         # with _err_records.recording():
@@ -110,7 +111,7 @@ class FileParser:
     
     def _get_module_info(
         self, node: T.Node, line: str
-    ) -> t.Iterator[T.ModuleInfo]:
+    ) -> t.Iterator[T.ModuleInfo]:  # noqa
         if dot_cnt := self._check_if_relative_import(line):
             if dot_cnt == 1:
                 base_module = '.'.join(self.base_module_segs)

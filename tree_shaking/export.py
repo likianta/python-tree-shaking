@@ -1,4 +1,3 @@
-import hashlib
 import os
 import typing as t
 from collections import defaultdict
@@ -6,6 +5,8 @@ from functools import cache
 
 from lk_utils import fs
 
+from .config import graphs_root
+from .config import hash_path_to_uid
 from .config import parse_config
 from .graph import T as T0
 from .patch import patch
@@ -45,16 +46,6 @@ def dump_tree(
             - depsland
             - streamlit
             - toga-winforms
-        spec_files:
-            # path could be relative or absolute.
-            # make sure path must be under one of the search paths.
-            - chore/site_packages/streamlit/__init__.py
-            - chore/site_packages/streamlit/__main__.py
-            # trick: add '/' to the end of the path to indicate a
-            # directory type.
-            - depsland/chore/
-            - depsland/__init__.py
-            - depsland/__main__.py
     """
     root = fs.abspath(dir_o)
     # del dir_o
@@ -79,7 +70,9 @@ def dump_tree(
             'linked_resources'   : (files, dirs),
         },
         fs.xpath(
-            '_cache/dumped_resources_maps/{}.pkl'.format(x := _hash_path(root))
+            '_cache/dumped_resources_maps/{}.pkl'.format(
+                x := hash_path_to_uid(root)
+            )
         )
     )
     print('(cache) saved resources map', x, ':v')
@@ -151,7 +144,7 @@ def _incremental_exports(
     dry_run: bool = False,
 ) -> None:
     assert fs.exist(x := fs.xpath(
-        '_cache/dumped_resources_maps/{}.pkl'.format(_hash_path(root))
+        '_cache/dumped_resources_maps/{}.pkl'.format(hash_path_to_uid(root))
     ))
     old_res_map: T.ResourcesMap = fs.load(x)
     new_res_map: T.ResourcesMap = {
@@ -213,7 +206,8 @@ def _mount_resources(
     dirs: T.TodoDirs = set()
     patched_modules = set()
     
-    for graph_file in config['export']['module_graphs']:
+    for graph_id in config['entries'].values():
+        graph_file = '{}/{}.yaml'.format(graphs_root, graph_id)
         graph: T.DumpedModuleGraph = fs.load(graph_file)
         for module_name, relpath in graph['modules'].items():
             uid, relpath = relpath.split('/', 1)
@@ -252,12 +246,6 @@ def _mount_resources(
                         else:
                             if not nullable:
                                 raise Exception(top_name, relpath1)
-    
-    for path, isdir in config['export']['spec_files']:
-        if isdir:
-            dirs.add(path)
-        else:
-            files.add(path)
     
     for f in tuple(files):
         # since `len(dirs)` is usually small, we can simply for-loop it -
@@ -368,10 +356,6 @@ def _grind_down_dirpath(path: str) -> t.Iterator[str]:
     for c in b:
         a += '/' + c
         yield a
-
-
-def _hash_path(abspath: str) -> str:
-    return hashlib.md5(abspath.encode()).hexdigest()
 
 
 def _split_path(path: str, known_roots: t.Sequence[str]) -> t.Tuple[str, str]:
