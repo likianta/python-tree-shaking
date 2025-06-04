@@ -60,13 +60,24 @@ def build_module_graphs(config_file: T.AnyPath) -> None:
         result = dict(sorted(result.items()))
         result = _reformat_paths(result, cfg)
         # add refs info to result
-        refs = finder.references
-        result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
+        # refs = finder.references
+        # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
         fs.dump(result, file_o)
         print(
-            ':v2t',
-            'found {} source roots, dumped {} items. see result at "{}"'
-            .format(len(result['source_roots']), len(result['modules']), file_o)
+            ':v2ti',
+            '''
+            entry at {}:
+                graph id is {}.
+                found {} source roots,
+                dumped {} items,
+                see result at "{}".
+            '''.format(
+                p,
+                n,
+                len(result['source_roots']),
+                len(result['modules']),
+                file_o
+            )
         )
 
 
