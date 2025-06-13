@@ -1,5 +1,6 @@
 import hashlib
 import typing as t
+from textwrap import dedent
 
 from lk_utils import fs
 
@@ -65,18 +66,22 @@ def build_module_graphs(config_file: T.AnyPath) -> None:
         fs.dump(result, file_o)
         print(
             ':v2ti',
-            '''
-            entry at {}:
-                graph id is {}.
-                found {} source roots,
-                dumped {} items,
-                see result at "{}".
-            '''.format(
-                p,
-                n,
-                len(result['source_roots']),
-                len(result['modules']),
-                file_o
+            dedent(
+                '''
+                entry at {}:
+                    graph id is {}.
+                    found {} source roots,
+                    dumped {} items,
+                    see result at "{}".
+                '''.format(
+                    p,
+                    n,
+                    len(result['source_roots']),
+                    len(result['modules']),
+                    '<tree_shaking>/<graphs_root>/{}'.format(
+                        fs.relpath(file_o, graphs_root)
+                    )
+                )
             )
         )
 

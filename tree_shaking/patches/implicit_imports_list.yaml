@@ -1,11 +1,17 @@
 altair:
+  version: 5.5.0
   files:
+    - jupyter/js/index.js
+    - vegalite/v5/__init__.py
     - vegalite/v5/schema/vega-lite-schema.json
     - vegalite/v5/schema/vega-themes.json
-    - ../jsonschema-4.23.0.dist-info/
     - ../jsonschema_specifications/schemas/
-    - ../pyarrow/
+    # - ../pyarrow/
     - ../rpds/rpds.cp312-win_amd64.pyd
+    - - ../anywidget-0.9.18.dist-info/
+      - null
+    - - ../jsonschema-4.24.0.dist-info/
+      - ../jsonschema-4.23.0.dist-info/
 httptools:
   files:
     - parser/parser.cp312-win_amd64.pyd
@@ -178,13 +184,16 @@ PySide6:
     - QtWidgets.pyd
     - ../shiboken6/
 qmlease:
+  version: 3.1.0a27
   files:
-    - qmlside/hot_reloader/hot_reloader.qml
-    - qmlside/hot_reloader/hot_reloader_legacy.qml
+    - qmlside/hot_reloader/_view.qml
+    - qmlside/hot_reloader/_view2.qml
     - qmlside/js_evaluator.mjs
     - qmlside/js_evaluator.qml
     - qmlside/qml_eval.qml
     - style/stylesheet/
+    - widget_support/_cache/
+    - widget_support/layout_supplement.qml
     - widgets/
 remote_ipython:
   files:
@@ -233,20 +242,21 @@ streamlit:
     # - ../pyarrow/lib.pyx
     # - ../pyarrow/lib_api.h
     - ../tornado/
-    - - ../streamlit-1.40.0.dist-info/
-      - ../streamlit-1.40.1.dist-info/
-      - ../streamlit-1.41.0.dist-info/
-      - ../streamlit-1.41.1.dist-info/
-      - ../streamlit-1.42.0.dist-info/
-      - ../streamlit-1.42.2.dist-info/
+    - - ../streamlit-1.45.1.dist-info/
+      - ../streamlit-1.45.0.dist-info/
       - ../streamlit-1.44.1.dist-info/
-      - ../streamlit-1.45.1.dist-info/
+      - ../streamlit-1.42.2.dist-info/
+      - ../streamlit-1.42.0.dist-info/
+      - ../streamlit-1.41.1.dist-info/
+      - ../streamlit-1.41.0.dist-info/
+      - ../streamlit-1.40.1.dist-info/
+      - ../streamlit-1.40.0.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
   files:
-    - - ../streamlit_extras-0.5.0.dist-info/
-      - ../streamlit_extras-0.6.0.dist-info/
+    - - ../streamlit_extras-0.6.0.dist-info/
+      - ../streamlit_extras-0.5.0.dist-info/
 toga:
   version: 0.4.8
   files:
@@ -257,10 +267,10 @@ toga:
     - ../travertino-0.3.0.dist-info/
     - ../_cffi_backend.cp312-win_amd64.pyd
     - ../clr.py
-    - - ../toga_core-0.4.8.dist-info/
-      - ../toga_core-0.4.9.dist-info/
-    - - ../toga_winforms-0.4.8.dist-info/
-      - ../toga_winforms-0.4.9.dist-info/
+    - - ../toga_core-0.4.9.dist-info/
+      - ../toga_core-0.4.8.dist-info/
+    - - ../toga_winforms-0.4.9.dist-info/
+      - ../toga_winforms-0.4.8.dist-info/
 tracerite:
   files:
     - style.css

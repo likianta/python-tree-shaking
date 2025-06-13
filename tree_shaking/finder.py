@@ -50,9 +50,8 @@ class Finder:
         self._clear_holders()
         yield from self._get_all_imports(script, include_self)
     
-    # DELETE
     def get_direct_imports(
-        self, script: T.FilePath, include_self: bool = True
+        self, script: T.FilePath, include_self: bool = False
     ) -> T.ImportsInfo:
         script = fs.abspath(script)
         parser = FileParser(script)

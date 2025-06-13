@@ -145,7 +145,7 @@ def _incremental_exports(
 ) -> None:
     assert fs.exist(x := fs.xpath(
         '_cache/dumped_resources_maps/{}.pkl'.format(hash_path_to_uid(root))
-    ))
+    )), x  # devnote: check if file was dumped by another venv provider.
     old_res_map: T.ResourcesMap = fs.load(x)
     new_res_map: T.ResourcesMap = {
         'created_directories': tobe_created_dirs,
@@ -162,6 +162,12 @@ def _incremental_exports(
                 action, '<root>/{}'.format(path_o[len(root) + 1:])
             ))
         else:
+            if (
+                action in ('drop_dir', 'del_file', 'del_dir') and
+                not fs.exist(path_o)
+            ):
+                print(':v6', 'already removed?', action, path_o)
+                continue
             match action:
                 case 'make_dir':
                     fs.make_dir(path_o)
