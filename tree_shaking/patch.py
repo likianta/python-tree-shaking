@@ -29,8 +29,7 @@ class Patch:
         return module_name in self._patches
     
     def __getitem__(self, module_name: str) -> t.TypedDict('PatchItem', {
-        'files'  : t.Tuple[t.Union[str, t.List[str]], ...],
-        'imports': t.Tuple[str, ...]
+        'files'  : t.Tuple[str, ...], 'imports': t.Tuple[str, ...]
     }):
         return self._patches[module_name]
 

@@ -4,6 +4,10 @@
 
 - analyze dependency tree
 
+### 0.1.2 (2025-07-21)
+
+- dynamic patching implicit paths
+
 ### 0.1.1 (2025-06-13)
 
 - reduce cache size

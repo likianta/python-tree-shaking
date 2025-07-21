@@ -5,13 +5,11 @@ altair:
     - vegalite/v5/__init__.py
     - vegalite/v5/schema/vega-lite-schema.json
     - vegalite/v5/schema/vega-themes.json
+    - ../anywidget-*.dist-info/?
+    - ../jsonschema-*.dist-info/
     - ../jsonschema_specifications/schemas/
     # - ../pyarrow/
     - ../rpds/rpds.cp312-win_amd64.pyd
-    - - ../anywidget-0.9.18.dist-info/
-      - null
-    - - ../jsonschema-4.24.0.dist-info/
-      - ../jsonschema-4.23.0.dist-info/
 httptools:
   files:
     - parser/parser.cp312-win_amd64.pyd
@@ -197,7 +195,7 @@ qmlease:
     - widgets/
 remote_ipython:
   files:
-    - ../prompt_toolkit-3.0.51.dist-info/
+    - ../prompt_toolkit-*.dist-info/
 requests:
   files:
     - ../certifi/cacert.pem
@@ -230,7 +228,6 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.42.2
   files:
     - runtime/scriptrunner/magic_funcs.py
     - static/
@@ -241,41 +238,29 @@ streamlit:
     # - ../pyarrow/lib.pxd
     # - ../pyarrow/lib.pyx
     # - ../pyarrow/lib_api.h
+    - ../streamlit-*.dist-info/
     - ../tornado/
-    - - ../streamlit-1.45.1.dist-info/
-      - ../streamlit-1.45.0.dist-info/
-      - ../streamlit-1.44.1.dist-info/
-      - ../streamlit-1.42.2.dist-info/
-      - ../streamlit-1.42.0.dist-info/
-      - ../streamlit-1.41.1.dist-info/
-      - ../streamlit-1.41.0.dist-info/
-      - ../streamlit-1.40.1.dist-info/
-      - ../streamlit-1.40.0.dist-info/
 streamlit_extras:
   imports:
     - grid/__init__.py
   files:
-    - - ../streamlit_extras-0.6.0.dist-info/
-      - ../streamlit_extras-0.5.0.dist-info/
+    - ../streamlit_extras-*.dist-info/
 toga:
   version: 0.4.8
   files:
-    - ../clr_loader/
-    - ../clr_loader-0.2.7.post0.dist-info/
-    - ../pythonnet/
-    - ../toga_winforms/
-    - ../travertino-0.3.0.dist-info/
     - ../_cffi_backend.cp312-win_amd64.pyd
     - ../clr.py
-    - - ../toga_core-0.4.9.dist-info/
-      - ../toga_core-0.4.8.dist-info/
-    - - ../toga_winforms-0.4.9.dist-info/
-      - ../toga_winforms-0.4.8.dist-info/
+    - ../clr_loader/
+    - ../clr_loader-*.dist-info/
+    - ../pythonnet/
+    - ../toga_core-*.dist-info/
+    - ../toga_winforms/
+    - ../toga_winforms-*.dist-info/
+    - ../travertino-*.dist-info/
 tracerite:
   files:
     - style.css
 zmq:
   files:
     - backend/cython/
-    - - ../pyzmq.libs/
-      - null
+    - ../pyzmq.libs/?

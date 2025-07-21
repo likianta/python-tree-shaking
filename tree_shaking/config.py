@@ -131,7 +131,7 @@ def _format_path(path: str, root: str, base: str) -> str:
         path = fs.normpath(path.replace('<module>', graphs_root))
     else:
         path = fs.normpath(path)
-    assert isabs(path) and fs.exists(path), path
+    assert isabs(path) and fs.exist(path), path
     return path
 
 

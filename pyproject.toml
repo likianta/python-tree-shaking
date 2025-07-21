@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
@@ -17,8 +17,8 @@ argsense = "^1.0.0"
 lk-utils = "^3.2.0"
 
 [tool.poetry.group.dev.dependencies]
-argsense = { version = "^1.0.1b0", source = "likianta" }
-lk-utils = { version = "^3.3.0a12", source = "likianta" }
+argsense = { version = "^1.0.1b2", source = "likianta" }
+lk-utils = { version = "^3.3.0a17", source = "likianta" }
 pyecharts = "^2.0.8"
 
 [[tool.poetry.source]]
@@ -28,7 +28,7 @@ priority = "primary"
 
 [[tool.poetry.source]]
 name = "likianta"
-url = "http://47.102.108.149:2131/"
+url = "http://localhost:2131/"
 priority = "supplemental"
 
 [build-system]

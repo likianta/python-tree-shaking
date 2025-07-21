@@ -104,7 +104,7 @@ class Finder:
                     '{}/__init__.py'.format(path.rsplit('/', 1)[0])
                 if possible_init_file in self._resolved_files:
                     continue
-                elif fs.exists(possible_init_file):
+                elif fs.exist(possible_init_file):
                     more_files.add((
                         possible_init_file,
                         True if include_self in (True, None) else False

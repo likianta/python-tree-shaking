@@ -2,6 +2,7 @@ import os
 import typing as t
 from collections import defaultdict
 from functools import cache
+from glob import glob
 
 from lk_utils import fs
 
@@ -212,6 +213,34 @@ def _mount_resources(
     dirs: T.TodoDirs = set()
     patched_modules = set()
     
+    def resolve_patched_path(relpath: str) -> str:
+        """
+        returns: a must-exist abspath or empty string.
+        """
+        if relpath.endswith('?'):
+            nullable = True
+            relpath = relpath[:-1]
+        else:
+            nullable = False
+        
+        if '*' in relpath:
+            candidates = glob(fs.normpath('{}/{}'.format(base_dir, relpath)))
+            if len(candidates) == 0 and nullable:
+                return ''
+            elif len(candidates) == 1:
+                if fs.exist(candidates[0]):
+                    return candidates[0].replace('\\', '/')
+            else:
+                raise Exception(relpath, candidates, nullable)
+        else:
+            if fs.exist(x := fs.normpath('{}/{}'.format(base_dir, relpath))):
+                return x
+        
+        if nullable:
+            return ''
+        else:
+            raise Exception(top_name, relpath)
+    
     for graph_id in config['entries'].values():
         graph_file = '{}/{}.yaml'.format(graphs_root, graph_id)
         graph: T.DumpedModuleGraph = fs.load(graph_file)
@@ -231,27 +260,11 @@ def _mount_resources(
                         graph['source_roots'][uid], top_name
                     )
                     for relpath1 in patch[top_name]['files']:
-                        # relpath1: str | [str, ...]
-                        if isinstance(relpath1, str):
-                            xlist = (relpath1,)
-                        else:
-                            xlist = relpath1
-                        nullable = False
-                        for x0 in xlist:
-                            if x0 is None:
-                                nullable = True
-                                continue
-                            x1 = fs.normpath('{}/{}'.format(base_dir, x0))
-                            if fs.exist(x1):
-                                abspath1 = x1
-                                if x0.endswith('/'):
-                                    dirs.add(abspath1)
-                                else:
-                                    files.add(abspath1)
-                                break
-                        else:
-                            if not nullable:
-                                raise Exception(top_name, relpath1)
+                        if abspath1 := resolve_patched_path(relpath1):
+                            if abspath1.endswith('/'):
+                                dirs.add(abspath1)
+                            else:
+                                files.add(abspath1)
     
     for f in tuple(files):
         # since `len(dirs)` is usually small, we can simply for-loop it -

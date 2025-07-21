@@ -2,17 +2,17 @@
 
 [[package]]
 name = "argsense"
-version = "1.0.1b0"
+version = "1.0.1b2"
 description = "New command line interface based on Rich library."
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "argsense-1.0.1b0-py3-none-any.whl", hash = "sha256:70012e9137444aa934293e4c4271a27794c520f2ba4a6bdde2cf9dceaa88afbe"},
+    {file = "argsense-1.0.1b2-py3-none-any.whl", hash = "sha256:723a61a6a7f253e48070498d72b2ea9dc95b25b06255c9362b63e8eca6b3465b"},
 ]
 
 [package.dependencies]
-lk-logger = ">=6.0.5,<7.0.0"
+lk-logger = ">=6.0.6,<7.0.0"
 rich = ">=13.9.0,<14.0.0"
 
 [package.extras]
@@ -20,7 +20,7 @@ gui = ["pysimplegui"]
 
 [package.source]
 type = "legacy"
-url = "http://47.102.108.149:2131"
+url = "http://localhost:2131"
 reference = "likianta"
 
 [[package]]
@@ -48,13 +48,13 @@ reference = "tsinghua"
 
 [[package]]
 name = "lk-logger"
-version = "6.0.5"
+version = "6.0.6"
 description = "Python print with source map and varnames."
 optional = false
 python-versions = ">=3.8,<4.0"
 groups = ["main", "dev"]
 files = [
-    {file = "lk_logger-6.0.5-py3-none-any.whl", hash = "sha256:dac3432477ae4d58046c758d8cf4d4eedb0c75135a6d9b878728e7e5701e0326"},
+    {file = "lk_logger-6.0.6-py3-none-any.whl", hash = "sha256:b3ff112cd8acae488b02f3657ba573733c7871fab28846df29953513de25bae0"},
 ]
 
 [package.dependencies]
@@ -70,31 +70,31 @@ reference = "tsinghua"
 
 [[package]]
 name = "lk-utils"
-version = "3.3.0a12"
+version = "3.3.0a17"
 description = "LK Utils is a set of utility wrappers made for data processing."
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "lk_utils-3.3.0a12-py3-none-any.whl", hash = "sha256:73fb658160995b2503d1d23a928fc845ee405ec7334c581e96bf9c1cb83e7fea"},
+    {file = "lk_utils-3.3.0a17-py3-none-any.whl", hash = "sha256:99757ec3df5174bd3166dd00156d2170c41df5000b5c78f95f5d930872101f1a"},
 ]
 
 [package.dependencies]
-argsense = ">=0.7.2"
-lk-logger = ">=6.0.5,<7.0.0"
+argsense = ">=1.0.0,<2.0.0"
+lk-logger = ">=6.0.6,<7.0.0"
 psutil = ">=6.0.0"
 pyyaml = ">=6.0.0,<7.0.0"
-rich = ">=13.9.0,<14.0.0"
+rich = ">=13.9.0"
 typing-extensions = ">=4.0.0,<5.0.0"
 
 [package.extras]
-all = ["ipython (<9.0.0) ; python_version >= \"3.8\" and python_version < \"3.11\"", "ipython (>=9.0.0,<10.0.0) ; python_version >= \"3.11\" and python_version < \"4.0\"", "toml (>=0.10.0,<0.11.0) ; python_version < \"3.11\"", "xlrd (==1.2.0)", "xlsxwriter (>=3.2.0,<4.0.0)"]
-dbg = ["ipython (<9.0.0) ; python_version >= \"3.8\" and python_version < \"3.11\"", "ipython (>=9.0.0,<10.0.0) ; python_version >= \"3.11\" and python_version < \"4.0\""]
-exl = ["xlrd (==1.2.0)", "xlsxwriter (>=3.2.0,<4.0.0)"]
+all = ["ipython", "toml", "xlrd", "xlsxwriter"]
+dbg = ["ipython"]
+exl = ["xlrd", "xlsxwriter"]
 
 [package.source]
 type = "legacy"
-url = "http://47.102.108.149:2131"
+url = "http://localhost:2131"
 reference = "likianta"
 
 [[package]]
@@ -578,4 +578,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "6163014ebd4bb4793662e417099d2e2c5543652b75a305b0a38c11f3f68a5c32"
+content-hash = "68fd0458adbfa825dd6858917fc9c5ceb3f250f003ae56233a853082ee8f85bf"
