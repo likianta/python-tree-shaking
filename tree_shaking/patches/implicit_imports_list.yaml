@@ -69,7 +69,7 @@ numpy:
     - ../numpy.libs/
 omni_driver_kit:
   files:
-    - ../crcmod/
+    # - ../crcmod/
     - ../modbus_tk/modbus_tcp.py
 oss2:
   files:
