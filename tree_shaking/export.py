@@ -62,7 +62,7 @@ def dump_tree(
             root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
         )
     else:
-        _incremental_exports(
+        _incremental_updates(
             root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
         )
     fs.dump(
@@ -88,6 +88,8 @@ def _first_time_exports(
     copyfiles: bool,
     dry_run: bool = False,
 ) -> None:
+    if not fs.exist(root):
+        fs.make_dir(root)
     roots = _get_common_roots(tobe_created_dirs)
     for subroot, reldirs in roots.items():
         dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
@@ -137,7 +139,7 @@ def _first_time_exports(
                 fs.make_link(i, o, overwrite=True)
 
 
-def _incremental_exports(
+def _incremental_updates(
     root: str,
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
@@ -146,7 +148,8 @@ def _incremental_exports(
 ) -> None:
     assert fs.exist(x := fs.xpath(
         '_cache/dumped_resources_maps/{}.pkl'.format(hash_path_to_uid(root))
-    )), x  # devnote: check if file was dumped by another venv provider.
+    )), x  # devnote: if AssertionError, check if file was dumped by another -
+    #   venv provider.
     old_res_map: T.ResourcesMap = fs.load(x)
     new_res_map: T.ResourcesMap = {
         'created_directories': tobe_created_dirs,
@@ -224,7 +227,7 @@ def _mount_resources(
             nullable = False
         
         if '*' in relpath:
-            candidates = glob(fs.normpath('{}/{}'.format(base_dir, relpath)))
+            candidates = glob('{}/{}'.format(base_dir, relpath))
             if len(candidates) == 0 and nullable:
                 return ''
             elif len(candidates) == 1:
@@ -233,7 +236,7 @@ def _mount_resources(
             else:
                 raise Exception(relpath, candidates, nullable)
         else:
-            if fs.exist(x := fs.normpath('{}/{}'.format(base_dir, relpath))):
+            if fs.exist(x := '{}/{}'.format(base_dir, relpath)):
                 return x
         
         if nullable:

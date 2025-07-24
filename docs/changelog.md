@@ -4,6 +4,10 @@
 
 - analyze dependency tree
 
+### 0.1.3 (2025-07-24)
+
+- fix patched paths in export
+
 ### 0.1.2 (2025-07-21)
 
 - dynamic patching implicit paths

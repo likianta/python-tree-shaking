@@ -9,11 +9,11 @@ altair:
     - ../jsonschema-*.dist-info/
     - ../jsonschema_specifications/schemas/
     # - ../pyarrow/
-    - ../rpds/rpds.cp312-win_amd64.pyd
+    - ../rpds/rpds.*.pyd
 httptools:
   files:
-    - parser/parser.cp312-win_amd64.pyd
-    - parser/url_parser.cp312-win_amd64.pyd
+    - parser/parser.*.pyd
+    - parser/url_parser.*.pyd
 IPython:
   version: 9.2.0
   imports:
@@ -28,44 +28,44 @@ IPython:
 matplotlib:
   version: 3.9.2
   files:
-    - backends/_backend_agg.cp312-win_amd64.pyd
+    - backends/_backend_agg.*.pyd
     - mpl-data/
-    - ../kiwisolver/_cext.cp312-win_amd64.pyd
+    - ../kiwisolver/_cext.*.pyd
     # - ../matplotlib.libs/
 modbus_tk:
   files:
     - modbus_tcp.py
 # numpy:
 #   files:
-#     - core/_multiarray_tests.cp312-win_amd64.pyd
-#     - core/_multiarray_umath.cp312-win_amd64.pyd
-#     - fft/_pocketfft_internal.cp312-win_amd64.pyd
-#     - linalg/_umath_linalg.cp312-win_amd64.pyd
-#     - random/_bounded_integers.cp312-win_amd64.pyd
-#     - random/_common.cp312-win_amd64.pyd
-#     - random/_generator.cp312-win_amd64.pyd
-#     - random/_mt19937.cp312-win_amd64.pyd
-#     - random/_pcg64.cp312-win_amd64.pyd
-#     - random/_philox.cp312-win_amd64.pyd
-#     - random/_sfc64.cp312-win_amd64.pyd
-#     - random/bit_generator.cp312-win_amd64.pyd
-#     - random/mtrand.cp312-win_amd64.pyd
+#     - core/_multiarray_tests.*.pyd
+#     - core/_multiarray_umath.*.pyd
+#     - fft/_pocketfft_internal.*.pyd
+#     - linalg/_umath_linalg.*.pyd
+#     - random/_bounded_integers.*.pyd
+#     - random/_common.*.pyd
+#     - random/_generator.*.pyd
+#     - random/_mt19937.*.pyd
+#     - random/_pcg64.*.pyd
+#     - random/_philox.*.pyd
+#     - random/_sfc64.*.pyd
+#     - random/bit_generator.*.pyd
+#     - random/mtrand.*.pyd
 #     - ../numpy.libs/
 numpy:
   version: 2.0.2
   files:
-    - _core/_multiarray_tests.cp312-win_amd64.pyd
-    - fft/_pocketfft_umath.cp312-win_amd64.pyd
-    - linalg/_umath_linalg.cp312-win_amd64.pyd
-    - random/_bounded_integers.cp312-win_amd64.pyd
-    - random/_common.cp312-win_amd64.pyd
-    - random/_generator.cp312-win_amd64.pyd
-    - random/_mt19937.cp312-win_amd64.pyd
-    - random/_pcg64.cp312-win_amd64.pyd
-    - random/_philox.cp312-win_amd64.pyd
-    - random/_sfc64.cp312-win_amd64.pyd
-    - random/bit_generator.cp312-win_amd64.pyd
-    - random/mtrand.cp312-win_amd64.pyd
+    - _core/_multiarray_tests.*.pyd
+    - fft/_pocketfft_umath.*.pyd
+    - linalg/_umath_linalg.*.pyd
+    - random/_bounded_integers.*.pyd
+    - random/_common.*.pyd
+    - random/_generator.*.pyd
+    - random/_mt19937.*.pyd
+    - random/_pcg64.*.pyd
+    - random/_philox.*.pyd
+    - random/_sfc64.*.pyd
+    - random/bit_generator.*.pyd
+    - random/mtrand.*.pyd
     - ../numpy.libs/
 omni_driver_kit:
   files:
@@ -80,8 +80,8 @@ pandas:
   version: 2.2.3
   files:
     - _libs/
-    # - _libs/pandas_datetime.cp312-win_amd64.pyd
-    # - _libs/pandas_parser.cp312-win_amd64.pyd
+    # - _libs/pandas_datetime.*.pyd
+    # - _libs/pandas_parser.*.pyd
     - ../pandas.libs/
 plotly:
   # imports:
@@ -232,8 +232,9 @@ streamlit:
     - runtime/scriptrunner/magic_funcs.py
     - static/
     # - web/
+    - ../PIL/
     - ../pyarrow/
-    # - ../pyarrow/lib.cp312-win_amd64.pyd
+    # - ../pyarrow/lib.*.pyd
     # - ../pyarrow/lib.h
     # - ../pyarrow/lib.pxd
     # - ../pyarrow/lib.pyx
@@ -248,7 +249,7 @@ streamlit_extras:
 toga:
   version: 0.4.8
   files:
-    - ../_cffi_backend.cp312-win_amd64.pyd
+    - ../_cffi_backend.*.pyd
     - ../clr.py
     - ../clr_loader/
     - ../clr_loader-*.dist-info/
