@@ -25,13 +25,18 @@ class FileNodesCache:
         print(':vi', 'parsing file', file)
         source = fs.load(file, 'plain')
         lines = source.splitlines()
-        tree = ast.parse(source, file)
-        nodes = []
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                line = lines[node.lineno - 1]
-                yield node, line
-                nodes.append((node, line))
+        try:
+            tree = ast.parse(source, file)
+        except SyntaxError:
+            print(':v8', 'syntax error when parsing file', file_id, file)
+            nodes = ()
+        else:
+            nodes = []
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    line = lines[node.lineno - 1]
+                    yield node, line
+                    nodes.append((node, line))
         self._cache[file_id] = tuple(nodes)
         self._changed = True
     

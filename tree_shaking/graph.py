@@ -28,7 +28,7 @@ class T(T0):
 
 # FIXME
 def build_module_graph(
-    script: T.AnyScriptPath, graph_id: T.GraphId, sort: bool = True
+    script: str, graph_id: T.GraphId, sort: bool = True
 ) -> str:
     file_i = fs.abspath(script)
     file_o = '{}/{}.yaml'.format(graphs_root, graph_id)
@@ -48,7 +48,7 @@ def build_module_graph(
     return file_o
 
 
-def build_module_graphs(config_file: T.AnyPath) -> None:
+def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file, _save=True)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name

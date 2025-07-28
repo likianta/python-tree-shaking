@@ -35,7 +35,3 @@ class Patch:
 
 
 patch = Patch()
-
-
-def check_if_patch_worked(target_project: str) -> None:
-    pass
