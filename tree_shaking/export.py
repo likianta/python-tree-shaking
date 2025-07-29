@@ -57,16 +57,10 @@ def dump_tree(
     root = fs.abspath(dir_o)
     # del dir_o
     
-    cfg: T.Config = parse_config(file_i)
+    cfg: T.Config = parse_config(file_i, sole_export=sole_export)
     
-    if sole_export:
-        sole_root = '{}/{}'.format(cfg['root'], sole_export)
-        assert sole_root in cfg['search_paths'], (sole_export, sole_root)
-    else:
-        sole_root = None
-    del sole_export
     files, dirs = _mount_resources(
-        cfg, verbose=dry_run, limited_search_root=sole_root
+        cfg, verbose=dry_run, limited_search_root=cfg['sole_export']
     )
     
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
@@ -75,12 +69,12 @@ def dump_tree(
     if _check_if_first_time_export(root):
         _first_time_exports(
             root, tobe_created_dirs, (files, dirs),
-            copyfiles, sole_root, dry_run
+            copyfiles, cfg['sole_export'], dry_run
         )
     else:
         _incremental_updates(
             root, tobe_created_dirs, (files, dirs),
-            copyfiles, sole_root, dry_run
+            copyfiles, cfg['sole_export'], dry_run
         )
     fs.dump(
         {

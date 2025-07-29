@@ -1,10 +1,10 @@
 # Changelog
 
-### 0.2.0 (wip)
+### 0.3.0 (wip)
 
 - analyze dependency tree
 
-### 0.1.5 (wip)
+### 0.2.0 (wip)
 
 - sole export
 

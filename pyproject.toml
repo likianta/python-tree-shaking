@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.1.5b0"
+version = "0.2.0b0"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"

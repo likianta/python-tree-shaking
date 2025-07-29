@@ -32,6 +32,7 @@ class T:
         'search_paths': t.List[RelPath],
         'entries'     : t.List[RelPath],  # must ends with ".py"
         'ignores'     : t.List[IgnoredName],
+        'sole_export' : t.Optional[RelPath],
     }, total=False)
     """
         {
@@ -49,7 +50,7 @@ class T:
         'search_paths': t.List[NormPath],
         'entries'     : t.Dict[NormPath, GraphId],
         'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-        # 'exports'     : t.Sequence[str],
+        'sole_export' : t.Optional[NormPath],
     })
     
     Config = Config1
@@ -58,7 +59,7 @@ class T:
 graphs_root = fs.xpath('_cache/module_graphs')
 
 
-def parse_config(file: str, _save: bool = False) -> T.Config:
+def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     """
     file:
         - the file ext must be '.yaml' or '.yml'.
@@ -75,6 +76,7 @@ def parse_config(file: str, _save: bool = False) -> T.Config:
         'search_paths': [],
         'entries'     : {},
         'ignores'     : (),
+        'sole_export' : None,
     }
     
     # 1
@@ -106,6 +108,11 @@ def parse_config(file: str, _save: bool = False) -> T.Config:
     
     # 4
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
+    
+    # 5
+    if x := (kwargs.get('sole_export') or cfg0.get('sole_export')):
+        assert x in cfg0['search_paths']  # noqa
+        cfg1['sole_export'] = fmtpath(x)
     
     if _save:
         atexit.register(partial(_save_graph_alias, cfg1))
