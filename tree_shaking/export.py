@@ -87,13 +87,14 @@ def _first_time_exports(
     copyfiles: bool,
     dry_run: bool = False,
 ) -> None:
-    if not fs.exist(root):
+    if not fs.exist(root) and not dry_run:
         fs.make_dir(root)
     
     roots = _get_common_roots(tobe_created_dirs)
     for subroot, reldirs in roots.items():
         dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
-        fs.make_dir(dir_prefix)
+        if not dry_run:
+            fs.make_dir(dir_prefix)
         for x in sorted(reldirs):
             d = '{}/{}'.format(dir_prefix, x)
             if dry_run:
