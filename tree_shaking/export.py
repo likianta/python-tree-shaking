@@ -26,6 +26,7 @@ class T(T0):
 def dump_tree(
     file_i: str,
     dir_o: str,
+    sole_export: str = None,
     copyfiles: bool = False,
     dry_run: bool = False,
 ) -> None:
@@ -34,7 +35,13 @@ def dump_tree(
         file_i (-i):
         dir_o (-o):
             an empty folder to store the tree. it can be an inexistent path.
+        sole_export (-s):
+            by default (=None), we export all modules in all of -
+            `file_i:search_paths`, if you want to limit to only one root in -
+            them, give it here.
+            be noted the value must be one of `file_i:search_paths`.
         copyfiles (-c): if true, use copy instead of symlink.
+        dry_run (-d):
     
     file content for example:
         search_paths:
@@ -51,7 +58,15 @@ def dump_tree(
     # del dir_o
     
     cfg: T.Config = parse_config(file_i)
-    files, dirs = _mount_resources(cfg, verbose=dry_run)
+    
+    if sole_export:
+        sole_root = '{}/{}'.format(cfg['root'], sole_export)
+        assert sole_root in cfg['search_paths'], (sole_export, sole_root)
+    else:
+        sole_root = None
+    files, dirs = _mount_resources(
+        cfg, verbose=dry_run, limited_search_root=sole_root
+    )
     
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
     print(len(tobe_created_dirs), len(files), len(dirs), ':v1')
@@ -213,8 +228,13 @@ def _check_if_first_time_export(root: str) -> bool:
 
 
 def _mount_resources(
-    config: T.Config, verbose: bool = False
+    config: T.Config,
+    verbose: bool = False,
+    limited_search_root: t.Optional[str] = None
 ) -> t.Tuple[T.TodoFiles, T.TodoDirs]:
+    """
+    limited_search_root: an absolute path.
+    """
     files: T.TodoFiles = set()
     dirs: T.TodoDirs = set()
     patched_modules = set()
@@ -250,9 +270,19 @@ def _mount_resources(
     for graph_id in config['entries'].values():
         graph_file = '{}/{}.yaml'.format(graphs_root, graph_id)
         graph: T.DumpedModuleGraph = fs.load(graph_file)
+        
+        limited_uid = None
+        if limited_search_root:
+            for uid, root in graph['source_roots'].items():
+                if root == limited_search_root:
+                    limited_uid = uid
+                    break
+        
         for module_name, relpath in graph['modules'].items():
             uid, relpath = relpath.split('/', 1)
             uid = uid[1:-1]
+            if limited_uid and uid != limited_uid:
+                continue
             abspath = '{}/{}'.format(graph['source_roots'][uid], relpath)
             files.add(abspath)
             
