@@ -64,6 +64,7 @@ def dump_tree(
         assert sole_root in cfg['search_paths'], (sole_export, sole_root)
     else:
         sole_root = None
+    del sole_export
     files, dirs = _mount_resources(
         cfg, verbose=dry_run, limited_search_root=sole_root
     )
@@ -73,11 +74,13 @@ def dump_tree(
     
     if _check_if_first_time_export(root):
         _first_time_exports(
-            root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
+            root, tobe_created_dirs, (files, dirs),
+            copyfiles, sole_root, dry_run
         )
     else:
         _incremental_updates(
-            root, tobe_created_dirs, (files, dirs), copyfiles, dry_run
+            root, tobe_created_dirs, (files, dirs),
+            copyfiles, sole_root, dry_run
         )
     fs.dump(
         {
@@ -100,16 +103,20 @@ def _first_time_exports(
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
     copyfiles: bool,
+    sole_root: t.Optional[str] = None,
     dry_run: bool = False,
 ) -> None:
     if not fs.exist(root) and not dry_run:
         fs.make_dir(root)
     
-    roots = _get_common_roots(tobe_created_dirs)
+    roots = _get_common_roots(tobe_created_dirs, sole_root)
     for subroot, reldirs in roots.items():
-        dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
-        if not dry_run:
-            fs.make_dir(dir_prefix)
+        if sole_root:
+            dir_prefix = root
+        else:
+            dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
+            if not dry_run:
+                fs.make_dir(dir_prefix)
         for x in sorted(reldirs):
             d = '{}/{}'.format(dir_prefix, x)
             if dry_run:
@@ -124,7 +131,10 @@ def _first_time_exports(
     print(known_roots, ':vl')
     for f in files:
         r, s = _split_path(f, known_roots)
-        i, o = f, '{}/{}/{}'.format(root, fs.basename(r), s)
+        i, o = f, (
+            '{}/{}'.format(root, s) if sole_root else
+            '{}/{}/{}'.format(root, fs.basename(r), s)
+        )
         if dry_run:
             print(':i', '(dry run) {}: {}'.format(
                 'copying file' if copyfiles else 'symlinking file',
@@ -142,7 +152,10 @@ def _first_time_exports(
         #   TODO: maybe we can eliminate cross-including paths in -
         #       "_mount_resources()" stage.
         r, s = _split_path(d, known_roots)
-        i, o = d, '{}/{}/{}'.format(root, fs.basename(r), s)
+        i, o = d, (
+            '{}/{}'.format(root, s) if sole_root else
+            '{}/{}/{}'.format(root, fs.basename(r), s)
+        )
         if dry_run:
             print(':i', '(dry run) {}: {}'.format(
                 'copying dir' if copyfiles else 'symlinking dir',
@@ -160,6 +173,7 @@ def _incremental_updates(
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
     copyfiles: bool,
+    sole_root: t.Optional[str] = None,
     dry_run: bool = False,
 ) -> None:
     assert fs.exist(x := fs.xpath(
@@ -171,14 +185,18 @@ def _incremental_updates(
         'created_directories': tobe_created_dirs,
         'linked_resources'   : tobe_linked_resources,
     }
-    known_roots = tuple(
-        sorted(_get_common_roots(tobe_created_dirs).keys(), reverse=True)
-    )
+    known_roots = tuple(sorted(
+        _get_common_roots(tobe_created_dirs, sole_root).keys(),
+        reverse=True
+    ))
     for action, path_i in _analyze_incremental_updates(
         old_res_map, new_res_map
     ):
         a, b = _split_path(path_i, known_roots)
-        path_o = '{}/{}/{}'.format(root, fs.basename(a), b)
+        path_o = (
+            '{}/{}'.format(root, b) if sole_root else
+            '{}/{}/{}'.format(root, fs.basename(a), b)
+        )
         if dry_run:
             print(':i', '(dry run) {}: {}'.format(
                 action, '<root>/{}'.format(path_o[len(root) + 1:])
@@ -219,12 +237,79 @@ def _incremental_updates(
 
 # -----------------------------------------------------------------------------
 
+def _analyze_dirs_to_be_created(
+    files: T.TodoFiles, dirs: T.TodoDirs
+) -> t.Set[str]:
+    """
+    returns: a set of dir paths, the paths are grind down to each level of -
+    directories.
+    note: the returned value is a set of "source" paths, not "target" paths.
+    """
+    out = set()
+    for x in (files | dirs):
+        out.update(_grind_down_dirpath(fs.parent(x)))
+    # remove existing dirs that out of search roots
+    search_roots = _get_search_roots(shrink=True)
+    for d in tuple(out):
+        if any(x.startswith(d + '/') for x in search_roots):
+            print('pick out high-priority existing dir', d, ':vi')
+            # assert fs.exist(d)
+            out.remove(d)
+    return out
+
+
+def _analyze_incremental_updates(
+    old_resources_map: T.ResourcesMap, new_resources_map: T.ResourcesMap
+) -> t.Iterator[t.Tuple[str, str]]:
+    tree0 = old_resources_map['created_directories']
+    tree1 = new_resources_map['created_directories']
+    for d in sorted(tree1 - tree0):
+        yield 'make_dir', d
+    for d in sorted(tree0 - tree1, reverse=True):
+        yield 'drop_dir', d
+    
+    # f2f: "file-to-file"
+    f2f0 = old_resources_map['linked_resources'][0]
+    f2f1 = new_resources_map['linked_resources'][0]
+    for f in f2f1 - f2f0:
+        yield 'add_file', f
+    for f in f2f0 - f2f1:
+        yield 'del_file', f
+        
+    # d2d: "dir-to-dir"
+    d2d0 = old_resources_map['linked_resources'][1]
+    d2d1 = new_resources_map['linked_resources'][1]
+    for d in sorted(d2d1 - d2d0, reverse=True):
+        yield 'add_dir', d
+    for d in sorted(d2d0 - d2d1, reverse=True):
+        yield 'del_dir', d
+
+
 def _check_if_first_time_export(root: str) -> bool:
     if not fs.exist(root):
         return True
     if not fs.find_dir_names(root):
         return True
     return False
+
+
+# TODO or DELETE
+def _init_target_tree(
+    root: str, tobe_created_dirs: T.TodoDirs, dry_run: bool = False
+) -> None:
+    roots = _get_common_roots(tobe_created_dirs)
+    for subroot, reldirs in roots.items():
+        dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
+        if not dry_run:
+            fs.make_dir(dir_prefix)
+        for x in sorted(reldirs):
+            d = '{}/{}'.format(dir_prefix, x)
+            if dry_run:
+                print(':i', '(dry run) make dir: {}'.format(
+                    fs.relpath(d, root)
+                ))
+            else:
+                fs.make_dir(d)
 
 
 def _mount_resources(
@@ -317,64 +402,28 @@ def _mount_resources(
     return files, dirs
 
 
-def _analyze_dirs_to_be_created(
-    files: T.TodoFiles, dirs: T.TodoDirs
-) -> t.Set[str]:
-    """
-    returns: a set of dir paths, the paths are grind down to each level of -
-    directories.
-    note: the returned value is a set of "source" paths, not "target" paths.
-    """
-    out = set()
-    for x in (files | dirs):
-        out.update(_grind_down_dirpath(fs.parent(x)))
-    # remove existing dirs that out of search roots
-    search_roots = _get_search_roots(shrink=True)
-    for d in tuple(out):
-        if any(x.startswith(d + '/') for x in search_roots):
-            print('pick out high-priority existing dir', d, ':vi')
-            # assert fs.exist(d)
-            out.remove(d)
-    return out
-
-
-def _analyze_incremental_updates(
-    old_resources_map: T.ResourcesMap, new_resources_map: T.ResourcesMap
-) -> t.Iterator[t.Tuple[str, str]]:
-    tree0 = old_resources_map['created_directories']
-    tree1 = new_resources_map['created_directories']
-    for d in sorted(tree1 - tree0):
-        yield 'make_dir', d
-    for d in sorted(tree0 - tree1, reverse=True):
-        yield 'drop_dir', d
-    
-    # f2f: "file-to-file"
-    f2f0 = old_resources_map['linked_resources'][0]
-    f2f1 = new_resources_map['linked_resources'][0]
-    for f in f2f1 - f2f0:
-        yield 'add_file', f
-    for f in f2f0 - f2f1:
-        yield 'del_file', f
-        
-    # d2d: "dir-to-dir"
-    d2d0 = old_resources_map['linked_resources'][1]
-    d2d1 = new_resources_map['linked_resources'][1]
-    for d in sorted(d2d1 - d2d0, reverse=True):
-        yield 'add_dir', d
-    for d in sorted(d2d0 - d2d1, reverse=True):
-        yield 'del_dir', d
-
-
 # -----------------------------------------------------------------------------
 # neutral
 
-def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
+def _get_common_roots(
+    absdirs: t.Iterable[str], single_root: str = None
+) -> t.Dict[str, t.Set[str]]:
     """
     returns: {known_root: {relpath, ...}, ...}
         note that all `return:keys` are existing dirs. but their sequence is -
         not guaranteed to be ordered. i.e. the returned dict cannot be -
         definitely treated as an "ordered" dict, though in most cases it is.
     """
+    if single_root:
+        r = single_root + '/'
+        x = set()
+        for d in absdirs:
+            if d.startswith(r):
+                x.add(d.removeprefix(r))
+            else:
+                assert r.startswith(d + '/')
+        return {single_root: x}
+    
     search_roots = _get_search_roots(shrink=True)
     out = defaultdict(set)  # {root: {reldir, ...}, ...}
     for d in absdirs:
