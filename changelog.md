@@ -4,6 +4,15 @@
 
 - analyze dependency tree
 
+### 0.1.5 (wip)
+
+- sole export
+
+### 0.1.4 (2025-07-29)
+
+- fix exporting if search roots are mutually contained
+- simplify path formats in config file
+
 ### 0.1.3 (2025-07-24)
 
 - fix patched paths in export

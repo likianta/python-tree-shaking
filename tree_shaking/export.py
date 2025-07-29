@@ -1,7 +1,6 @@
 import os
 import typing as t
 from collections import defaultdict
-from functools import cache
 from glob import glob
 
 from lk_utils import fs
@@ -90,6 +89,7 @@ def _first_time_exports(
 ) -> None:
     if not fs.exist(root):
         fs.make_dir(root)
+    
     roots = _get_common_roots(tobe_created_dirs)
     for subroot, reldirs in roots.items():
         dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
@@ -104,8 +104,8 @@ def _first_time_exports(
                 fs.make_dir(d)
     
     files, dirs = tobe_linked_resources
-    known_roots = tuple(roots.keys())
-    #   note: `roots.keys()` are already sorted in descending order.
+    known_roots = tuple(sorted(roots.keys(), reverse=True))
+    print(known_roots, ':vl')
     for f in files:
         r, s = _split_path(f, known_roots)
         i, o = f, '{}/{}/{}'.format(root, fs.basename(r), s)
@@ -155,7 +155,9 @@ def _incremental_updates(
         'created_directories': tobe_created_dirs,
         'linked_resources'   : tobe_linked_resources,
     }
-    known_roots = tuple(_get_common_roots(tobe_created_dirs).keys())
+    known_roots = tuple(
+        sorted(_get_common_roots(tobe_created_dirs).keys(), reverse=True)
+    )
     for action, path_i in _analyze_incremental_updates(
         old_res_map, new_res_map
     ):
@@ -288,13 +290,15 @@ def _analyze_dirs_to_be_created(
     files: T.TodoFiles, dirs: T.TodoDirs
 ) -> t.Set[str]:
     """
+    returns: a set of dir paths, the paths are grind down to each level of -
+    directories.
     note: the returned value is a set of "source" paths, not "target" paths.
     """
     out = set()
     for x in (files | dirs):
         out.update(_grind_down_dirpath(fs.parent(x)))
     # remove existing dirs that out of search roots
-    search_roots = _get_search_roots()
+    search_roots = _get_search_roots(shrink=True)
     for d in tuple(out):
         if any(x.startswith(d + '/') for x in search_roots):
             print('pick out high-priority existing dir', d, ':vi')
@@ -335,13 +339,12 @@ def _analyze_incremental_updates(
 
 def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
     """
-    returns:
-        {known_root: {relpath, ...}, ...}
-            known_root:
-                all known roots are existing dirs.
-                the keys are ordered by length of paths in descending.
+    returns: {known_root: {relpath, ...}, ...}
+        note that all `return:keys` are existing dirs. but their sequence is -
+        not guaranteed to be ordered. i.e. the returned dict cannot be -
+        definitely treated as an "ordered" dict, though in most cases it is.
     """
-    search_roots = _get_search_roots()
+    search_roots = _get_search_roots(shrink=True)
     out = defaultdict(set)  # {root: {reldir, ...}, ...}
     for d in absdirs:
         if d in search_roots:
@@ -353,12 +356,10 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> t.Dict[str, t.Set[str]]:
         else:
             raise Exception('path should be under one of the search roots', d)
     # print(':l', search_roots, tuple(out.keys()))
-    # print(':vl', out)
     return out
 
 
-@cache
-def _get_search_roots() -> t.Tuple[str, ...]:
+def _get_search_roots(shrink: bool = False) -> t.Tuple[str, ...]:
     search_roots = set()
     for path, isdir in path_scope.module_2_path.values():
         # e.g.
@@ -369,6 +370,21 @@ def _get_search_roots() -> t.Tuple[str, ...]:
         #       '<project>/venv/site-packages/typing_extensions.py'
         #       -> '<project>/venv/site-packages'
         search_roots.add(fs.parent(path))
+    if shrink:
+        buried_search_roots = set()
+        for root in search_roots:
+            for other in search_roots:
+                if (
+                    other != root and
+                    other not in buried_search_roots and
+                    other.startswith(root + '/')
+                ):
+                    buried_search_roots.add(other)
+        if buried_search_roots:
+            print('shrink search roots count from {} to {}'.format(
+                len(search_roots), len(search_roots - buried_search_roots)
+            ))
+            search_roots = search_roots - buried_search_roots
     return tuple(sorted(search_roots, reverse=True))
 
 
