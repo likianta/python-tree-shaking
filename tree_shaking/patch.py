@@ -6,7 +6,7 @@ from lk_utils import fs
 class Patch:
     
     def __init__(self) -> None:
-        cfg = fs.load(fs.xpath('patches/implicit_imports_list.yaml'))
+        cfg = fs.load(fs.xpath('patches/implicit_import_hooks.yaml'))
         
         # {
         #   module: {

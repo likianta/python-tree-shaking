@@ -233,7 +233,7 @@ streamlit:
     - static/
     # - web/
     - ../PIL/
-    - ../pyarrow/
+    # - ../pyarrow/
     # - ../pyarrow/lib.*.pyd
     # - ../pyarrow/lib.h
     # - ../pyarrow/lib.pxd
@@ -261,6 +261,12 @@ toga:
 tracerite:
   files:
     - style.css
+tree_shaking:
+  files:
+    - _cache/dumped_resources_maps/.gitkeep
+    - _cache/module_graphs/.gitkeep
+    - _cache/ignores.txt
+    - patches/
 zmq:
   files:
     - backend/cython/

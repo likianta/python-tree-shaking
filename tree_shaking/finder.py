@@ -20,6 +20,7 @@ class Finder:
         self._global_ignores = global_ignores
         self._patched_modules = set()
         self._references = defaultdict(set)
+        #   {module_name: {module_name, ...}, ...}
         self._resolved_files = set()
     
     @property

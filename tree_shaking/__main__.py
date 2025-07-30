@@ -17,7 +17,7 @@ def check_if_patch_worked(target_project: str):
     site_packages_dir = '{}/Lib/site-packages'.format(venv_root)
     assert fs.exist(site_packages_dir)
     
-    patch = fs.load(fs.xpath('patches/implicit_imports_list.yaml'))
+    patch = fs.load(fs.xpath('patches/implicit_import_hooks.yaml'))
     for k, v in patch.items():
         if 'files' in v:
             for item in v['files']:
