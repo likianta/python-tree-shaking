@@ -125,7 +125,7 @@ def _first_time_exports(
     print(known_roots, ':vl')
     for f in files:
         r, s = _split_path(f, known_roots)
-        i, o = f, (
+        i, o = f, fs.normpath(
             '{}/{}'.format(root, s) if sole_root else
             '{}/{}/{}'.format(root, fs.basename(r), s)
         )
@@ -146,7 +146,7 @@ def _first_time_exports(
         #   TODO: maybe we can eliminate cross-including paths in -
         #       "_mount_resources()" stage.
         r, s = _split_path(d, known_roots)
-        i, o = d, (
+        i, o = d, fs.normpath(
             '{}/{}'.format(root, s) if sole_root else
             '{}/{}/{}'.format(root, fs.basename(r), s)
         )
@@ -187,7 +187,7 @@ def _incremental_updates(
         old_res_map, new_res_map
     ):
         a, b = _split_path(path_i, known_roots)
-        path_o = (
+        path_o = fs.normpath(
             '{}/{}'.format(root, b) if sole_root else
             '{}/{}/{}'.format(root, fs.basename(a), b)
         )
