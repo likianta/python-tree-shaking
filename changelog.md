@@ -1,8 +1,12 @@
 # Changelog
 
-### 0.3.0 (wip)
+### 0.4.0 (wip)
 
 - analyze dependency tree
+
+### 0.3.0 (wip)
+
+- use pyinstaller to hook imports
 
 ### 0.2.0 (2025-08-12)
 
