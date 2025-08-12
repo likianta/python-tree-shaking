@@ -2,13 +2,13 @@
 
 [[package]]
 name = "argsense"
-version = "1.0.1"
+version = "1.1.0"
 description = "New command line interface based on Rich library."
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "argsense-1.0.1-py3-none-any.whl", hash = "sha256:a6e6d89d4ccd4eafd43fbd37d8beb72b257c1b9f299c387cca7a0fc44954cc45"},
+    {file = "argsense-1.1.0-py3-none-any.whl", hash = "sha256:227768813b5bcbbe06e2702b2b1184b29b2703bd80d5ae4a8cc06aa39037c3aa"},
 ]
 
 [package.dependencies]
@@ -47,13 +47,13 @@ reference = "tsinghua"
 
 [[package]]
 name = "lk-utils"
-version = "3.3.0a18"
+version = "3.3.0a19"
 description = "LK Utils is a set of utility wrappers made for data processing."
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "lk_utils-3.3.0a18-py3-none-any.whl", hash = "sha256:141c0b5ed448bca8307cd7728b16b8994ecda097146ff67a2c8b7bcda5b76a0b"},
+    {file = "lk_utils-3.3.0a19-py3-none-any.whl", hash = "sha256:15a9cf64c43eae784a2b5b56fc0bedd84e8bc00743c3b4ed0bcabcc601416f00"},
 ]
 
 [package.dependencies]
@@ -286,4 +286,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "3acd31e196e6d574a5333ab81094a247dede21c866169499865fb781585cb4ad"
+content-hash = "a85e64f16318c859b8db1376cd745089f5809643b8b75f31d75afe0836632c2b"

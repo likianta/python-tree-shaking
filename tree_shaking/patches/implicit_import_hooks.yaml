@@ -25,6 +25,11 @@ IPython:
 # jaraco:
 #   files:
 #     - text/Lorem ipsum.txt
+# jupyter_console:
+#   imports:
+#     - ../traitlets/config/__init__.py
+#   # files:
+#   #   - ../traitlets/config/
 matplotlib:
   version: 3.9.2
   files:

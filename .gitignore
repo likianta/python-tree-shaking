@@ -1,5 +1,6 @@
 /.idea/
 /dist/
+/sidework/minimal_python/python_*/
 /test/_test_root_*
 /tree_shaking/_cache/**
 __pycache__/

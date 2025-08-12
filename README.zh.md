@@ -142,3 +142,19 @@ tree_shaking.dump_tree("./tree_shaking.yaml", "./dist/minified_libs")
 ```
 
 将 `dist/minified_libs` 压缩成 zip 文件, 对比 `.venv/Lib/site-packages` 体积变化如下: ...
+
+## 增量更新
+
+...
+
+### 如何禁用增量更新
+
+对于 `tree_shaking.dump_tree`, 你需要手动删除导出目录, 然后重新调用此函数.
+
+值得注意的是, 如果你使用 Depsland 分发你的程序, 禁用增量更新会导致 Depsland 重新完整地上传所有树摇结果, 哪怕与之前版本的文件相比内容没有变化 (即哈希值一致). 这是因为 Depsland 的快速比较策略导致的. 在最坏的情况下, 用户在升级程序时, 将花费几乎等同于重新下载完整的新版本的时间.
+
+### 在什么情况下适合禁用增量更新?
+
+- 你认为树摇结果出现了问题, 并且是在升级了 tree-shaking 这个包之后出现的.
+- `tree-shaking : patches : implicit_imports_list.yaml` 发生了变化.
+

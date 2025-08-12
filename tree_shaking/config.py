@@ -92,7 +92,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         if p == '.': return _root
         assert not p.startswith(('./', '../', '<')), p
         out = '{}/{}'.format(_root, p)
-        assert fs.exist(out)
+        assert fs.exist(out), out
         return out
     
     temp = cfg1['search_paths']

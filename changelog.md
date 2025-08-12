@@ -4,7 +4,7 @@
 
 - analyze dependency tree
 
-### 0.2.0 (wip)
+### 0.2.0 (2025-08-12)
 
 - sole export
 
