@@ -74,7 +74,7 @@ def dump_tree(
     else:
         _incremental_updates(
             root, tobe_created_dirs, (files, dirs),
-            copyfiles, cfg['sole_export'], dry_run
+            copyfiles, cfg['sole_export'], dry_run, cfg['root']
         )
     fs.dump(
         {
@@ -169,6 +169,7 @@ def _incremental_updates(
     copyfiles: bool,
     sole_root: t.Optional[str] = None,
     dry_run: bool = False,
+    _source_root: str = None,  # experimental
 ) -> None:
     assert fs.exist(x := fs.xpath(
         '_cache/dumped_resources_maps/{}.pkl'.format(hash_path_to_uid(root))
@@ -184,7 +185,7 @@ def _incremental_updates(
         reverse=True
     ))
     for action, path_i in _analyze_incremental_updates(
-        old_res_map, new_res_map
+        old_res_map, new_res_map, _source_root
     ):
         a, b = _split_path(path_i, known_roots)
         path_o = fs.normpath(
@@ -227,6 +228,11 @@ def _incremental_updates(
                         fs.remove_tree(path_o)
                     else:
                         os.unlink(path_o)
+                case 'update_file':
+                    if copyfiles:
+                        fs.copy_file(path_i, path_o, overwrite=True)
+                    else:
+                        fs.make_link(path_i, path_o, overwrite=True)
 
 
 # -----------------------------------------------------------------------------
@@ -253,8 +259,21 @@ def _analyze_dirs_to_be_created(
 
 
 def _analyze_incremental_updates(
-    old_resources_map: T.ResourcesMap, new_resources_map: T.ResourcesMap
+    old_resources_map: T.ResourcesMap,
+    new_resources_map: T.ResourcesMap,
+    source_root: str = None,
 ) -> t.Iterator[t.Tuple[str, str]]:
+    """
+    yields: ((action, path), ...)
+        action:
+            'make_dir'
+            'drop_dir'
+            'add_file'
+            'del_file'
+            'add_dir'
+            'del_dir'
+            'update_file'
+    """
     tree0 = old_resources_map['created_directories']
     tree1 = new_resources_map['created_directories']
     for d in sorted(tree1 - tree0):
@@ -277,6 +296,17 @@ def _analyze_incremental_updates(
         yield 'add_dir', d
     for d in sorted(d2d0 - d2d1, reverse=True):
         yield 'del_dir', d
+    
+    if source_root and fs.exist(x := fs.xpath(
+        '_cache/auxiliary/{}.pkl'.format(hash_path_to_uid(source_root))
+    )):
+        for f in sorted(frozenset(fs.load(x))):
+            print(
+                ':vi',
+                'detect content-changed file',
+                fs.relpath(f, source_root)
+            )
+            yield 'update_file', f
 
 
 def _check_if_first_time_export(root: str) -> bool:

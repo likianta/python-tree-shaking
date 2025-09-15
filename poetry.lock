@@ -65,17 +65,17 @@ reference = "tsinghua"
 
 [[package]]
 name = "lk-utils"
-version = "3.3.0a19"
+version = "3.3.0"
 description = "LK Utils is a set of utility wrappers made for data processing."
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 files = [
-    {file = "lk_utils-3.3.0a19-py3-none-any.whl", hash = "sha256:15a9cf64c43eae784a2b5b56fc0bedd84e8bc00743c3b4ed0bcabcc601416f00"},
+    {file = "lk_utils-3.3.0-py3-none-any.whl", hash = "sha256:10113a2c103cce40fb20115c231c11a10afae8efdb51eb5e16b275f7888c4d85"},
 ]
 
 [package.dependencies]
-argsense = ">=1.0.0,<2.0.0"
+argsense = ">=1.1.0,<2.0.0"
 lk-logger = ">=6.0.6,<7.0.0"
 psutil = ">=6.0.0"
 pyyaml = ">=6.0.0,<7.0.0"
@@ -469,4 +469,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "95e61ae97049b7ff3b2022f3e477252014170ff06667d34271b2c08cd7de8e5c"
+content-hash = "ecb3df9ad08b13a74b23cd1a4b4d61804d517be69e306a20857263662a42c481"

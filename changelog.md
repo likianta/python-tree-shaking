@@ -8,6 +8,10 @@
 
 - use pyinstaller to hook imports
 
+### 0.2.1 (wip)
+
+- fix incremental export
+
 ### 0.2.0 (2025-08-12)
 
 - sole export

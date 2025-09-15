@@ -89,15 +89,17 @@ pandas:
     # - _libs/pandas_parser.*.pyd
     - ../pandas.libs/
 plotly:
+  version: 6.3.0
   # imports:
   #   - express/trendline_functions/__init__.py
   files:
-    - ../plotly/
     - ../pandas/
     - ../pandas.libs/
-    - ../scipy/
-    - ../scipy.libs/
-    - ../statsmodels/
+    - ../plotly/
+    - ../plotly-*.dist-info
+    # - ../scipy/
+    # - ../scipy.libs/
+    # - ../statsmodels/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -234,9 +236,10 @@ shiboken6:
     - vcruntime140_1.dll
 streamlit:
   files:
+    - __main__.py
     - runtime/scriptrunner/magic_funcs.py
     - static/
-    # - web/
+    - web/
     - ../PIL/
     # - ../pyarrow/
     # - ../pyarrow/lib.*.pyd
@@ -246,6 +249,9 @@ streamlit:
     # - ../pyarrow/lib_api.h
     - ../streamlit-*.dist-info/
     - ../tornado/
+streamlit_canary:
+  imports:
+    - ../streamlit/__main__.py
 streamlit_extras:
   imports:
     - grid/__init__.py

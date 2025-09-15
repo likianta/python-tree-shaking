@@ -4,8 +4,10 @@ from textwrap import dedent
 
 from lk_utils import fs
 
+from .cache import file_cache
 from .config import T as T0
 from .config import graphs_root
+from .config import hash_path_to_uid
 from .config import parse_config
 from .finder import Finder
 
@@ -64,6 +66,15 @@ def build_module_graphs(config_file: str) -> None:
         # refs = finder.references
         # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
         fs.dump(result, file_o)
+        if file_cache.changed_files:
+            file_aux = fs.xpath('_cache/auxiliary/{}.pkl'.format(
+                hash_path_to_uid(cfg['root']))
+            )
+            if fs.exist(file_aux):
+                changed_files = fs.load(file_aux) | file_cache.changed_files
+            else:
+                changed_files = file_cache.changed_files
+            fs.dump(changed_files, file_aux)
         print(
             ':v2ti',
             dedent(

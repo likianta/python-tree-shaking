@@ -3,9 +3,12 @@
 /sidework/minimal_python/python_*/
 /test/_test_root_*
 /tree_shaking/_cache/**
+/tree_shaking/_rooms/**
 __pycache__/
+!/tree_shaking/_cache/auxiliary/
+!/tree_shaking/_cache/auxiliary/readme.md
 !/tree_shaking/_cache/dumped_resources_maps/
 !/tree_shaking/_cache/module_graphs/
 !/tree_shaking/_cache/ignores.txt
-!/tree_shaking/_rooms/*
+!/tree_shaking/_rooms/
 !**/.gitkeep
