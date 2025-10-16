@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.2.1a0"
+version = "0.2.1"
 description = "Python tree-shaking for dependencies to reduce the size of packaging."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
@@ -15,16 +15,17 @@ homepage = "https://github.com/likianta/python-tree-shaking"
 python = "^3.12"
 argsense = "^1.1.0"
 lk-utils = "^3.3.0"
-pyinstaller = { version = "^6.15.0", python = ">=3.12,<3.15" }
 
 [tool.poetry.group.dev.dependencies]
 argsense = { version = "^1.1.0", source = "likianta" }
-lk-utils = { version = "^3.3.0", source = "likianta" }
+lk-utils = { version = "^3.3.1a3", source = "likianta" }
 # pyecharts = "^2.0.8"
+pyinstaller = { version = "^6.15.0", python = ">=3.12,<3.15" }
 
 [[tool.poetry.source]]
 name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+url = "https://mirrors.aliyun.com/pypi/simple/"
 priority = "primary"
 
 [[tool.poetry.source]]

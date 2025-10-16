@@ -25,8 +25,8 @@ class T(T0):
 
 def dump_tree(
     file_i: str,
-    dir_o: str,
-    sole_export: str = None,
+    dir_o: str = '',
+    sole_export_from: str = '',
     copyfiles: bool = False,
     dry_run: bool = False,
 ) -> None:
@@ -35,7 +35,8 @@ def dump_tree(
         file_i (-i):
         dir_o (-o):
             an empty folder to store the tree. it can be an inexistent path.
-        sole_export (-s):
+            if not given, will try to get it from `file_i:sole_export:target`.
+        sole_export_from (-s):
             by default (=None), we export all modules in all of -
             `file_i:search_paths`, if you want to limit to only one root in -
             them, give it here.
@@ -54,13 +55,18 @@ def dump_tree(
             - streamlit
             - toga-winforms
     """
-    root = fs.abspath(dir_o)
-    # del dir_o
+    cfg: T.Config = parse_config(
+        file_i, sole_export={'source': sole_export_from, 'target': dir_o}
+    )
     
-    cfg: T.Config = parse_config(file_i, sole_export=sole_export)
+    sole = cfg['sole_export']['source']  # an optional relative path
+    root = cfg['sole_export']['target']  # an valid abspath
+    assert root
+    print(root)
+    del dir_o
     
     files, dirs = _mount_resources(
-        cfg, verbose=dry_run, limited_search_root=cfg['sole_export']
+        cfg, verbose=dry_run, limited_search_root=sole
     )
     
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
@@ -69,12 +75,12 @@ def dump_tree(
     if _check_if_first_time_export(root):
         _first_time_exports(
             root, tobe_created_dirs, (files, dirs),
-            copyfiles, cfg['sole_export'], dry_run
+            copyfiles, sole, dry_run
         )
     else:
         _incremental_updates(
             root, tobe_created_dirs, (files, dirs),
-            copyfiles, cfg['sole_export'], dry_run, cfg['root']
+            copyfiles, sole, dry_run, cfg['root']
         )
     fs.dump(
         {
@@ -185,7 +191,8 @@ def _incremental_updates(
         reverse=True
     ))
     for action, path_i in _analyze_incremental_updates(
-        old_res_map, new_res_map, _source_root
+        old_res_map, new_res_map,
+        _source_root, known_roots,
     ):
         a, b = _split_path(path_i, known_roots)
         path_o = fs.normpath(
@@ -229,10 +236,17 @@ def _incremental_updates(
                     else:
                         os.unlink(path_o)
                 case 'update_file':
+                    print(':vl', path_i, path_o)
                     if copyfiles:
                         fs.copy_file(path_i, path_o, overwrite=True)
                     else:
                         fs.make_link(path_i, path_o, overwrite=True)
+    
+    if fs.exist(x := fs.xpath(
+        '_cache/auxiliary/{}.pkl'.format(hash_path_to_uid(_source_root))
+    )):
+        print('complete checking content-changed files, delete the auxiliary')
+        fs.remove_file(x)
 
 
 # -----------------------------------------------------------------------------
@@ -262,6 +276,7 @@ def _analyze_incremental_updates(
     old_resources_map: T.ResourcesMap,
     new_resources_map: T.ResourcesMap,
     source_root: str = None,
+    known_roots: t.Tuple[str, ...] = None,
 ) -> t.Iterator[t.Tuple[str, str]]:
     """
     yields: ((action, path), ...)
@@ -300,13 +315,16 @@ def _analyze_incremental_updates(
     if source_root and fs.exist(x := fs.xpath(
         '_cache/auxiliary/{}.pkl'.format(hash_path_to_uid(source_root))
     )):
-        for f in sorted(frozenset(fs.load(x))):
-            print(
-                ':vi',
-                'detect content-changed file',
-                fs.relpath(f, source_root)
-            )
-            yield 'update_file', f
+        assert known_roots
+        known_roots = tuple(x + '/' for x in known_roots)
+        for f in sorted(fs.load(x)):
+            if f.startswith(known_roots) and fs.exist(f):
+                print(
+                    ':vi',
+                    'detect content-changed file',
+                    fs.relpath(f, source_root)
+                )
+                yield 'update_file', f
 
 
 def _check_if_first_time_export(root: str) -> bool:
@@ -445,7 +463,7 @@ def _get_common_roots(
             if d.startswith(r):
                 x.add(d.removeprefix(r))
             else:
-                assert r.startswith(d + '/')
+                assert r.startswith(d + '/'), (r, d)
         return {single_root: x}
     
     search_roots = _get_search_roots(shrink=True)
@@ -504,4 +522,8 @@ def _split_path(path: str, known_roots: t.Sequence[str]) -> t.Tuple[str, str]:
     for root in known_roots:
         if path.startswith(root + '/'):
             return root, path.removeprefix(root + '/')
-    raise Exception('path should be under one of the search roots', path)
+    raise Exception(
+        'path should be under one of the search roots',
+        known_roots,
+        path
+    )

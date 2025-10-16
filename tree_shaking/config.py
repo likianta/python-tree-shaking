@@ -32,7 +32,9 @@ class T:
         'search_paths': t.List[RelPath],
         'entries'     : t.List[RelPath],  # must ends with ".py"
         'ignores'     : t.List[IgnoredName],
-        'sole_export' : t.Optional[RelPath],
+        'sole_export' : t.Optional[t.TypedDict('SoleExportOption', {
+            'source': AnyDirPath, 'target': AnyDirPath,
+        })],
     }, total=False)
     """
         {
@@ -50,7 +52,9 @@ class T:
         'search_paths': t.List[NormPath],
         'entries'     : t.Dict[NormPath, GraphId],
         'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-        'sole_export' : t.Optional[NormPath],
+        'sole_export' : t.TypedDict('SoleExportOption', {
+            'source': NormPath, 'target': NormPath,
+        }),
     })
     
     Config = Config1
@@ -76,7 +80,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         'search_paths': [],
         'entries'     : {},
         'ignores'     : (),
-        'sole_export' : None,
+        'sole_export' : {'source': '', 'target': ''},
     }
     
     # 1
@@ -110,9 +114,16 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
     
     # 5
-    if x := (kwargs.get('sole_export') or cfg0.get('sole_export')):
-        assert x in cfg0['search_paths']  # noqa
-        cfg1['sole_export'] = fmtpath(x)
+    dict0 = kwargs.get('sole_export', {'source': '', 'target': ''})
+    dict1 = cfg0.get('sole_export', {'source': '', 'target': ''})
+    if src := (dict0['source'] or dict1['source']):
+        assert src in cfg0['search_paths']  # noqa
+        cfg1['sole_export']['source'] = fmtpath(src)
+        # cfg1['sole_export']['source'] = src
+    if dict0['target']:
+        cfg1['sole_export']['target'] = fs.abspath(dict0['target'])
+    elif dict1['target']:
+        cfg1['sole_export']['target'] = fmtpath(dict1['target'])
     
     if _save:
         atexit.register(partial(_save_graph_alias, cfg1))
