@@ -123,7 +123,10 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     if dict0['target']:
         cfg1['sole_export']['target'] = fs.abspath(dict0['target'])
     elif dict1['target']:
-        cfg1['sole_export']['target'] = fmtpath(dict1['target'])
+        # cfg1['sole_export']['target'] = fmtpath(dict1['target'])
+        cfg1['sole_export']['target'] = fs.normpath('{}/{}'.format(
+            cfg1['root'], dict1['target']
+        ))
     
     if _save:
         atexit.register(partial(_save_graph_alias, cfg1))
