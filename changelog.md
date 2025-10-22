@@ -12,9 +12,9 @@
 
 ---
 
-### 0.2.2 (wip)
+### 0.2.2 (2025-10-22)
 
-...
+- rename `config:sole_export` to `config:export`
 
 ### 0.2.1 (2025-10-16)
 

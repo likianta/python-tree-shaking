@@ -32,8 +32,8 @@ class T:
         'search_paths': t.List[RelPath],
         'entries'     : t.List[RelPath],  # must ends with ".py"
         'ignores'     : t.List[IgnoredName],
-        'sole_export' : t.Optional[t.TypedDict('SoleExportOption', {
-            'source': AnyDirPath, 'target': AnyDirPath,
+        'export'      : t.Optional[t.TypedDict('SoleExportOption', {
+            'source': t.Optional[AnyDirPath], 'target': AnyDirPath,
         })],
     }, total=False)
     """
@@ -52,7 +52,7 @@ class T:
         'search_paths': t.List[NormPath],
         'entries'     : t.Dict[NormPath, GraphId],
         'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-        'sole_export' : t.TypedDict('SoleExportOption', {
+        'export'      : t.TypedDict('SoleExportOption', {
             'source': NormPath, 'target': NormPath,
         }),
     })
@@ -80,7 +80,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         'search_paths': [],
         'entries'     : {},
         'ignores'     : (),
-        'sole_export' : {'source': '', 'target': ''},
+        'export'      : {'source': '', 'target': ''},
     }
     
     # 1
@@ -114,17 +114,17 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
     
     # 5
-    dict0 = kwargs.get('sole_export', {'source': '', 'target': ''})
-    dict1 = cfg0.get('sole_export', {'source': '', 'target': ''})
+    dict0 = kwargs.get('export', {'source': '', 'target': ''})
+    dict1 = cfg0.get('export', {'source': '', 'target': ''})
     if src := (dict0['source'] or dict1['source']):
         assert src in cfg0['search_paths']  # noqa
-        cfg1['sole_export']['source'] = fmtpath(src)
-        # cfg1['sole_export']['source'] = src
+        cfg1['export']['source'] = fmtpath(src)
+        # cfg1['export']['source'] = src
     if dict0['target']:
-        cfg1['sole_export']['target'] = fs.abspath(dict0['target'])
+        cfg1['export']['target'] = fs.abspath(dict0['target'])
     elif dict1['target']:
-        # cfg1['sole_export']['target'] = fmtpath(dict1['target'])
-        cfg1['sole_export']['target'] = fs.normpath('{}/{}'.format(
+        # cfg1['export']['target'] = fmtpath(dict1['target'])
+        cfg1['export']['target'] = fs.normpath('{}/{}'.format(
             cfg1['root'], dict1['target']
         ))
     

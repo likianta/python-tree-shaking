@@ -26,7 +26,7 @@ class T(T0):
 def dump_tree(
     file_i: str,
     dir_o: str = '',
-    sole_export_from: str = '',
+    single_source_entry: str = '',
     copyfiles: bool = False,
     dry_run: bool = False,
 ) -> None:
@@ -35,12 +35,12 @@ def dump_tree(
         file_i (-i):
         dir_o (-o):
             an empty folder to store the tree. it can be an inexistent path.
-            if not given, will try to get it from `file_i:sole_export:target`.
-        sole_export_from (-s):
-            by default (=None), we export all modules in all of -
-            `file_i:search_paths`, if you want to limit to only one root in -
-            them, give it here.
-            be noted the value must be one of `file_i:search_paths`.
+            if not set, will try to get it from `file_i:export:target`.
+        single_source_entry (-s):
+            if set, make sure it is one of `file_i:export:search_paths`.
+            if not set, will try to get it from `file_i:export:source`.
+            if `file_i:export:source` is an empty string, will export all
+            entries of `file_i:export:search_paths`.
         copyfiles (-c): if true, use copy instead of symlink.
         dry_run (-d):
     
@@ -56,31 +56,31 @@ def dump_tree(
             - toga-winforms
     """
     cfg: T.Config = parse_config(
-        file_i, sole_export={'source': sole_export_from, 'target': dir_o}
+        file_i, export={'source': single_source_entry, 'target': dir_o}
     )
     
-    sole = cfg['sole_export']['source']  # an optional relative path
-    root = cfg['sole_export']['target']  # an valid abspath
-    assert root
-    print(root)
-    del dir_o
+    source = cfg['export']['source']  # an optional relative path
+    target = cfg['export']['target']  # an valid abspath
+    assert target
+    print(target)
+    # del dir_o
     
     files, dirs = _mount_resources(
-        cfg, verbose=dry_run, limited_search_root=sole
+        cfg, verbose=dry_run, limited_search_root=source
     )
     
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
     print(len(tobe_created_dirs), len(files), len(dirs), ':v1')
     
-    if _check_if_first_time_export(root):
+    if _check_if_first_time_export(target):
         _first_time_exports(
-            root, tobe_created_dirs, (files, dirs),
-            copyfiles, sole, dry_run
+            target, tobe_created_dirs, (files, dirs),
+            copyfiles, source, dry_run
         )
     else:
         _incremental_updates(
-            root, tobe_created_dirs, (files, dirs),
-            copyfiles, sole, dry_run, cfg['root']
+            target, tobe_created_dirs, (files, dirs),
+            copyfiles, source, dry_run, cfg['root']
         )
     fs.dump(
         {
@@ -89,7 +89,7 @@ def dump_tree(
         },
         fs.xpath(
             '_cache/dumped_resources_maps/{}.pkl'.format(
-                x := hash_path_to_uid(root)
+                x := hash_path_to_uid(target)
             )
         )
     )
