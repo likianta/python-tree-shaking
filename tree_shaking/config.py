@@ -100,7 +100,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         return out
     
     temp = cfg1['search_paths']
-    for p in map(fmtpath, cfg0['search_paths']):
+    for p in map(fmtpath, reversed(cfg0['search_paths'])):
         temp.append(p)
         path_scope.add_scope(p)
     

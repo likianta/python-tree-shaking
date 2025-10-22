@@ -149,7 +149,7 @@ python -m lk_utils mklink <other_path>/site-packages <project>/.deps
 
   如果你的所有依赖都安装在 site-packages 目录, 那么在这里填此路径即可.
 
-  如果你的依赖来源于多个目录, 那么该字段留空 (`source: null` 或者 `source: ""`), 或者删掉该字段也可以.
+  如果你的依赖来源于多个目录, 那么将该字段留空 (`source: null` 或者 `source: ""`).
 
   为空和不为空会对导出结果的目录结构产生影响, 下面是案例对比:
 

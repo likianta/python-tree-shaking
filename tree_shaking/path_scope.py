@@ -23,6 +23,10 @@ class PathScope:
         #       path: absolute filepath.
     
     def add_scope(self, scope: T.Dirpath) -> None:
+        """
+        notice: if a module name both exists in `<scope>/<module>` and
+        `self.module_2_path`, the former one takes effect.
+        """
         module_2_path = {}
         path_2_module = {}
         scope = fs.abspath(scope)

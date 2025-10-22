@@ -1,51 +1,50 @@
 # Changelog
 
-### 0.4.0 (wip)
+### ?.?.? (wip)
 
 - analyze dependency tree
-
----
-
-### 0.3.0 (wip)
-
 - use pyinstaller to hook imports
 
 ---
 
+### 0.2.3 (2025-11-04)
+
+- The earlier search path should have higher priority.
+
 ### 0.2.2 (2025-10-22)
 
-- rename `config:sole_export` to `config:export`
+- Rename `config:sole_export` to `config:export`.
 
 ### 0.2.1 (2025-10-16)
 
-- fix incremental export
+- Fix incremental export.
 
 ### 0.2.0 (2025-08-12)
 
-- sole export
+- Sole export.
 
 ---
 
 ### 0.1.4 (2025-07-29)
 
-- fix exporting if search roots are mutually contained
-- simplify path formats in config file
+- Fix exporting if search roots are mutually contained.
+- Simplify path formats in config file.
 
 ### 0.1.3 (2025-07-24)
 
-- fix patched paths in export
+- Fix patched paths in export.
 
 ### 0.1.2 (2025-07-21)
 
-- dynamic patching implicit paths
+- Dynamic patching implicit paths.
 
 ### 0.1.1 (2025-06-13)
 
-- reduce cache size
-- optimize implicit imports list
+- Reduce cache size.
+- Optimize implicit imports list.
 
 ### 0.1.0 (2025-06-03)
 
-- analyze dependencies tree
-- export shrinked tree
-- incremental updates
+- Analyze dependencies tree.
+- Export shrinked tree.
+- Incremental updates.
