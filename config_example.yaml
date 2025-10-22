@@ -1,0 +1,17 @@
+root: .
+search_paths:
+  - .venv/Lib/site-packages
+  - lib
+  - src
+  - .
+entries:
+  - src/main.py
+  - .venv/Lib/site-packages/IPython/__main__.py
+  - .venv/Lib/site-packages/streamlit/__main__.py
+ignores:
+  - matplotlib
+  - numpy
+  - pandas
+export:
+  source: .venv/Lib/site-packages
+  target: dist/minideps
