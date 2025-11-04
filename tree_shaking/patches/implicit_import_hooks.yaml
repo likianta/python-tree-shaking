@@ -217,6 +217,13 @@ rich:
     - ../pygments/lexers/python.py
     - ../pygments/styles/default.py
     - ../pygments/unistring.py
+# scipy:
+#   files:
+#     - _cyutility.cp312-win_amd64.dll.a
+#     - _cyutility.cp312-win_amd64.pyd
+#     - _lib/array_api_compat/common/_fft.py
+#     - _lib/array_api_compat/numpy/fft.py
+#     - spatial/_ckdtree.cp312-win_amd64.dll.a
 shiboken6:
   files:
     - concrt140.dll
