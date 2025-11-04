@@ -1,6 +1,6 @@
 # Python Tree Shaking
 
-[中文版](./README.zh.md)
+[中文版 (最新)](./README.zh.md)
 
 *English README is under construction.*
 

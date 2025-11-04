@@ -7,6 +7,12 @@
 
 ---
 
+### 0.3.0 (wip)
+
+- Add Web UI.
+
+---
+
 ### 0.2.3 (2025-11-04)
 
 - The earlier search path should have higher priority.

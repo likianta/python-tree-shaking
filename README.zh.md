@@ -22,7 +22,35 @@
 pip install tree-shaking
 ```
 
-## 使用
+此外, `tree-shaking` 支持图形化界面启动, 如需使用图形化界面, 需要安装相关依赖, 使用下面的命令:
+
+```sh
+pip install "tree-shaking[ui]"
+
+# or
+pip install tree-shaking
+pip install pyapp-window
+pip install streamlit
+pip install streamlit-canary
+```
+
+下面分别介绍图形化界面和脚本编程两种使用方法.
+
+## 图形化界面
+
+启动命令:
+
+```sh
+python -m tree_shaking launch-gui
+```
+
+界面如图所示:
+
+![](./.assets/173230.png)
+
+如需关闭应用, 点击窗口上的关闭按钮, 或者在命令行按下 `Ctrl + C` 停止.
+
+## 脚本编程
 
 ### 编写配置文件
 
@@ -30,8 +58,8 @@ pip install tree-shaking
 
 配置文件主要提供两个信息:
 
-- 入口脚本在哪里
 - 依赖库的搜索目录有哪些
+- 入口脚本在哪里
 
 下面从一个示例文件来详细讲解每个配置项:
 
@@ -101,10 +129,10 @@ export:
 需要注意的是, 有些人使用全局的 site-packages 目录, 或者把虚拟环境放在项目以外的地方了, 这时候用相对路径就会加很多 "../", 而且不同设备上可能路径也不一样, 解决方法是使用软链接将 site-packages 链向项目内, 比如:
 
 ```sh
-python -m lk_utils mklink <other_path>/site-packages <project>/.deps
+python -m lk_utils mklink <external_venv>/site-packages <project>/.venv_packages
 ```
 
-然后设置 `root_paths: [".deps", "."]`.
+然后设置 `root_paths: [".venv_packages", ...]`.
 
 这些路径的处理优先级和 python 的 `sys.path` 一样, 越靠前的优先级越高.
 
@@ -130,7 +158,7 @@ python -m lk_utils mklink <other_path>/site-packages <project>/.deps
 
 该字段用于以下情形: 如果你发现 tree-shaking 裁剪得不到位, 裁剪后仍然包含了某个体积庞大且根本不需要的依赖 (比较典型的案例: 你的代码里某个 if 条件才会导入这个依赖, 但你认为即使删除这个依赖, 也几乎不会影响程序运行).
 
-为了不让 tree-shaking 分析这个依赖和它的下游依赖 (即依赖和依赖的依赖...), 你可以将它加入到 `ignores` 字段.
+为了不让 tree-shaking 分析这个依赖和它的下游依赖 (即依赖的依赖...), 你可以将它加入到 `ignores` 字段.
 
 每个依赖的格式要求:
 
@@ -173,16 +201,16 @@ python -m lk_utils mklink <other_path>/site-packages <project>/.deps
     ```
     <project>
     |= dist
-       |= minideps
-          |= site-packages
+       |= minideps  # 具有多个并行的子命令
+          |= site-packages  # 1.
              |= IPython
              |= requests
              |= streamlit
              |= ...
-          |= lib
+          |= lib            # 2.
              |= lk_utils
              |= ...
-          |= src
+          |= src            # 3.
              |= ...
     ```
 
@@ -206,7 +234,7 @@ python -m lk_utils mklink <other_path>/site-packages <project>/.deps
     ```python
     <project>
     |= dist
-       |= minideps
+       |= minideps  # 不再具有多个并行的子目录
           |= IPython
           |= requests
           |= streamlit
@@ -260,7 +288,7 @@ python -m lk_utils mklink <other_path>/site-packages <project>/.deps
 
   指定要将生成结果放在哪个目录.
 
-  这个目录可以事先不存在. 比如 `target: "dist/minideps"`, 其中 "minideps" 目录可以事先不存在 (但是 "dist" 必须存在), tree-shaking 会自动创建出来.
+  这个目录可以事先不存在. 比如 `target: "dist/minideps"`, 其中 "minideps" 目录可以事先不存在 (但其父目录必须存在), tree-shaking 会自动创建它.
 
   如果要导出的目录已经存在, 请确保这个目录是一个空目录. 否则 tree-shaking 会按照 "增量更新" 的方式导出, 关于 "增量更新" 会在下面讲解.
 
@@ -335,9 +363,9 @@ tree_shaking.dump_tree('./tree_shaking_module.yaml', '../dist/minideps')
 
 ## 增量更新
 
-增量更新不需要更换命令, 重复上面的使用流程, 然后只要导出的目录不变且非空, tree-shaking 就会采用增量更新策略.
+增量更新不需要更换命令, 重复上面的使用流程, 只要导出的目录还是上次的目录, tree-shaking 就会采用增量更新策略.
 
-这里讲一下增量更新是怎么做到的.
+这里讲一下增量更新的实现原理:
 
 ...
 

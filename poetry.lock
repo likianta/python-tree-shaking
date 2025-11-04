@@ -2444,10 +2444,54 @@ type = "legacy"
 url = "https://mirrors.aliyun.com/pypi/simple"
 reference = "tsinghua"
 
+[[package]]
+name = "wxpython"
+version = "4.2.4"
+description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "wxpython-4.2.4-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:ac29d594f5ed512d1c70b2bed799dd9158f904aa6a92365e48b561c1cbd7b009"},
+    {file = "wxpython-4.2.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:bc96d4fb43d2e049f65831e1ab703eb617d26c9c112fdd6acd59ed1823a69870"},
+    {file = "wxpython-4.2.4-cp310-cp310-win32.whl", hash = "sha256:2d020c0b0db1869d58ee646afd9cc1276520a77a9d800d407927bfee35678970"},
+    {file = "wxpython-4.2.4-cp310-cp310-win_amd64.whl", hash = "sha256:95d390e0bf4bd8c4c1d77e2205887a5bc84e950e4f44719d66f8d14f59c777eb"},
+    {file = "wxpython-4.2.4-cp311-cp311-macosx_10_10_x86_64.whl", hash = "sha256:99478006f60ecf622ba55f8cda9177d3f2933f513589404a1e1c87eb8b0924b6"},
+    {file = "wxpython-4.2.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ec7d264dbb2301fdb6ee7bbe722652b06ab1aa4b6e25a76cba99d8a38aea8855"},
+    {file = "wxpython-4.2.4-cp311-cp311-win32.whl", hash = "sha256:b86b0258074f4ec16b234274fa0c32c42e039124c9f6f36529091c9a00ebff4d"},
+    {file = "wxpython-4.2.4-cp311-cp311-win_amd64.whl", hash = "sha256:f48fe7b9f22c7733a06b5901559b5b7e4835fa852cbef0f620ffd0a0030aaf73"},
+    {file = "wxpython-4.2.4-cp311-cp311-win_arm64.whl", hash = "sha256:fe83813241dfb94780f18dff1678d1ffd097116a8b8fea0272a332c387f69ef8"},
+    {file = "wxpython-4.2.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:a42807f84d504554a78bf7c4d0b8b18ec72de098b578bd4276bf5144b5a698ef"},
+    {file = "wxpython-4.2.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8b1c5f5c173a90c861f4f3453f2e066e29f258472c76d40f8e2ec16b0389971f"},
+    {file = "wxpython-4.2.4-cp312-cp312-win32.whl", hash = "sha256:83e45e4d5d139638260c2f23108a94cb8d40bd5eb714d41b1009452e4ec4229a"},
+    {file = "wxpython-4.2.4-cp312-cp312-win_amd64.whl", hash = "sha256:c333113be1fcb4e4252890b3e66af016f03432b2fe15b370f38f2a505f5daa74"},
+    {file = "wxpython-4.2.4-cp312-cp312-win_arm64.whl", hash = "sha256:88b7e8cbdb141ebb4e361cd6f3d5595160764f0c05d2d7e03506b53860eb01ab"},
+    {file = "wxpython-4.2.4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:4ff49e0a0dd08235f00c3df26a0644bc14197ecd8c2361fcea9a7a1dffc1c8db"},
+    {file = "wxpython-4.2.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b2286456eedf8cddeb25adc375e5f4a201d35c8eee7dbb2fce1cb39acc06e809"},
+    {file = "wxpython-4.2.4-cp313-cp313-win32.whl", hash = "sha256:b0920fe193e2bbd90c6d3fbb9a8101f1276229638aff29f66bfe521901c3a0b8"},
+    {file = "wxpython-4.2.4-cp313-cp313-win_amd64.whl", hash = "sha256:a0a532ee6e6a3ce0d1fb2e223159d4b8ec42f8a844c852da936fb23cba6b9335"},
+    {file = "wxpython-4.2.4-cp313-cp313-win_arm64.whl", hash = "sha256:e82ab099df0b6c55bcfad198822648a6275bbb575ce09502a9085b290ec9852d"},
+    {file = "wxpython-4.2.4-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:20bdd73d51c4fcc9f026a059d95654aaf68540562faf23340a2224fdfa319798"},
+    {file = "wxpython-4.2.4-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:4842f9639869e455a032ef7471d974c0c8c8b7d9ba73327982d84b9d96537a08"},
+    {file = "wxpython-4.2.4-cp314-cp314-win32.whl", hash = "sha256:7e7c3baa2aab55f1c0a14fdd1b371f8ec0cff1cc2f6171497643f977b243f750"},
+    {file = "wxpython-4.2.4-cp314-cp314-win_amd64.whl", hash = "sha256:dae6d80067f64498e530d2c5f47c81f5f1a6f32e820b3b59f05062c1629ff97d"},
+    {file = "wxpython-4.2.4-cp314-cp314-win_arm64.whl", hash = "sha256:f7b649542969c2221d2963695de11c74c12060e83d412f4017ba03e7787c9c5d"},
+    {file = "wxpython-4.2.4-cp39-cp39-macosx_10_10_x86_64.whl", hash = "sha256:a2ec6de12ad17ecc54ffd19d8158c6b3970fd817aca1f3231f57e9418c964df8"},
+    {file = "wxpython-4.2.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:48a3efea46fe52891035c042c8481ed0a1a3b613f4eff38781f3a2e1951002a8"},
+    {file = "wxpython-4.2.4-cp39-cp39-win32.whl", hash = "sha256:e31e645ed4f0b048954f230f9a3d8dce84054fe9161f2f3ceeb2bbf176126424"},
+    {file = "wxpython-4.2.4-cp39-cp39-win_amd64.whl", hash = "sha256:1771079f39cfe1fd52a2302bf7d59fad716b71cb5369c9423480b1a518a72afd"},
+    {file = "wxpython-4.2.4.tar.gz", hash = "sha256:2eb123979c87bcb329e8a2452269d60ff8f9f651e9bf25c67579e53c4ebbae3c"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "tsinghua"
+
 [extras]
-ui = ["streamlit", "streamlit-canary"]
+ui = ["pyyaml", "streamlit", "streamlit-canary"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "5c619152441e8317a5b440c945d6a822765e205fafa85a05212d395b6f6e43a6"
+content-hash = "b562f721a7c6931f2068b616b609b11663cdb906d75d9ebc06f43ea4493961fe"
