@@ -9,9 +9,10 @@
 
 ---
 
-### 0.2.4 (wip)
+### 0.2.4 (2026-03-06)
 
-...
+- Fix checking case-sensitive paths
+- Routine updates for "implicit_import_hooks"
 
 ### 0.2.3 (2025-11-04)
 

@@ -90,7 +90,7 @@ class FileParser:
                         #     )
                     continue
                 except Exception as e:
-                    print(':v4l', self.file, node.lineno, module)
+                    print(':v8l', self.file, node.lineno, module)
                     raise e
                 if path in ('<stdlib>', '<ignored>'):
                     continue
