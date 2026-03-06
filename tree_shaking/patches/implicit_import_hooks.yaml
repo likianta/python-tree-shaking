@@ -1,10 +1,10 @@
 altair:
-  version: 5.5.0
+  version: 6.0.0
   files:
     - jupyter/js/index.js
-    - vegalite/v5/__init__.py
-    - vegalite/v5/schema/vega-lite-schema.json
-    - vegalite/v5/schema/vega-themes.json
+    - vegalite/v*/__init__.py
+    - vegalite/v*/schema/vega-lite-schema.json
+    - vegalite/v*/schema/vega-themes.json
     - ../anywidget-*.dist-info/?
     - ../jsonschema-*.dist-info/
     - ../jsonschema_specifications/schemas/
@@ -88,6 +88,18 @@ pandas:
     # - _libs/pandas_datetime.*.pyd
     # - _libs/pandas_parser.*.pyd
     - ../pandas.libs/
+pikepdf:
+  files:
+    - concrt140.dll
+    - msvcp140.dll
+    - msvcp140_1.dll
+    - msvcp140_2.dll
+    - msvcp140_atomic_wait.dll
+    - msvcp140_codecvt_ids.dll
+    - qpdf29.dll
+    - vcruntime140.dll
+    - vcruntime140_1.dll
+    - ../lxml/_elementpath.*.pyd
 plotly:
   version: 6.3.0
   # imports:
@@ -100,6 +112,13 @@ plotly:
     # - ../scipy/
     # - ../scipy.libs/
     # - ../statsmodels/
+# pyapp_window:
+#   files:
+#     - ../cffi/
+#     - ../pycparser/
+pyarrow:
+  files:
+    - ../pyarrow/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -203,6 +222,10 @@ qmlease:
 remote_ipython:
   files:
     - ../prompt_toolkit-*.dist-info/
+reportlab:
+  files:
+    - fonts/
+    - rl_settings.py
 requests:
   files:
     - ../certifi/cacert.pem
@@ -264,9 +287,17 @@ streamlit_extras:
     - grid/__init__.py
   files:
     - ../streamlit_extras-*.dist-info/
-toga:
-  version: 0.4.8
+streamlit_pdf_viewer:
   files:
+    - frontend/
+    - ../pyarrow/
+toga:
+  version: 0.5.3
+  files:
+    - __init__.pyi
+    - colors.py
+    - sources/
+    - widgets/
     - ../_cffi_backend.*.pyd
     - ../clr.py
     - ../clr_loader/
@@ -285,6 +316,9 @@ tree_shaking:
     - _cache/module_graphs/.gitkeep
     - _cache/ignores.txt
     - patches/
+webui:
+  files:
+    - webui-windows-msvc-x64/webui-2.dll
 zmq:
   files:
     - backend/cython/

@@ -2,16 +2,22 @@
 
 ### ?.?.? (wip)
 
-- analyze dependency tree
-- use pyinstaller to hook imports
+- Analyze dependency tree
+- Use pyinstaller to hook imports
 
 ---
 
 ### 0.3.0 (wip)
 
-- Add Web UI.
+- Web UI.
+- Allow external paths in config file.
 
 ---
+
+### 0.2.4 (2026-03-06)
+
+- Fix checking case-sensitive paths
+- Routine updates for "implicit_import_hooks"
 
 ### 0.2.3 (2025-11-04)
 
