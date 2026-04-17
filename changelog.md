@@ -9,10 +9,15 @@
 
 ---
 
+### 0.2.5 (wip)
+
+- Read cache location from environment variable `TREE_SHAKING_CACHE_ROOT`.
+- `config:export:source` supports special value `$venv`.
+
 ### 0.2.4 (2026-03-06)
 
-- Fix checking case-sensitive paths
-- Routine updates for "implicit_import_hooks"
+- Fix checking case-sensitive paths.
+- Routine updates for "implicit_import_hooks".
 
 ### 0.2.3 (2025-11-04)
 

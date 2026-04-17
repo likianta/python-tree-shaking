@@ -15,10 +15,11 @@ httptools:
     - parser/parser.*.pyd
     - parser/url_parser.*.pyd
 IPython:
-  version: 9.2.0
+  version: 9.11.0
   imports:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
+    - ../pygments/styles/gruvbox.py
     - ../pygments/styles/monokai.py
     - ../pygments/styles/pastie.py
     - ../pygments/unistring.py
@@ -78,6 +79,7 @@ omni_driver_kit:
     - ../modbus_tk/modbus_tcp.py
 oss2:
   files:
+    - ../_cffi_backend.*.pyd
     - ../aliyunsdkcore/data/
     - ../Crypto/
     - ../cryptography/
@@ -112,6 +114,9 @@ plotly:
     # - ../scipy/
     # - ../scipy.libs/
     # - ../statsmodels/
+psutil:
+  files:
+    - _psutil_windows.pyd
 # pyapp_window:
 #   files:
 #     - ../cffi/
@@ -230,23 +235,32 @@ requests:
   files:
     - ../certifi/cacert.pem
 rich:
+  version: 14.3.3
   imports:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/styles/default.py
     - ../pygments/unistring.py
   files:
+    - _unicode_data/
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/styles/default.py
     - ../pygments/unistring.py
-# scipy:
-#   files:
-#     - _cyutility.cp312-win_amd64.dll.a
-#     - _cyutility.cp312-win_amd64.pyd
-#     - _lib/array_api_compat/common/_fft.py
-#     - _lib/array_api_compat/numpy/fft.py
-#     - spatial/_ckdtree.cp312-win_amd64.dll.a
+scipy:
+  files:
+    - _cyutility.cp312-win_amd64.dll.a
+    - _cyutility.cp312-win_amd64.pyd
+    - _lib/
+    - constants/
+    - interpolate/
+    - linalg/
+    - optimize/
+    - sparse/
+    - spatial/
+    - special/
+    - stats/
+    - ../scipy.libs/
 shiboken6:
   files:
     - concrt140.dll
@@ -282,6 +296,8 @@ streamlit:
 streamlit_canary:
   imports:
     - ../streamlit/__main__.py
+  files:
+    - ../pyapp_window/__main__.py
 streamlit_extras:
   imports:
     - grid/__init__.py
