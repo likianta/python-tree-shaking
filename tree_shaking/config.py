@@ -8,7 +8,9 @@ from functools import partial
 from lk_utils import fs
 from lk_utils import run_cmd_args
 from os.path import isabs
+from .cache import cache_root
 from .path_scope import path_scope
+
 
 class T:
     AnyDirPath = str
@@ -27,18 +29,27 @@ class T:
     NormPath = str  # absolute path.
     RelPath = str  # relative path, starts from `root`.
     SpecialPath = str  # '$venv' or `$venv/...`
-    
+
     # noinspection PyTypedDict
-    Config0 = t.TypedDict('Config0', {
-        'root'        : AnyDirPath,
-        'search_paths': t.List[t.Union[RelPath, SpecialPath]],
-        'entries'     : t.List[RelPath],  # must ends with ".py"
-        'ignores'     : t.List[IgnoredName],
-        'export'      : t.Optional[t.TypedDict('ExportOption0', {
-            'source': t.Union[SpecialPath, AnyDirPath],
-            'target': AnyDirPath,
-        })],
-    }, total=False)
+    Config0 = t.TypedDict(
+        'Config0',
+        {
+            'root': AnyDirPath,
+            'search_paths': t.List[t.Union[RelPath, SpecialPath]],
+            'entries': t.List[RelPath],  # must ends with ".py"
+            'ignores': t.List[IgnoredName],
+            'export': t.Optional[
+                t.TypedDict(
+                    'ExportOption0',
+                    {
+                        'source': t.Union[SpecialPath, AnyDirPath],
+                        'target': AnyDirPath,
+                    },
+                )
+            ],
+        },
+        total=False,
+    )
     """
         {
             'root': dirpath,
@@ -48,21 +59,30 @@ class T:
             #   module_name is case sensitive.
         }
     """
-    
+
     # noinspection PyTypedDict
-    Config1 = t.TypedDict('Config1', {
-        'root'        : NormPath,
-        'search_paths': t.List[NormPath],
-        'entries'     : t.Dict[NormPath, GraphId],
-        'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-        'export'      : t.TypedDict('ExportOption1', {
-            'source': NormPath, 'target': NormPath,
-        }),
-    })
-    
+    Config1 = t.TypedDict(
+        'Config1',
+        {
+            'root': NormPath,
+            'search_paths': t.List[NormPath],
+            'entries': t.Dict[NormPath, GraphId],
+            'ignores': t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
+            'export': t.TypedDict(
+                'ExportOption1',
+                {
+                    'source': NormPath,
+                    'target': NormPath,
+                },
+            ),
+        },
+    )
+
     Config = Config1
 
-graphs_root = fs.xpath('_cache/module_graphs')
+
+graphs_root = '{}/module_graphs'.format(cache_root)
+
 
 def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     """
@@ -77,48 +97,48 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     cfg_dir: str = fs.parent(cfg_file)
     cfg0: T.Config0 = fs.load(cfg_file)
     cfg1: T.Config1 = {
-        'root'        : '',
+        'root': '',
         'search_paths': [],
-        'entries'     : {},
-        'ignores'     : (),
-        'export'      : {'source': '', 'target': ''},
+        'entries': {},
+        'ignores': (),
+        'export': {'source': '', 'target': ''},
     }
-    
+
     # 1
     if isabs(cfg0['root']):  # not suggested
         cfg1['root'] = fs.normpath(cfg0['root'])
     else:
         cfg1['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg0['root']))
-    
+
     # 2
     _root = cfg1['root']
-    
+
     def fmtpath(p: t.Union[T.RelPath, T.SpecialPath]) -> T.NormPath:
-        if p == '': 
+        if p == '':
             raise ValueError('path cannot be empty')
-        if p == '.': 
+        if p == '.':
             return _root
-        if p.startswith('$venv'): 
+        if p.startswith('$venv'):
             return p.replace('$venv', _get_venv_root(_root), 1)
         assert not p.startswith(('./', '../', '<')), p
         out = '{}/{}'.format(_root, p)
         assert fs.exist(out), out
         return out
-    
+
     temp = cfg1['search_paths']
     for p in map(fmtpath, reversed(cfg0['search_paths'])):
         temp.append(p)
         path_scope.add_scope(p)
-    
+
     # 3
     temp = cfg1['entries']
     for p in cfg0['entries']:
         p = fmtpath(p)
         temp[p] = hash_path_to_uid(p)
-    
+
     # 4
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))  # type: ignore
-    
+
     # 5
     dict0 = kwargs.get('export', {'source': '', 'target': ''})
     dict1 = cfg0.get('export', {'source': '', 'target': ''})
@@ -128,18 +148,20 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     if dict0['target']:
         cfg1['export']['target'] = fs.abspath(dict0['target'])
     elif dict1['target']:
-        cfg1['export']['target'] = fs.normpath('{}/{}'.format(
-            cfg1['root'], dict1['target']
-        ))
-    
+        cfg1['export']['target'] = fs.normpath(
+            '{}/{}'.format(cfg1['root'], dict1['target'])
+        )
+
     if _save:
         atexit.register(partial(_save_graph_alias, cfg1))
-    
+
     # print(cfg1, ':l')
     return cfg1
 
+
 def hash_path_to_uid(abspath: str) -> str:
     return hashlib.md5(abspath.encode()).hexdigest()
+
 
 @cache
 def _get_venv_root(working_root: str) -> T.NormPath:
@@ -152,15 +174,22 @@ def _get_venv_root(working_root: str) -> T.NormPath:
     venv_root = fs.normpath(
         run_cmd_args(
             (
-                sys.executable, '-m', 'poetry', 'env', 'info', '--path', 
-                '--no-ansi', '--directory', working_root
-            ), 
+                sys.executable,
+                '-m',
+                'poetry',
+                'env',
+                'info',
+                '--path',
+                '--no-ansi',
+                '--directory',
+                working_root,
+            ),
             cwd=working_root,
         )
     )
     print(venv_root)
     assert venv_root.endswith('py3.12')
-    
+
     if os.name == 'nt':
         out = '{}/Lib/site-packages'.format(venv_root)
     else:
@@ -170,12 +199,12 @@ def _get_venv_root(working_root: str) -> T.NormPath:
     assert fs.exist(out), (working_root, venv_root, out)
     return out
 
+
 def _save_graph_alias(config: T.Config1) -> None:
-    map_ = fs.load(fs.xpath('_cache/module_graphs_alias.yaml'), default={})
+    map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
     if config['root'] in map_:
-        if (
-            set(config['entries'].values()) ==
-            set(map_[config['root']].values())
+        if set(config['entries'].values()) == set(
+            map_[config['root']].values()
         ):
             return
     map_[config['root']] = {
@@ -183,4 +212,6 @@ def _save_graph_alias(config: T.Config1) -> None:
         fs.relpath(k, config['root']): v
         for k, v in config['entries'].items()
     }
-    fs.dump(map_, fs.xpath('_cache/module_graphs_alias.yaml'), sort_keys=True)
+    fs.dump(
+        map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
+    )

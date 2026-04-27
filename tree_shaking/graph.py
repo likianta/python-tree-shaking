@@ -1,9 +1,8 @@
 import hashlib
 import typing as t
-from textwrap import dedent
-
 from lk_utils import fs
-
+from textwrap import dedent
+from .cache import cache_root
 from .cache import file_cache
 from .config import T as T0
 from .config import graphs_root
@@ -13,11 +12,14 @@ from .finder import Finder
 
 
 class T(T0):
-    DumpedModuleGraph = t.TypedDict('DumpedModuleGraph', {
-        'source_roots': t.Dict[str, str],
-        'modules'     : t.Dict[str, str],
-    })
-    '''
+    DumpedModuleGraph = t.TypedDict(
+        'DumpedModuleGraph',
+        {
+            'source_roots': t.Dict[str, str],
+            'modules': t.Dict[str, str],
+        },
+    )
+    """
         {
             'source_roots': {uid: root_path, ...},
                 uid: 8-char md5 hash of root_path.
@@ -25,7 +27,7 @@ class T(T0):
             'modules': {module: short_path, ...}
                 short_path: `<uid>/path/to/module.py`
         }
-    '''
+    """
 
 
 # FIXME
@@ -34,7 +36,7 @@ def build_module_graph(
 ) -> str:
     file_i = fs.abspath(script)
     file_o = '{}/{}.yaml'.format(graphs_root, graph_id)
-    
+
     finder = Finder(())
     result = dict(finder.get_all_imports(file_i))
     if sort:
@@ -42,10 +44,10 @@ def build_module_graph(
     # for module in result:
     #     print(':i', module)
     fs.dump(result, file_o)
-    
+
     print(
-        ':v2t', 'dumped {} items. see result at "{}"'
-        .format(len(result), file_o)
+        ':v2t',
+        'dumped {} items. see result at "{}"'.format(len(result), file_o),
     )
     return file_o
 
@@ -67,8 +69,8 @@ def build_module_graphs(config_file: str) -> None:
         # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
         fs.dump(result, file_o)
         if file_cache.changed_files:
-            file_aux = fs.xpath('_cache/auxiliary/{}.pkl'.format(
-                hash_path_to_uid(cfg['root']))
+            file_aux = '{}/auxiliary/{}.pkl'.format(
+                cache_root, hash_path_to_uid(cfg['root'])
             )
             if fs.exist(file_aux):
                 changed_files = fs.load(file_aux) | file_cache.changed_files
@@ -78,55 +80,55 @@ def build_module_graphs(config_file: str) -> None:
         print(
             ':v2ti',
             dedent(
-                '''
+                """
                 entry at {}:
                     graph id is {}.
                     found {} source roots,
                     dumped {} items,
                     see result at "{}".
-                '''.format(
+                """.format(
                     p,
                     n,
                     len(result['source_roots']),
                     len(result['modules']),
                     '<tree_shaking>/<graphs_root>/{}'.format(
                         fs.relpath(file_o, graphs_root)
-                    )
+                    ),
                 )
-            )
+            ),
         )
 
 
 def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
     out: T.DumpedModuleGraph = {'source_roots': {}, 'modules': {}}
-    
+
     def hash_content(text: str) -> str:
         return hashlib.md5(text.encode()).hexdigest()[::4]  # length: 8
-    
+
     temp = out['source_roots']
     for root in sorted(config['search_paths'], reverse=True):
         temp[hash_content(root)] = root
     _frozen_source_roots = tuple((k, v + '/') for k, v in temp.items())
     used_source_roots = set()
-    
+
     def reformat_path(path: str) -> str:
         for uid, root in _frozen_source_roots:
             if path.startswith(root):
                 used_source_roots.add(uid)
-                return '<{}>/{}'.format(uid, path[len(root):])
+                return '<{}>/{}'.format(uid, path[len(root) :])
         else:
             print(':lv4', _frozen_source_roots, path)
             raise Exception(path)
-    
+
     temp = out['modules']
     for m, p in modules.items():
         temp[m] = reformat_path(p)
-    
+
     # remove unused source roots
     assert 0 < len(used_source_roots) <= len(out['source_roots'])
     if len(used_source_roots) < len(out['source_roots']):
         for k in tuple(out['source_roots'].keys()):
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
-    
+
     return t.cast(dict, out)

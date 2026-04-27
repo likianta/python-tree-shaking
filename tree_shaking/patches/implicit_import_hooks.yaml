@@ -328,6 +328,7 @@ tracerite:
     - style.css
 tree_shaking:
   files:
+    - _cache/auxiliary/.gitkeep
     - _cache/dumped_resources_maps/.gitkeep
     - _cache/module_graphs/.gitkeep
     - _cache/ignores.txt
