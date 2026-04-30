@@ -117,6 +117,14 @@ plotly:
 psutil:
   files:
     - _psutil_windows.pyd
+py7zr:
+  files:
+    - ../Cryptodome/Cipher/_raw_aes.pyd
+    - ../Cryptodome/Util/_cpuid_c.pyd
+    - ../backports/zstd/
+    - ../bcj/_bcj.*.pyd
+    - ../inflate64/_inflate64.*.pyd
+    - ../pyppmd/c/_ppmd.*.pyd
 # pyapp_window:
 #   files:
 #     - ../cffi/

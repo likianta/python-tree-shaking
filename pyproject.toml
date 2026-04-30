@@ -1,7 +1,7 @@
 [project]
 name = "tree-shaking"
-version = "0.2.5b0"
-description = "Python tree-shaking for dependencies to reduce the size of packaging."
+version = "0.2.5"
+description = "Detect and eliminate \"unused\" files from dependencies to reduce packaging size of target application."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
 packages = [{ include = "tree_shaking" }]
@@ -19,7 +19,7 @@ poetry = "^2.3.4"
 
 [tool.poetry.group.dev.dependencies]
 argsense = { version = "^1.1.1", source = "likianta" }
-lk-utils = { version = "^3.6.0a10", source = "likianta" }
+lk-utils = { version = "^3.6.0a20", source = "likianta" }
 
 [[tool.poetry.source]]
 name = "tsinghua"

@@ -3,13 +3,12 @@
 ### ?.?.? (wip)
 
 - Web UI.
-- Allow external paths in config file.
-- Analyze dependency tree
-- Use pyinstaller to hook imports
+- Analyze dependency tree.
+- *Use pyinstaller to hook imports.*
 
 ---
 
-### 0.2.5 (wip)
+### 0.2.5 (2026-04-30)
 
 - Read cache location from environment variable `TREE_SHAKING_CACHE_ROOT`.
 - `config:export:source` supports special value `$venv`.
