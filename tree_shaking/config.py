@@ -69,11 +69,7 @@ class T:
             'entries': t.Dict[NormPath, GraphId],
             'ignores': t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
             'export': t.TypedDict(
-                'ExportOption1',
-                {
-                    'source': NormPath,
-                    'target': NormPath,
-                },
+                'ExportOption1', {'source': NormPath, 'target': NormPath}
             ),
         },
     )
@@ -137,19 +133,19 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         temp[p] = hash_path_to_uid(p)
 
     # 4
-    cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))  # type: ignore
+    cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
 
     # 5
     dict0 = kwargs.get('export', {'source': '', 'target': ''})
     dict1 = cfg0.get('export', {'source': '', 'target': ''})
-    if src := (dict0['source'] or dict1['source']):
+    if src := (dict0['source'] or dict1['source']):  # type: ignore
         assert src in cfg0['search_paths']
         cfg1['export']['source'] = fmtpath(src)
     if dict0['target']:
         cfg1['export']['target'] = fs.abspath(dict0['target'])
-    elif dict1['target']:
+    elif dict1['target']:  # type: ignore
         cfg1['export']['target'] = fs.normpath(
-            '{}/{}'.format(cfg1['root'], dict1['target'])
+            '{}/{}'.format(cfg1['root'], dict1['target'])  # type: ignore
         )
 
     if _save:
@@ -172,19 +168,22 @@ def _get_venv_root(working_root: str) -> T.NormPath:
     if 'VIRTUAL_ENV' in os.environ:
         del os.environ['VIRTUAL_ENV']
     venv_root = fs.normpath(
-        run_cmd_args(
-            (
-                sys.executable,
-                '-m',
-                'poetry',
-                'env',
-                'info',
-                '--path',
-                '--no-ansi',
-                '--directory',
-                working_root,
+        t.cast(
+            str,
+            run_cmd_args(
+                (
+                    sys.executable,
+                    '-m',
+                    'poetry',
+                    'env',
+                    'info',
+                    '--path',
+                    '--no-ansi',
+                    '--directory',
+                    working_root,
+                ),
+                cwd=working_root,
             ),
-            cwd=working_root,
         )
     )
     print(venv_root)

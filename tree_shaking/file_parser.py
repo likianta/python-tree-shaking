@@ -3,7 +3,6 @@ import atexit
 import typing as t
 from contextlib import contextmanager
 
-from lk_logger import parallel_printing
 from lk_utils import fs
 
 from .cache import cache_root
@@ -189,8 +188,8 @@ class ErrorRecords:
 
     @contextmanager
     def recording(self) -> t.Generator:
-        with parallel_printing(self._log):
-            yield
+        # FIXME: with parallel_printing(self._log):
+        yield
 
     def _log(self, msg: str) -> None:
         self._records.append(str(msg))

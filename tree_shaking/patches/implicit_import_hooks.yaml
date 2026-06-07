@@ -127,6 +127,7 @@ py7zr:
     - ../pyppmd/c/_ppmd.*.pyd
 # pyapp_window:
 #   files:
+#     - ../_cffi_backend.*.pyd
 #     - ../cffi/
 #     - ../pycparser/
 pyarrow:
@@ -220,6 +221,11 @@ PySide6:
     - QtQuickWidgets.pyd
     - QtWidgets.pyd
     - ../shiboken6/
+pythonnet:
+  files:
+    - ../_cffi_backend.*.pyd
+    - ../cffi/
+    - ../pycparser/
 qmlease:
   version: 3.1.0a27
   files:
@@ -287,11 +293,13 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
+  version: 1.58.0
   files:
     - __main__.py
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - web/
+    - ../anyio/_backends/
     - ../PIL/
     # - ../pyarrow/
     # - ../pyarrow/lib.*.pyd
@@ -300,7 +308,9 @@ streamlit:
     # - ../pyarrow/lib.pyx
     # - ../pyarrow/lib_api.h
     - ../streamlit-*.dist-info/
-    - ../tornado/
+    # - ../tornado/
+    - ../uvicorn/lifespan/
+    - ../uvicorn/protocols/http/auto.py
 streamlit_canary:
   imports:
     - ../streamlit/__main__.py
@@ -323,9 +333,11 @@ toga:
     - sources/
     - widgets/
     - ../_cffi_backend.*.pyd
+    - ../cffi/
     - ../clr.py
     - ../clr_loader/
     - ../clr_loader-*.dist-info/
+    - ../pycparser/
     - ../pythonnet/
     - ../toga_core-*.dist-info/
     - ../toga_winforms/
@@ -341,6 +353,10 @@ tree_shaking:
     - _cache/module_graphs/.gitkeep
     - _cache/ignores.txt
     - patches/
+# uvicorn:
+#   files:
+#     - lifespan/
+#     - protocols/http/auto.py
 webui:
   files:
     - webui-windows-msvc-x64/webui-2.dll
