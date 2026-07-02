@@ -8,9 +8,10 @@
 
 ---
 
-### 0.2.6 (wip)
+### 0.2.6 (2026-07-02)
 
 - Remove support of dynamically getting poetry venv path.
+- Enhance stability.
 
 ### 0.2.5 (2026-04-30)
 

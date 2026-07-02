@@ -151,6 +151,7 @@ py7zr:
 pyarrow:
   files:
     - ../pyarrow/
+    - ../pyarrow.libs/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -161,6 +162,10 @@ pyexcel:
     # - ../pyexcel_io/database/
     # - ../pyexcel_io/readers/
     # - ../pyexcel_io/writers/
+pyportable_crypto:
+  files:
+    - ../cryptography/hazmat/bindings/__init__.py
+    - ../cryptography/hazmat/bindings/_rust.pyd
 PySide6:
   version: 6.8.2
   files:
@@ -283,6 +288,7 @@ scipy:
   files:
     - _cyutility.*.dll.a
     - _cyutility.*.pyd
+    - _external/array_api_compat/common/_fft.py
     - _external/array_api_compat/numpy/fft.py
     - _lib/
     - constants/

@@ -251,12 +251,12 @@ def _incremental_updates(
                         fs.copy_file(path_i, path_o, overwrite=True)
                     else:
                         fs.make_link(path_i, path_o, overwrite=True)
-                case 'del_dir':
+                case 'delete_dir':
                     if copyfiles:
                         fs.remove_tree(path_o)
                     else:
                         os.unlink(path_o)
-                case 'del_file':
+                case 'delete_file':
                     if copyfiles:
                         fs.remove_file(path_o)
                     else:
@@ -265,6 +265,8 @@ def _incremental_updates(
                     fs.remove_tree(path_o)
                 case 'make_dir':
                     fs.make_dir(path_o)
+                case 'make_dirs':
+                    fs.make_dirs(path_o)
                 case 'update_file':
                     print(':vl', path_i, path_o)
                     if copyfiles:
@@ -311,17 +313,23 @@ def _analyze_incremental_updates(
     new_resources_map: T.ResourcesMap,
     source_root: t.Optional[str] = None,
     known_roots: t.Optional[t.Tuple[str, ...]] = None,
-) -> t.Iterator[t.Tuple[str, str]]:
+) -> t.Iterator[
+    t.Tuple[
+        t.Literal[
+            'add_dir',
+            'add_file',
+            'delete_dir',
+            'delete_file',
+            'drop_dir',
+            'make_dir',
+            'make_dirs',
+            'update_file',
+        ],
+        T.NormPath,
+    ]
+]:
     """
     yields: ((action, path), ...)
-        action:
-            'make_dir'
-            'drop_dir'
-            'add_file'
-            'del_file'
-            'add_dir'
-            'del_dir'
-            'update_file'
     """
     tree0 = old_resources_map['created_directories']
     tree1 = new_resources_map['created_directories']
@@ -336,7 +344,7 @@ def _analyze_incremental_updates(
     for f in f2f1 - f2f0:
         yield 'add_file', f
     for f in f2f0 - f2f1:
-        yield 'del_file', f
+        yield 'delete_file', f
 
     # d2d: "dir-to-dir"
     d2d0 = old_resources_map['linked_resources'][1]
@@ -344,10 +352,10 @@ def _analyze_incremental_updates(
     for d in sorted(d2d1 - d2d0, reverse=True):
         yield 'add_dir', d
     for d in sorted(d2d0 - d2d1, reverse=True):
-        yield 'del_dir', d
+        yield 'delete_dir', d
 
     if source_root and fs.exist(
-        x := (
+        aux_file := (
             '{}/auxiliary/{}.pkl'.format(
                 cache_root, hash_path_to_uid(source_root)
             )
@@ -355,13 +363,15 @@ def _analyze_incremental_updates(
     ):
         assert known_roots
         known_roots = tuple(x + '/' for x in known_roots)
-        for f in sorted(fs.load(x)):
+        for f in sorted(fs.load(aux_file)):
             if f.startswith(known_roots) and fs.exist(f):
                 print(
                     ':vi',
                     'detect content-changed file',
                     fs.relpath(f, source_root),
                 )
+                if fs.parent(f) not in tree1:
+                    yield 'make_dirs', fs.parent(f)
                 yield 'update_file', f
 
 
