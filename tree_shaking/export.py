@@ -16,6 +16,7 @@ from .path_scope import path_scope
 
 
 class T(T0):
+    KnownRoots = t.Dict[T0.NormPath, t.Set[T0.RelPath]]
     TodoDirs = t.Set[str]  # a set of absolute paths
     TodoFiles = t.Set[str]  # a set of absolute paths
     Resources = t.Tuple[TodoFiles, TodoDirs]
@@ -113,7 +114,9 @@ def _first_time_exports(
     if not fs.exist(root) and not dry_run:
         fs.make_dir(root)
 
-    roots = _get_common_roots(tobe_created_dirs, sole_root)
+    roots = _get_common_roots(tobe_created_dirs)
+    if sole_root:
+        roots = _shrink_to_single_root(roots, sole_root)
     for subroot, reldirs in roots.items():
         if sole_root:
             dir_prefix = root
@@ -193,7 +196,7 @@ def _incremental_updates(
     copyfiles: bool,
     sole_root: t.Optional[str] = None,
     dry_run: bool = False,
-    _source_root: str = None,  # experimental
+    _source_root: t.Optional[str] = None,  # experimental
 ) -> None:
     assert fs.exist(
         x := (
@@ -208,9 +211,11 @@ def _incremental_updates(
         'created_directories': tobe_created_dirs,
         'linked_resources': tobe_linked_resources,
     }
-    known_roots = tuple(
-        sorted(
-            _get_common_roots(tobe_created_dirs, sole_root).keys(), reverse=True
+    known_roots = (
+        (sole_root,)
+        if sole_root
+        else tuple(
+            sorted(_get_common_roots(tobe_created_dirs).keys(), reverse=True)
         )
     )
     for action, path_i in _analyze_incremental_updates(
@@ -236,23 +241,14 @@ def _incremental_updates(
                 print(':v6', 'already removed?', action, path_o)
                 continue
             match action:
-                case 'make_dir':
-                    fs.make_dir(path_o)
-                case 'drop_dir':
-                    fs.remove_tree(path_o)
-                case 'add_file':
-                    if copyfiles:
-                        fs.copy_file(path_i, path_o, overwrite=True)
-                    else:
-                        fs.make_link(path_i, path_o, overwrite=True)
-                case 'del_file':
-                    if copyfiles:
-                        fs.remove_file(path_o)
-                    else:
-                        os.unlink(path_o)
                 case 'add_dir':
                     if copyfiles:
                         fs.copy_tree(path_i, path_o, overwrite=True)
+                    else:
+                        fs.make_link(path_i, path_o, overwrite=True)
+                case 'add_file':
+                    if copyfiles:
+                        fs.copy_file(path_i, path_o, overwrite=True)
                     else:
                         fs.make_link(path_i, path_o, overwrite=True)
                 case 'del_dir':
@@ -260,6 +256,15 @@ def _incremental_updates(
                         fs.remove_tree(path_o)
                     else:
                         os.unlink(path_o)
+                case 'del_file':
+                    if copyfiles:
+                        fs.remove_file(path_o)
+                    else:
+                        os.unlink(path_o)
+                case 'drop_dir':
+                    fs.remove_tree(path_o)
+                case 'make_dir':
+                    fs.make_dir(path_o)
                 case 'update_file':
                     print(':vl', path_i, path_o)
                     if copyfiles:
@@ -267,7 +272,7 @@ def _incremental_updates(
                     else:
                         fs.make_link(path_i, path_o, overwrite=True)
 
-    if fs.exist(
+    if _source_root and fs.exist(
         x := (
             '{}/auxiliary/{}.pkl'.format(
                 cache_root, hash_path_to_uid(_source_root)
@@ -485,9 +490,7 @@ def _mount_resources(
 # neutral
 
 
-def _get_common_roots(
-    absdirs: t.Iterable[str], single_root: t.Optional[str] = None
-) -> t.Dict[str, t.Set[str]]:
+def _get_common_roots(absdirs: t.Iterable[str]) -> T.KnownRoots:
     """
     returns: {known_root: {relpath, ...}, ...}
         note that all `return:keys` are existing dirs. but the keys' sequence is
@@ -495,33 +498,24 @@ def _get_common_roots(
         definitely treated as an "ordered" dict, though in most cases it should
         be.
     """
-    if single_root:
-        # all paths must be children of `single_root`, otherwise, there are two
-        # cases:
-        # 1. path is parent of `single_root`, ignore it.
-        # 2. path is unrelated to `single_root`, raise exception.
-        r = single_root + '/'
-        x = set()
-        for d in absdirs:
-            if d.startswith(r):
-                x.add(d.removeprefix(r))
-            else:
-                assert fs.is_parent(d, r), np.format(
-                    single_root, d, absdirs, ':nl'
-                )
-        return {single_root: x}
-
     search_roots = _get_search_roots(shrink=True)
     out = defaultdict(set)  # {root: {reldir, ...}, ...}
     for d in absdirs:
         if d in search_roots:
             continue
         for root in search_roots:
-            if d.startswith(root + '/'):
+            if fs.is_parent(root, d):
                 out[root].add(d.removeprefix(root + '/'))
                 break
         else:
-            raise Exception('path should be under one of the search roots', d)
+            raise Exception(
+                np.format(
+                    'path should be under one of the search roots',
+                    search_roots,
+                    d,
+                    ':nl',
+                )
+            )
     # print(':l', search_roots, tuple(out.keys()))
     return out
 
@@ -563,6 +557,29 @@ def _grind_down_dirpath(path: str) -> t.Iterator[str]:
     for c in b:
         a += '/' + c
         yield a
+
+
+def _shrink_to_single_root(
+    known_roots: T.KnownRoots, single_root: str
+) -> T.KnownRoots:
+    out = {}
+    for root in known_roots.keys():
+        if root == single_root:
+            out[single_root] = known_roots[root]
+        elif fs.is_parent(root, single_root):
+            continue
+        else:
+            raise Exception(
+                np.format(
+                    single_root,
+                    tuple(known_roots.keys()),
+                    root,
+                    known_roots[root],
+                    ':nl',
+                )
+            )
+    assert len(out) == 1
+    return out
 
 
 def _split_path(path: str, known_roots: t.Sequence[str]) -> t.Tuple[str, str]:
