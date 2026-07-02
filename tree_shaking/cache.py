@@ -70,7 +70,7 @@ cache_file: str
 file_cache: FileNodesCache
 if _path := os.getenv('TREE_SHAKING_CACHE_ROOT'):
     assert fs.exist(_path), _path
-    print(':vs', 'found tree-shaking cache root from environment', _path)
+    print(':vs', 'get tree-shaking cache root from environment', _path)
     if not fs.exist('{}/.init_ok'.format(_path)):
         fs.copy_file(
             fs.xpath('_cache/ignores.txt'), '{}/ignores.txt'.format(_path)

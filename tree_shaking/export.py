@@ -2,7 +2,10 @@ import os
 import typing as t
 from collections import defaultdict
 from glob import glob
+
+import neoprint as np
 from lk_utils import fs
+
 from .cache import cache_root
 from .config import graphs_root
 from .config import hash_path_to_uid
@@ -18,10 +21,7 @@ class T(T0):
     Resources = t.Tuple[TodoFiles, TodoDirs]
     ResourcesMap = t.TypedDict(
         'ResourcesMap',
-        {
-            'created_directories': TodoDirs,
-            'linked_resources': Resources,
-        },
+        {'created_directories': TodoDirs, 'linked_resources': Resources},
     )
 
 
@@ -214,10 +214,7 @@ def _incremental_updates(
         )
     )
     for action, path_i in _analyze_incremental_updates(
-        old_res_map,
-        new_res_map,
-        _source_root,
-        known_roots,
+        old_res_map, new_res_map, _source_root, known_roots
     ):
         a, b = _split_path(path_i, known_roots)
         path_o = fs.normpath(
@@ -288,7 +285,7 @@ def _analyze_dirs_to_be_created(
     files: T.TodoFiles, dirs: T.TodoDirs
 ) -> t.Set[str]:
     """
-    returns: a set of dir paths, the paths are grind down to each level of -
+    returns: a set of dir paths, the paths are grind down to each level of
     directories.
     note: the returned value is a set of "source" paths, not "target" paths.
     """
@@ -298,9 +295,8 @@ def _analyze_dirs_to_be_created(
     # remove existing dirs that out of search roots
     search_roots = _get_search_roots(shrink=True)
     for d in tuple(out):
-        if any(x.startswith(d + '/') for x in search_roots):
+        if any(fs.is_parent(d, x) for x in search_roots):
             print('pick out high-priority existing dir', d, ':vi')
-            # assert fs.exist(d)
             out.remove(d)
     return out
 
@@ -308,8 +304,8 @@ def _analyze_dirs_to_be_created(
 def _analyze_incremental_updates(
     old_resources_map: T.ResourcesMap,
     new_resources_map: T.ResourcesMap,
-    source_root: str = None,
-    known_roots: t.Tuple[str, ...] = None,
+    source_root: t.Optional[str] = None,
+    known_roots: t.Optional[t.Tuple[str, ...]] = None,
 ) -> t.Iterator[t.Tuple[str, str]]:
     """
     yields: ((action, path), ...)
@@ -421,6 +417,8 @@ def _mount_resources(
                 if fs.exist(candidates[0]):
                     return candidates[0].replace('\\', '/')
             else:
+                # currently we don't allow multiple candidates. i think it's
+                # fine to unlock this behavior. let me review this case later.
                 raise Exception(relpath, candidates, nullable)
         else:
             if fs.exist(x := '{}/{}'.format(base_dir, relpath)):
@@ -488,22 +486,29 @@ def _mount_resources(
 
 
 def _get_common_roots(
-    absdirs: t.Iterable[str], single_root: str = None
+    absdirs: t.Iterable[str], single_root: t.Optional[str] = None
 ) -> t.Dict[str, t.Set[str]]:
     """
     returns: {known_root: {relpath, ...}, ...}
-        note that all `return:keys` are existing dirs. but their sequence is -
-        not guaranteed to be ordered. i.e. the returned dict cannot be -
-        definitely treated as an "ordered" dict, though in most cases it is.
+        note that all `return:keys` are existing dirs. but the keys' sequence is
+        not guaranteed to be ordered. i.e. the returned dict cannot be
+        definitely treated as an "ordered" dict, though in most cases it should
+        be.
     """
     if single_root:
+        # all paths must be children of `single_root`, otherwise, there are two
+        # cases:
+        # 1. path is parent of `single_root`, ignore it.
+        # 2. path is unrelated to `single_root`, raise exception.
         r = single_root + '/'
         x = set()
         for d in absdirs:
             if d.startswith(r):
                 x.add(d.removeprefix(r))
             else:
-                assert r.startswith(d + '/'), (r, d)
+                assert fs.is_parent(d, r), np.format(
+                    single_root, d, absdirs, ':nl'
+                )
         return {single_root: x}
 
     search_roots = _get_search_roots(shrink=True)

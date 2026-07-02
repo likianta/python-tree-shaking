@@ -1,13 +1,11 @@
 import atexit
 import hashlib
-import os
-import sys
 import typing as t
-from functools import cache
 from functools import partial
-from lk_utils import fs
-from lk_utils import run_cmd_args
 from os.path import isabs
+
+from lk_utils import fs
+
 from .cache import cache_root
 from .path_scope import path_scope
 
@@ -83,10 +81,10 @@ graphs_root = '{}/module_graphs'.format(cache_root)
 def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     """
     file:
-        - the file ext must be '.yaml' or '.yml'.
+        - file can be YAML or JSON.
         - we suggest using 'xxx-modules.yaml', 'xxx_modules.yaml' or just
         'modules.yaml' as the file name.
-        see example of `[project] depsland : -
+        see example of `[project] depsland :
         /build/build_tool/_tree_shaking_model.yaml`.
     """
     cfg_file: str = fs.abspath(file)
@@ -159,44 +157,51 @@ def hash_path_to_uid(abspath: str) -> str:
     return hashlib.md5(abspath.encode()).hexdigest()
 
 
-@cache
 def _get_venv_root(working_root: str) -> T.NormPath:
     """
     find venv root (the "site-packages" folder) by `poetry env` command.
     """
-    # https://stackoverflow.com/questions/75232761/
-    if 'VIRTUAL_ENV' in os.environ:
-        del os.environ['VIRTUAL_ENV']
-    venv_root = fs.normpath(
-        t.cast(
-            str,
-            run_cmd_args(
-                (
-                    sys.executable,
-                    '-m',
-                    'poetry',
-                    'env',
-                    'info',
-                    '--path',
-                    '--no-ansi',
-                    '--directory',
-                    working_root,
-                ),
-                cwd=working_root,
-            ),
-        )
-    )
-    print(venv_root)
-    assert venv_root.endswith('py3.12')
-
-    if os.name == 'nt':
-        out = '{}/Lib/site-packages'.format(venv_root)
+    if fs.exist('{}/.venv'.format(working_root)):
+        assert fs.exist('{}/.venv/Lib/site-packages'.format(working_root))
+        return '{}/.venv/Lib/site-packages'.format(working_root)
     else:
-        out = '{}/lib/python{}.{}/site-packages'.format(
-            venv_root, sys.version_info.major, sys.version_info.minor
+        raise Exception(
+            '".venv" folder should be under working root', working_root
         )
-    assert fs.exist(out), (working_root, venv_root, out)
-    return out
+
+    # # https://stackoverflow.com/questions/75232761/
+    # if 'VIRTUAL_ENV' in os.environ:
+    #     del os.environ['VIRTUAL_ENV']
+    # venv_root = fs.normpath(
+    #     t.cast(
+    #         str,
+    #         run_cmd_args(
+    #             (
+    #                 sys.executable,
+    #                 '-m',
+    #                 'poetry',
+    #                 'env',
+    #                 'info',
+    #                 '--path',
+    #                 '--no-ansi',
+    #                 '--directory',
+    #                 working_root,
+    #             ),
+    #             cwd=working_root,
+    #         ),
+    #     )
+    # )
+    # print(venv_root)
+    # assert venv_root.endswith('py3.12')
+
+    # if os.name == 'nt':
+    #     out = '{}/Lib/site-packages'.format(venv_root)
+    # else:
+    #     out = '{}/lib/python{}.{}/site-packages'.format(
+    #         venv_root, sys.version_info.major, sys.version_info.minor
+    #     )
+    # assert fs.exist(out), (working_root, venv_root, out)
+    # return out
 
 
 def _save_graph_alias(config: T.Config1) -> None:

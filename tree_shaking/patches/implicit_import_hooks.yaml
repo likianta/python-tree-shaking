@@ -1,15 +1,32 @@
 altair:
-  version: 6.0.0
+  version: 6.2.1
   files:
     - jupyter/js/index.js
     - vegalite/v*/__init__.py
     - vegalite/v*/schema/vega-lite-schema.json
     - vegalite/v*/schema/vega-themes.json
+    - ../altair-*.dist-info/
     - ../anywidget-*.dist-info/?
     - ../jsonschema-*.dist-info/
     - ../jsonschema_specifications/schemas/
     # - ../pyarrow/
     - ../rpds/rpds.*.pyd
+emei_kit_r6p0:
+  files:
+    - _regmap_files/
+h5py:
+  files:
+    # - '*.dll'
+    # - '*.pyd'
+    # - _conv.*.pyd
+    # - _proxy.*.pyd
+    # - defs.*.pyd
+    # - h5ac.*.pyd
+    # - hdf5.dll
+    # - hdf5_hl.dll
+    # - utils.*.pyd
+    # - z.dll
+    - ../h5py/
 httptools:
   files:
     - parser/parser.*.pyd
@@ -58,8 +75,9 @@ modbus_tk:
 #     - random/mtrand.*.pyd
 #     - ../numpy.libs/
 numpy:
-  version: 2.0.2
+  version: 2.4.6
   files:
+    - _core/_exceptions.py
     - _core/_multiarray_tests.*.pyd
     - fft/_pocketfft_umath.*.pyd
     - linalg/_umath_linalg.*.pyd
@@ -263,13 +281,17 @@ rich:
     - ../pygments/unistring.py
 scipy:
   files:
-    - _cyutility.cp312-win_amd64.dll.a
-    - _cyutility.cp312-win_amd64.pyd
+    - _cyutility.*.dll.a
+    - _cyutility.*.pyd
     - _lib/
     - constants/
     - interpolate/
+    - io/matlab/_mio_utils.*.pyd
+    - io/matlab/_mio5_utils.*.pyd
+    - io/matlab/_streams.*.pyd
     - linalg/
     - optimize/
+    - signal/
     - sparse/
     - spatial/
     - special/

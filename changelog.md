@@ -8,6 +8,10 @@
 
 ---
 
+### 0.2.6 (wip)
+
+- Remove support of dynamically getting poetry venv path.
+
 ### 0.2.5 (2026-04-30)
 
 - Read cache location from environment variable `TREE_SHAKING_CACHE_ROOT`.
