@@ -72,7 +72,7 @@ def dump_tree(
     )
 
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
-    print(len(tobe_created_dirs), len(files), len(dirs), ':v1')
+    print(len(tobe_created_dirs), len(files), len(dirs), ':nv2')
 
     if _check_if_first_time_export(target):
         _first_time_exports(

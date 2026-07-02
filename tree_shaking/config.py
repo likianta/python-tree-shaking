@@ -28,7 +28,6 @@ class T:
     RelPath = str  # relative path, starts from `root`.
     SpecialPath = str  # '$venv' or `$venv/...`
 
-    # noinspection PyTypedDict
     Config0 = t.TypedDict(
         'Config0',
         {
@@ -37,7 +36,7 @@ class T:
             'entries': t.List[RelPath],  # must ends with ".py"
             'ignores': t.List[IgnoredName],
             'export': t.Optional[
-                t.TypedDict(
+                t.TypedDict(  # ty: ignore
                     'ExportOption0',
                     {
                         'source': t.Union[SpecialPath, AnyDirPath],
@@ -58,7 +57,6 @@ class T:
         }
     """
 
-    # noinspection PyTypedDict
     Config1 = t.TypedDict(
         'Config1',
         {
@@ -66,7 +64,7 @@ class T:
             'search_paths': t.List[NormPath],
             'entries': t.Dict[NormPath, GraphId],
             'ignores': t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-            'export': t.TypedDict(
+            'export': t.TypedDict(  # ty: ignore
                 'ExportOption1', {'source': NormPath, 'target': NormPath}
             ),
         },

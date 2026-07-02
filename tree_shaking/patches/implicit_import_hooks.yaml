@@ -283,6 +283,7 @@ scipy:
   files:
     - _cyutility.*.dll.a
     - _cyutility.*.pyd
+    - _external/array_api_compat/numpy/fft.py
     - _lib/
     - constants/
     - interpolate/

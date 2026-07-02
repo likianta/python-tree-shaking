@@ -10,5 +10,6 @@ from .config import parse_config
 from .export import dump_tree
 from .graph import build_module_graph
 from .graph import build_module_graphs
+from .patch import implicit_hooks_file
 
 __version__ = '0.2.6'
