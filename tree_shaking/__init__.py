@@ -12,4 +12,4 @@ from .graph import build_module_graph
 from .graph import build_module_graphs
 from .patch import implicit_hooks_file
 
-__version__ = '0.2.6'
+__version__ = '0.2.7'

@@ -7,6 +7,7 @@ from os.path import isabs
 from lk_utils import fs
 
 from .cache import cache_root
+from .cache import file_cache
 from .path_scope import path_scope
 
 
@@ -86,6 +87,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         /build/build_tool/_tree_shaking_model.yaml`.
     """
     cfg_file: str = fs.abspath(file)
+    file_cache.init_by_profile(cfg_file)
     cfg_dir: str = fs.parent(cfg_file)
     cfg0: T.Config0 = fs.load(cfg_file)
     cfg1: T.Config1 = {

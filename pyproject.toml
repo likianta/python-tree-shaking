@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.2.6"
+version = "0.2.7a0"
 description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"

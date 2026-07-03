@@ -27,7 +27,6 @@ class T(T0):
     Node = t.Union[ast.Import, ast.ImportFrom]
 
 
-# noinspection PyMethodMayBeStatic
 class FileParser:
     def __init__(self, file: T.FilePath) -> None:
         self.file = file
@@ -71,7 +70,7 @@ class FileParser:
         )
 
     def parse_imports(self) -> T.ImportsInfo:
-        # print(':dv2sp', 'start', self.file)
+        # print(':dv2p', 'start', self.file)
         for node, line in file_cache.parse_nodes(self.file):
             for module in self._get_module_info(node, line):
                 try:
@@ -81,7 +80,7 @@ class FileParser:
                         _broken.add(module.id)
                         # with _err_records.recording():
                         #     print(
-                        #         ':v3l',
+                        #         ':v5l',
                         #         '{}:{}'.format(self.file, node.lineno),
                         #         line.strip(),
                         #         module,
@@ -95,7 +94,7 @@ class FileParser:
                     continue
                 else:
                     yield module, path
-        # print(':vsp', 'end', self.file)
+        # print(':vp', 'end', self.file)
 
     def _check_if_relative_import(self, line: str) -> int:
         x = line.lstrip().split()[1]
