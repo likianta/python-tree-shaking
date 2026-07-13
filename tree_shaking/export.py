@@ -63,9 +63,9 @@ def dump_tree(
     )
 
     source = cfg['export']['source']  # an optional relative path
-    target = cfg['export']['target']  # an valid abspath
+    target = cfg['export']['target']  # a valid abspath
+    print(source, target, ':nv2')
     assert target
-    print(target)
     # del dir_o
 
     files, dirs = _mount_resources(
@@ -508,7 +508,7 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> T.KnownRoots:
         definitely treated as an "ordered" dict, though in most cases it should
         be.
     """
-    search_roots = _get_search_roots(shrink=True)
+    search_roots = _get_search_roots(shrink=False)
     out = defaultdict(set)  # {root: {reldir, ...}, ...}
     for d in absdirs:
         if d in search_roots:
@@ -548,7 +548,7 @@ def _get_search_roots(shrink: bool = False) -> t.Tuple[str, ...]:
                 if (
                     other != root
                     and other not in buried_search_roots
-                    and other.startswith(root + '/')
+                    and fs.is_parent(root, other)
                 ):
                     buried_search_roots.add(other)
         if buried_search_roots:
@@ -588,7 +588,9 @@ def _shrink_to_single_root(
                     ':nl',
                 )
             )
-    assert len(out) == 1
+    assert len(out) == 1, np.format(
+        tuple(known_roots.keys()), single_root, out, ':nl'
+    )
     return out
 
 

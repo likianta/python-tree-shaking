@@ -72,7 +72,7 @@ class FileNodesCache:
                 'save tree shaking cache',
                 len(self._new_files),
                 self._cache_file,
-                ':v7n',
+                ':vn',
             )
             fs.dump(self._cache_data, self._cache_file)
 
