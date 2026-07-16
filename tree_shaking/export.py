@@ -1,14 +1,14 @@
 import os
-import typing as t
+import typing as tp
 from collections import defaultdict
 from glob import glob
 
 import neoprint as np
 from lk_utils import fs
+from lk_utils import uuid
 
 from .cache import cache_root
 from .config import graphs_root
-from .config import hash_path_to_uid
 from .config import parse_config
 from .graph import T as T0
 from .patch import patch
@@ -16,11 +16,11 @@ from .path_scope import path_scope
 
 
 class T(T0):
-    KnownRoots = t.Dict[T0.NormPath, t.Set[T0.RelPath]]
-    TodoDirs = t.Set[str]  # a set of absolute paths
-    TodoFiles = t.Set[str]  # a set of absolute paths
-    Resources = t.Tuple[TodoFiles, TodoDirs]
-    ResourcesMap = t.TypedDict(
+    KnownRoots = tp.Dict[T0.NormPath, tp.Set[T0.RelPath]]
+    TodoDirs = tp.Set[str]  # a set of absolute paths
+    TodoFiles = tp.Set[str]  # a set of absolute paths
+    Resources = tp.Tuple[TodoFiles, TodoDirs]
+    ResourcesMap = tp.TypedDict(
         'ResourcesMap',
         {'created_directories': TodoDirs, 'linked_resources': Resources},
     )
@@ -94,13 +94,11 @@ def dump_tree(
             'created_directories': tobe_created_dirs,
             'linked_resources': (files, dirs),
         },
-        '{}/dumped_resources_maps/{}.pkl'.format(
-            cache_root, x := hash_path_to_uid(target)
-        ),
+        '{}/dumped_resources_maps/{}.pkl'.format(cache_root, x := uuid(target)),
     )
     print('(cache) saved resources map', x, ':v')
 
-    print('done', ':t')
+    print('export done', ':t')
 
 
 def _first_time_exports(
@@ -108,7 +106,7 @@ def _first_time_exports(
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
     copyfiles: bool,
-    sole_root: t.Optional[str] = None,
+    sole_root: tp.Optional[str] = None,
     dry_run: bool = False,
 ) -> None:
     if not fs.exist(root) and not dry_run:
@@ -194,16 +192,12 @@ def _incremental_updates(
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
     copyfiles: bool,
-    sole_root: t.Optional[str] = None,
+    sole_root: tp.Optional[str] = None,
     dry_run: bool = False,
-    _source_root: t.Optional[str] = None,  # experimental
+    _source_root: tp.Optional[str] = None,  # experimental
 ) -> None:
     assert fs.exist(
-        x := (
-            '{}/dumped_resources_maps/{}.pkl'.format(
-                cache_root, hash_path_to_uid(root)
-            )
-        )
+        x := ('{}/dumped_resources_maps/{}.pkl'.format(cache_root, uuid(root)))
     ), x  # devnote: if AssertionError, check if file was dumped by another -
     #   venv provider.
     old_res_map: T.ResourcesMap = fs.load(x)
@@ -275,11 +269,7 @@ def _incremental_updates(
                         fs.make_link(path_i, path_o, overwrite=True)
 
     if _source_root and fs.exist(
-        x := (
-            '{}/auxiliary/{}.pkl'.format(
-                cache_root, hash_path_to_uid(_source_root)
-            )
-        )
+        x := ('{}/auxiliary/{}.pkl'.format(cache_root, uuid(_source_root)))
     ):
         print('complete checking content-changed files, delete the auxiliary')
         fs.remove_file(x)
@@ -290,7 +280,7 @@ def _incremental_updates(
 
 def _analyze_dirs_to_be_created(
     files: T.TodoFiles, dirs: T.TodoDirs
-) -> t.Set[str]:
+) -> tp.Set[str]:
     """
     returns: a set of dir paths, the paths are grind down to each level of
     directories.
@@ -311,11 +301,11 @@ def _analyze_dirs_to_be_created(
 def _analyze_incremental_updates(
     old_resources_map: T.ResourcesMap,
     new_resources_map: T.ResourcesMap,
-    source_root: t.Optional[str] = None,
-    known_roots: t.Optional[t.Tuple[str, ...]] = None,
-) -> t.Iterator[
-    t.Tuple[
-        t.Literal[
+    source_root: tp.Optional[str] = None,
+    known_roots: tp.Optional[tp.Tuple[str, ...]] = None,
+) -> tp.Iterator[
+    tp.Tuple[
+        tp.Literal[
             'add_dir',
             'add_file',
             'delete_dir',
@@ -356,9 +346,7 @@ def _analyze_incremental_updates(
 
     if source_root and fs.exist(
         aux_file := (
-            '{}/auxiliary/{}.pkl'.format(
-                cache_root, hash_path_to_uid(source_root)
-            )
+            '{}/auxiliary/{}.pkl'.format(cache_root, uuid(source_root))
         )
     ):
         assert known_roots
@@ -405,8 +393,8 @@ def _init_target_tree(
 def _mount_resources(
     config: T.Config,
     verbose: bool = False,
-    limited_search_root: t.Optional[str] = None,
-) -> t.Tuple[T.TodoFiles, T.TodoDirs]:
+    limited_search_root: tp.Optional[str] = None,
+) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     """
     limited_search_root: an absolute path.
     """
@@ -500,7 +488,7 @@ def _mount_resources(
 # neutral
 
 
-def _get_common_roots(absdirs: t.Iterable[str]) -> T.KnownRoots:
+def _get_common_roots(absdirs: tp.Iterable[str]) -> T.KnownRoots:
     """
     returns: {known_root: {relpath, ...}, ...}
         note that all `return:keys` are existing dirs. but the keys' sequence is
@@ -530,7 +518,7 @@ def _get_common_roots(absdirs: t.Iterable[str]) -> T.KnownRoots:
     return out
 
 
-def _get_search_roots(shrink: bool = False) -> t.Tuple[str, ...]:
+def _get_search_roots(shrink: bool = False) -> tp.Tuple[str, ...]:
     search_roots = set()
     for path, isdir in path_scope.module_2_path.values():
         # e.g.
@@ -561,7 +549,7 @@ def _get_search_roots(shrink: bool = False) -> t.Tuple[str, ...]:
     return tuple(sorted(search_roots, reverse=True))
 
 
-def _grind_down_dirpath(path: str) -> t.Iterator[str]:
+def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
     a, *b = path.split('/')
     yield a
     for c in b:
@@ -594,7 +582,7 @@ def _shrink_to_single_root(
     return out
 
 
-def _split_path(path: str, known_roots: t.Sequence[str]) -> t.Tuple[str, str]:
+def _split_path(path: str, known_roots: tp.Sequence[str]) -> tp.Tuple[str, str]:
     for root in known_roots:
         if path.startswith(root + '/'):
             return root, path.removeprefix(root + '/')

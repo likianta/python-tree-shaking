@@ -1,10 +1,10 @@
 import atexit
-import hashlib
-import typing as t
+import typing as tp
 from functools import partial
 from os.path import isabs
 
 from lk_utils import fs
+from lk_utils import uuid
 
 from .cache import cache_root
 from .cache import file_cache
@@ -14,7 +14,6 @@ from .path_scope import path_scope
 class T:
     AnyDirPath = str
     GraphId = str
-    #   just the md5 value of its abspath. see `_hash_path_to_uid()`.
     IgnoredName = str
     #   - must be lower case.
     #   - use underscore, not hyphen.
@@ -29,18 +28,18 @@ class T:
     RelPath = str  # relative path, starts from `root`.
     SpecialPath = str  # '$venv' or `$venv/...`
 
-    Config0 = t.TypedDict(
+    Config0 = tp.TypedDict(
         'Config0',
         {
             'root': AnyDirPath,
-            'search_paths': t.List[t.Union[RelPath, SpecialPath]],
-            'entries': t.List[RelPath],  # must ends with ".py"
-            'ignores': t.List[IgnoredName],
-            'export': t.Optional[
-                t.TypedDict(  # ty: ignore
+            'search_paths': tp.List[tp.Union[RelPath, SpecialPath]],
+            'entries': tp.List[RelPath],  # must ends with ".py"
+            'ignores': tp.List[IgnoredName],
+            'export': tp.Optional[
+                tp.TypedDict(
                     'ExportOption0',
                     {
-                        'source': t.Union[SpecialPath, AnyDirPath],
+                        'source': tp.Union[SpecialPath, AnyDirPath],
                         'target': AnyDirPath,
                     },
                 )
@@ -58,14 +57,14 @@ class T:
         }
     """
 
-    Config1 = t.TypedDict(
+    Config1 = tp.TypedDict(
         'Config1',
         {
             'root': NormPath,
-            'search_paths': t.List[NormPath],
-            'entries': t.Dict[NormPath, GraphId],
-            'ignores': t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-            'export': t.TypedDict(  # ty: ignore
+            'search_paths': tp.List[NormPath],
+            'entries': tp.Dict[NormPath, GraphId],
+            'ignores': tp.Union[tp.FrozenSet[str], tp.Tuple[str, ...]],
+            'export': tp.TypedDict(
                 'ExportOption1', {'source': NormPath, 'target': NormPath}
             ),
         },
@@ -107,7 +106,7 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
     # 2
     _root = cfg1['root']
 
-    def fmtpath(p: t.Union[T.RelPath, T.SpecialPath]) -> T.NormPath:
+    def fmtpath(p: tp.Union[T.RelPath, T.SpecialPath]) -> T.NormPath:
         if p == '':
             raise ValueError('path cannot be empty')
         if p == '.':
@@ -119,16 +118,14 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         assert fs.exist(out), out
         return out
 
-    temp = cfg1['search_paths']
     for p in map(fmtpath, reversed(cfg0['search_paths'])):
-        temp.append(p)
+        cfg1['search_paths'].append(p)
         path_scope.add_scope(p)
 
     # 3
-    temp = cfg1['entries']
     for p in cfg0['entries']:
         p = fmtpath(p)
-        temp[p] = hash_path_to_uid(p)
+        cfg1['entries'][p] = uuid(p)
 
     # 4
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
@@ -151,10 +148,6 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
 
     # print(cfg1, ':l')
     return cfg1
-
-
-def hash_path_to_uid(abspath: str) -> str:
-    return hashlib.md5(abspath.encode()).hexdigest()
 
 
 def _get_venv_root(working_root: str) -> T.NormPath:

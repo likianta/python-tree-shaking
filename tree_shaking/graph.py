@@ -1,33 +1,29 @@
-import hashlib
-import typing as t
+import typing as tp
+
 from lk_utils import fs
-from textwrap import dedent
+from lk_utils import uuid
+from lk_utils import dedent
+
 from .cache import cache_root
 from .cache import file_cache
 from .config import T as T0
 from .config import graphs_root
-from .config import hash_path_to_uid
 from .config import parse_config
 from .finder import Finder
 
 
 class T(T0):
-    DumpedModuleGraph = t.TypedDict(
+    DumpedModuleGraph = tp.TypedDict(
         'DumpedModuleGraph',
-        {
-            'source_roots': t.Dict[str, str],
-            'modules': t.Dict[str, str],
-        },
+        {'source_roots': tp.Dict[str, str], 'modules': tp.Dict[str, str]},
     )
-    """
-        {
-            'source_roots': {uid: root_path, ...},
-                uid: 8-char md5 hash of root_path.
-                root_path: absolute dirpath.
-            'modules': {module: short_path, ...}
-                short_path: `<uid>/path/to/module.py`
-        }
-    """
+    #   {
+    #       'source_roots': {uid: root_path, ...},
+    #           uid: 8-char md5 hash of root_path.
+    #           root_path: absolute dirpath.
+    #       'modules': {module: short_path, ...}
+    #           short_path: `<uid>/path/to/module.py`
+    #   }
 
 
 # FIXME
@@ -70,7 +66,7 @@ def build_module_graphs(config_file: str) -> None:
         fs.dump(result, file_o)
         if file_cache.changed_files:
             file_aux = '{}/auxiliary/{}.pkl'.format(
-                cache_root, hash_path_to_uid(cfg['root'])
+                cache_root, uuid(cfg['root'])
             )
             if fs.exist(file_aux):
                 changed_files = fs.load(file_aux) | file_cache.changed_files
@@ -85,7 +81,7 @@ def build_module_graphs(config_file: str) -> None:
                     graph id is {}.
                     found {} source roots,
                     dumped {} items,
-                    see result at "{}".
+                    see result at "{}" ({}).
                 """.format(
                     p,
                     n,
@@ -94,20 +90,20 @@ def build_module_graphs(config_file: str) -> None:
                     '<tree_shaking>/<graphs_root>/{}'.format(
                         fs.relpath(file_o, graphs_root)
                     ),
-                )
+                    fs.filesize(file_o, str),
+                ),
+                indent=4,
+                lstrip=False,
             ),
         )
 
 
-def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
+def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
     out: T.DumpedModuleGraph = {'source_roots': {}, 'modules': {}}
-
-    def hash_content(text: str) -> str:
-        return hashlib.md5(text.encode()).hexdigest()[::4]  # length: 8
 
     temp = out['source_roots']
     for root in sorted(config['search_paths'], reverse=True):
-        temp[hash_content(root)] = root
+        temp[uuid(root)] = root
     _frozen_source_roots = tuple((k, v + '/') for k, v in temp.items())
     used_source_roots = set()
 
@@ -131,4 +127,4 @@ def _reformat_paths(modules: t.Dict[str, str], config: T.Config) -> dict:
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
 
-    return t.cast(dict, out)
+    return tp.cast(dict, out)

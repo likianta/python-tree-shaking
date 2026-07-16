@@ -1,8 +1,9 @@
-import typing as t
+import typing as tp
 from dataclasses import dataclass
 from functools import cached_property
 
 from lk_utils import fs
+
 from .path_scope import path_scope
 
 
@@ -12,22 +13,22 @@ class ModuleInfo:
     name1: str  # e.g. 'b.c'
     name2: str  # e.g. 'd'
     level: int  # e.g. 1
-    base_dir: t.Optional[str]  # e.g. '<path/to/a>'
-    full_name: str = None  # e.g. 'a.b.c.d'
-    
+    base_dir: tp.Optional[str]  # e.g. '<path/to/a>'
+    full_name: tp.Optional[str] = None  # e.g. 'a.b.c.d'
+
     # def __str__(self) -> str:
     #     return self.id
-    
+
     @cached_property
     def relname(self) -> str:
         if self.level:
-            return '.'.join(self.name0.split('.')[self.level:])
+            return '.'.join(self.name0.split('.')[self.level :])
         return self.name0
-    
+
     @cached_property
     def id(self) -> str:
         return '{}.{}'.format(self.name0, self.name2).rstrip('.')
-    
+
     @cached_property
     def top(self) -> str:
         return self.name0.split('.', 1)[0]
@@ -42,10 +43,11 @@ class T:
 
 # noinspection PyMethodMayBeStatic
 class ModuleInspector:
-    known_stdlib_module_names: t.FrozenSet[str]
-    module_name_2_file: t.Dict[T.ModuleId, T.FilePath]
-    
-    def __init__(self, ignores: t.Iterable[str] = ()) -> None:
+    known_stdlib_module_names: tp.FrozenSet[str]
+    module_name_2_file: tp.Dict[T.ModuleId, T.FilePath]
+
+    def __init__(self, ignores: tp.Iterable[str] = ()) -> None:
+        # fmt: off
         self.known_stdlib_module_names = frozenset((
             # ref: https://github.com/mgedmin/findimports/blob/master
             #   /findimports.py
@@ -128,7 +130,8 @@ class ModuleInspector:
             'xdrlib', 'xml', 'xmlrpc',
             'zipapp', 'zipfile', 'zipimport', 'zlib',
         ))
-        
+        # fmt: on
+
         self.module_name_2_file = {}
         for name in self.known_stdlib_module_names:
             self.module_name_2_file[name] = '<stdlib>'
@@ -137,7 +140,7 @@ class ModuleInspector:
         for name, (path, isdir) in path_scope.module_2_path.items():
             if not isdir:
                 self.module_name_2_file[name] = path
-    
+
     def find_module_path(self, module: T.ModuleInfo) -> T.FilePath:
         if module.id in self.module_name_2_file:
             module.full_name = module.id.removesuffix('.*')
@@ -159,11 +162,11 @@ class ModuleInspector:
                     module.full_name = module.name0
                     self.module_name_2_file[module.id] = out
                     return out
-        
+
         if module.top in self.known_stdlib_module_names:
             self.module_name_2_file[module.id] = '<stdlib>'
             return '<stdlib>'
-        
+
         def determine_path() -> T.FilePath:
             if module.base_dir:
                 if module.name1:
@@ -172,9 +175,9 @@ class ModuleInspector:
                             '{}/{}/{}'.format(
                                 module.base_dir,
                                 module.name1.replace('.', '/'),
-                                module.name2
+                                module.name2,
                             ),
-                            case_sensitive=True
+                            case_sensitive=True,
                         ):
                             # module.full_name = module.id
                             module.full_name = '{}.{}'.format(
@@ -182,9 +185,11 @@ class ModuleInspector:
                             )
                             self.module_name_2_file[module.id] = x
                             return x
-                    if x := self._quick_check_path('{}/{}'.format(
-                        module.base_dir, module.name1.replace('.', '/')
-                    )):
+                    if x := self._quick_check_path(
+                        '{}/{}'.format(
+                            module.base_dir, module.name1.replace('.', '/')
+                        )
+                    ):
                         module.full_name = module.name0
                         self.module_name_2_file[module.name0] = x
                         self.module_name_2_file[module.id] = x
@@ -195,7 +200,7 @@ class ModuleInspector:
                     else:
                         if x := self._quick_check_path(
                             '{}/{}'.format(module.base_dir, module.name2),
-                            case_sensitive=True
+                            case_sensitive=True,
                         ):
                             module.full_name = module.id  # FIXME?
                             self.module_name_2_file[module.id] = x
@@ -211,13 +216,12 @@ class ModuleInspector:
                         if x := self._quick_check_path(
                             '{}/{}/{}'.format(
                                 top_path,
-                                module.name0
-                                    .replace(module.top, '', 1)
-                                    .lstrip('.')
-                                    .replace('.', '/'),
-                                module.name2
+                                module.name0.replace(module.top, '', 1)
+                                .lstrip('.')
+                                .replace('.', '/'),
+                                module.name2,
                             ).replace('//', '/'),
-                            case_sensitive=True
+                            case_sensitive=True,
                         ):
                             module.base_dir = fs.parent(x)
                             # module.full_name = module.id
@@ -229,11 +233,11 @@ class ModuleInspector:
                     if x := self._quick_check_path(
                         '{}/{}'.format(
                             top_path,
-                            '' if module.name0 == module.top else
-                            module.name0
-                                .replace(module.top, '', 1)
-                                .lstrip('.')
-                                .replace('.', '/'),
+                            ''
+                            if module.name0 == module.top
+                            else module.name0.replace(module.top, '', 1)
+                            .lstrip('.')
+                            .replace('.', '/'),
                         ).rstrip('/')
                     ):
                         module.base_dir = fs.parent(x)
@@ -248,14 +252,14 @@ class ModuleInspector:
                     self.module_name_2_file[module.id] = top_path
                     return top_path
             raise ModuleNotFound(module)
-        
+
         assert (out := determine_path())
         # assert module.base_dir
         return out
-    
+
     def _quick_check_path(
         self, possible_path: str, case_sensitive: bool = False
-    ) -> t.Optional[T.FilePath]:
+    ) -> tp.Optional[T.FilePath]:
         # if fs.isdir(possible_path):
         #     if fs.exist(x := f'{possible_path}/__init__.py'):
         #         return fs.normpath(x) if case_sensitive else x
@@ -290,12 +294,6 @@ class ModuleInspector:
                         return x
 
 
-def _debug_interrupt() -> None:
-    if input('continue: ') == 'x':
-        import sys
-        sys.exit()
-
-
 class ModuleNotFound(Exception):
     """
     module not found.
@@ -305,6 +303,7 @@ class ModuleNotFound(Exception):
         - it is a function/class/variable/builtin name not a module name in
             source.
     """
+
     pass
 
 

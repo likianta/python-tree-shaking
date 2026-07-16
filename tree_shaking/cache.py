@@ -1,28 +1,27 @@
 import ast
 import atexit
-import hashlib
 import os
-import typing as t
+import typing as tp
 
 from lk_utils import fs
+from lk_utils import uuid
 
 
 class T:
-    FileId = str
-    # {file_id: tuple nodes, ...}
-    #     nodes: ((node, line), ...)
-    #         node: ast.Import | ast.ImportFrom
-    #         line: str, preserves indentation
-    CacheData = t.Dict[
-        FileId, t.Tuple[t.Tuple[t.Union[ast.Import, ast.ImportFrom], str], ...]
-    ]
+    AstNode = tp.Union[ast.Import, ast.ImportFrom]
+    FileId = str  # see `get_file_id`
+    CacheData = tp.Dict[FileId, tp.Tuple[tp.Tuple[AstNode, str], ...]]
+    #   {file_id: tuple nodes, ...}
+    #       nodes: ((node, line), ...)
+    #           node: ast.Import | ast.ImportFrom
+    #           line: str, preserves indentation
 
 
 class FileNodesCache:
     _cache_data: T.CacheData
     _cache_file: str
     _cache_root: str
-    _new_files: t.Set[str]
+    _new_files: tp.Set[str]
 
     def __init__(self, cache_root: str) -> None:
         self._cache_root = cache_root
@@ -31,56 +30,53 @@ class FileNodesCache:
 
     def init_by_profile(self, profile: str) -> None:
         self._cache_file = '{}/cached_by_profile/{}.pkl'.format(
-            self._cache_root, hashlib.md5(profile.encode()).hexdigest()
+            self._cache_root, uuid(profile)
         )
         self._cache_data = fs.load(self._cache_file, default=lambda: {})
 
     @property
-    def changed_files(self) -> t.Set[str]:
+    def changed_files(self) -> tp.Set[str]:
         return self._new_files
 
-    def parse_nodes(
-        self, file: str
-    ) -> t.Iterator[t.Tuple[t.Union[ast.Import, ast.ImportFrom], str]]:
+    def parse_nodes(self, file: str) -> tp.Iterator[tp.Tuple[T.AstNode, str]]:
         file_id = get_file_id(file)
         if file_id in self._cache_data:
-            #   if AttributeError happens to `self._cache_data`, check if you 
+            #   if AttributeError happens to `self._cache_data`, check if you
             #   forget to call `init_by_profile`.
             yield from self._cache_data[file_id]
             return
-        print(':vi', 'parsing file', file)
+        print(':vi', 'ast parsing file', file)
         self._new_files.add(file)
         source = fs.load(file, 'plain')
         lines = source.splitlines()
+        nodes = []
         try:
             tree = ast.parse(source, file)
         except SyntaxError:
             print(':v8', 'syntax error when parsing file', file_id, file)
-            nodes = ()
         else:
-            nodes = []
             for node in ast.walk(tree):
                 if isinstance(node, (ast.Import, ast.ImportFrom)):
                     line = lines[node.lineno - 1]
                     yield node, line
                     nodes.append((node, line))
+        print(':v', file, file_id, len(nodes))
         self._cache_data[file_id] = tuple(nodes)
 
     def _save(self) -> None:
         if self._new_files:
+            fs.dump(self._cache_data, self._cache_file)
             print(
-                'save tree shaking cache',
+                'saved tree shaking cache',
                 len(self._new_files),
                 self._cache_file,
-                ':vn',
+                fs.filesize(self._cache_file, str),
+                ':vnl',
             )
-            fs.dump(self._cache_data, self._cache_file)
 
 
 def get_file_id(file: str) -> T.FileId:
-    return hashlib.md5(
-        '{}:{}'.format(file, fs.filetime(file)).encode()
-    ).hexdigest()
+    return uuid('{}:{}'.format(file, fs.filetime(file)))
 
 
 # ------------------------------------------------------------------------------

@@ -10,7 +10,7 @@
 
 ### 0.2.7 (wip)
 
-- Split cache data by profile.
+- Store cache data separately by profile.
 
 ### 0.2.6 (2026-07-02)
 
