@@ -27,28 +27,6 @@ class T(T0):
     #   }
 
 
-# FIXME
-def build_module_graph(
-    script: str, graph_id: T.GraphId, sort: bool = True
-) -> str:
-    file_i = fs.abspath(script)
-    file_o = '{}/{}.yaml'.format(graphs_root, graph_id)
-
-    finder = Finder(())
-    result = dict(finder.get_all_imports(file_i))
-    if sort:
-        result = dict(sorted(result.items()))
-    # for module in result:
-    #     print(':i', module)
-    fs.dump(result, file_o)
-
-    print(
-        ':v2t',
-        'dumped {} items. see result at "{}"'.format(len(result), file_o),
-    )
-    return file_o
-
-
 def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
@@ -60,30 +38,29 @@ def build_module_graphs(config_file: str) -> None:
 
     new_parsing_triggered.bind(_record_changed_file)
 
-    for p, i in cfg['entries'].items():  # 'p': path, 'i': id
-        print('entry at {} ({})'.format(p, i), ':i')
-        # build_module_graph(p, n)
-        if not cache_maker.is_cached(p, 'module_graphs'):
-            file_i = p
+    for entry_path in cfg['entries']:
+        print('entry at {}'.format(entry_path), ':i')
+        if not cache_maker.is_cached(entry_path, 'module_graphs'):
+            file_i = entry_path
             result = finder.get_all_imports(file_i)
             result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result
             # refs = finder.references
-            # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
-            file_o = cache_maker.save_cache(p, 'module_graphs', result)
+            # result['references'] = {
+            #   k: sorted(refs[k]) for k in sorted(refs.keys())
+            # }
+            file_o = cache_maker.save_cache(entry_path, 'module_graphs', result)
 
             print(
                 ':v2ti',
                 dedent(
                     """
                     entry: {}
-                    graph_id: {}
                     found_source_roots_count: {}
                     dumped_modules_count: {}
                     dumped_result_file: {} ({})
                     """.format(
-                        p,
-                        i,
+                        entry_path,
                         len(result['source_roots']),
                         len(result['modules']),
                         '<tree_shaking_cache>/{}'.format(

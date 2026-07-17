@@ -2,7 +2,6 @@ import typing as tp
 from os.path import isabs as is_abspath
 
 from lk_utils import fs
-from lk_utils import uuid
 
 from .cache2 import cache_maker
 from .path_scope import path_scope
@@ -10,7 +9,6 @@ from .path_scope import path_scope
 
 class T:
     AnyDirPath = str
-    GraphId = str
     IgnoredName = str
     #   - must be lower case.
     #   - use underscore, not hyphen.
@@ -57,7 +55,7 @@ class T:
         {
             'root': NormPath,
             'search_paths': tp.List[NormPath],
-            'entries': tp.Dict[NormPath, GraphId],
+            'entries': tp.Tuple[NormPath, ...],
             'ignores': tp.Union[tp.FrozenSet[str], tp.Tuple[str, ...]],
             'export': tp.TypedDict(  # ty: ignore
                 'ExportOption1', {'source': NormPath, 'target': NormPath}
@@ -66,9 +64,6 @@ class T:
     )
 
     Config = Config1
-
-
-# graphs_root = '{}/module_graphs'.format(cache_root)
 
 
 def parse_config(file: str, **kwargs) -> T.Config:
@@ -90,7 +85,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
     cfg1: T.Config1 = {
         'root': '',
         'search_paths': [],
-        'entries': {},
+        'entries': (),
         'ignores': (),
         'export': {'source': '', 'target': ''},
     }
@@ -121,9 +116,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
         path_scope.add_scope(p)
 
     # 3
-    for p in cfg0['entries']:
-        p = fmtpath(p)
-        cfg1['entries'][p] = uuid(p)
+    cfg1['entries'] = tuple(map(fmtpath, cfg0['entries']))
 
     # 4
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
@@ -157,37 +150,3 @@ def _get_venv_root(working_root: str) -> T.NormPath:
         raise Exception(
             '".venv" folder should be under working root', working_root
         )
-
-    # # https://stackoverflow.com/questions/75232761/
-    # if 'VIRTUAL_ENV' in os.environ:
-    #     del os.environ['VIRTUAL_ENV']
-    # venv_root = fs.normpath(
-    #     t.cast(
-    #         str,
-    #         run_cmd_args(
-    #             (
-    #                 sys.executable,
-    #                 '-m',
-    #                 'poetry',
-    #                 'env',
-    #                 'info',
-    #                 '--path',
-    #                 '--no-ansi',
-    #                 '--directory',
-    #                 working_root,
-    #             ),
-    #             cwd=working_root,
-    #         ),
-    #     )
-    # )
-    # print(venv_root)
-    # assert venv_root.endswith('py3.12')
-
-    # if os.name == 'nt':
-    #     out = '{}/Lib/site-packages'.format(venv_root)
-    # else:
-    #     out = '{}/lib/python{}.{}/site-packages'.format(
-    #         venv_root, sys.version_info.major, sys.version_info.minor
-    #     )
-    # assert fs.exist(out), (working_root, venv_root, out)
-    # return out
