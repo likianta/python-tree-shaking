@@ -1,3 +1,4 @@
+import atexit
 import os
 import typing as tp
 
@@ -38,6 +39,7 @@ class _CacheMaker:
     def __init__(self, cache_root: str) -> None:
         self._cache_root = cache_root
         self._tobe_deleted_files = set()
+        atexit.register(self._delete_outdated_files)
 
     def is_cached(self, source_file: str, namespace: str) -> bool:
         if source_file in self._tobe_deleted_files:
@@ -84,6 +86,17 @@ class _CacheMaker:
         if file in self._tobe_deleted_files:
             self._tobe_deleted_files.remove(file)
         return file
+
+    def _delete_outdated_files(self) -> None:
+        if self._tobe_deleted_files:
+            for file in self._tobe_deleted_files:
+                print(
+                    ':v7i',
+                    'remove outdated cache file',
+                    fs.relpath(file, self._cache_root),
+                )
+                fs.remove(file)
+            self._tobe_deleted_files.clear()
 
 
 cache_maker = _CacheMaker(cache_root)
