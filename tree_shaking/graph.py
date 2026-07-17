@@ -1,7 +1,7 @@
 import typing as tp
 
-from lk_utils import dedent
 from lk_utils import fs
+from lk_utils import textwrap as tw
 from lk_utils import uuid
 from neoprint import format
 
@@ -39,7 +39,7 @@ def build_module_graphs(config_file: str) -> None:
     new_parsing_triggered.bind(_record_changed_file)
 
     for entry_path in cfg['entries']:
-        print('entry at {}'.format(entry_path), ':i')
+        print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
         if not cache_maker.is_cached(entry_path, 'module_graphs'):
             file_i = entry_path
             result = finder.get_all_imports(file_i)
@@ -53,15 +53,22 @@ def build_module_graphs(config_file: str) -> None:
 
             print(
                 ':v2ti',
-                dedent(
+                tw.wrap(
                     """
                     entry: {}
-                    found_source_roots_count: {}
+                    source_roots: 
+                        {}
                     dumped_modules_count: {}
-                    save_result_to_cache_file: {} ({})
+                    cache: {} ({})
                     """.format(
                         entry_path,
-                        len(result['source_roots']),
+                        tw.join(
+                            (
+                                '{}: {}'.format(k, v)
+                                for k, v in result['source_roots'].items()
+                            ),
+                            indent=24,
+                        ),
                         len(result['modules']),
                         '<tree_shaking_cache>/{}'.format(
                             fs.relpath(file_o, cache_root)

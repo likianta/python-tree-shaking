@@ -58,6 +58,10 @@ class _CacheMaker:
     def get_cache(
         self, source_file: str, namespace: str, persistent: bool = False
     ) -> tp.Optional[tp.Any]:
+        """
+        notice: the return value may be empty list, empty dict or something.
+        you should not use generic `if data: ...` to check it.
+        """
         if persistent and (source_file, namespace) in self._quick_fetches:
             return self._quick_fetches[(source_file, namespace)]
 

@@ -8,15 +8,11 @@
 
 ---
 
-### 0.3.0 (wip)
+### 0.3.0 (2026-07-17)
 
 - New cache system.
 
 ---
-
-### 0.2.7 (wip)
-
-- Store cache data separately by profile.
 
 ### 0.2.6 (2026-07-02)
 

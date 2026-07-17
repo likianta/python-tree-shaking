@@ -64,7 +64,7 @@ def dump_tree(
 
     source = cfg['export']['source']  # an optional relative path
     target = cfg['export']['target']  # a valid abspath
-    print(source, target, ':nv2')
+    print(source, target, ':nv2l')
     assert target
     # del dir_o
 
@@ -73,7 +73,7 @@ def dump_tree(
     )
 
     tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
-    print(len(tobe_created_dirs), len(files), len(dirs), ':nv2')
+    print(len(tobe_created_dirs), len(files), len(dirs), ':n')
 
     if _check_if_first_time_export(target):
         _first_time_exports(
@@ -98,7 +98,7 @@ def dump_tree(
     )
     print('(cache) saved resources map', x, ':v')
 
-    print('export done', ':t')
+    print('export done', ':tv4')
 
 
 def _first_time_exports(
@@ -262,7 +262,7 @@ def _incremental_updates(
                 case 'make_dirs':
                     fs.make_dirs(path_o)
                 case 'update_file':
-                    print(':vl', path_i, path_o)
+                    # print(':vl', path_i, path_o)
                     if copyfiles:
                         fs.copy_file(path_i, path_o, overwrite=True)
                     else:
@@ -271,7 +271,11 @@ def _incremental_updates(
     if _source_root and fs.exist(
         x := ('{}/auxiliary/{}.pkl'.format(cache_root, uuid(_source_root)))
     ):
-        print('complete checking content-changed files, delete the auxiliary')
+        print(
+            'complete checking content-changed files, delete the auxiliary',
+            x,
+            ':v7',
+        )
         fs.remove_file(x)
 
 
@@ -344,6 +348,7 @@ def _analyze_incremental_updates(
     for d in sorted(d2d0 - d2d1, reverse=True):
         yield 'delete_dir', d
 
+    content_changed_files_count = 0
     if source_root and fs.exist(
         aux_file := (
             '{}/auxiliary/{}.pkl'.format(cache_root, uuid(source_root))
@@ -353,14 +358,16 @@ def _analyze_incremental_updates(
         known_roots = tuple(x + '/' for x in known_roots)
         for f in sorted(fs.load(aux_file)):
             if f.startswith(known_roots) and fs.exist(f):
-                print(
-                    ':vi',
-                    'detect content-changed file',
-                    fs.relpath(f, source_root),
-                )
+                # print(
+                #     ':vi',
+                #     'detect content-changed file',
+                #     fs.relpath(f, source_root),
+                # )
+                content_changed_files_count += 1
                 if fs.parent(f) not in tree1:
                     yield 'make_dirs', fs.parent(f)
                 yield 'update_file', f
+    print('found content-changed files: {}'.format(content_changed_files_count))
 
 
 def _check_if_first_time_export(root: str) -> bool:
@@ -436,6 +443,7 @@ def _mount_resources(
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
             entry_path, 'module_graphs'
         )
+        # assert graph is not None
 
         limited_uid = None
         if limited_search_root:

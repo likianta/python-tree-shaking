@@ -46,11 +46,13 @@ class Finder:
         yields:
             ((module_name, file_path), ...)
         """
-        if x := cache_maker.get_cache(
-            script,
-            'all_imports_{}'.format(1 if include_self else 0),
-            persistent=True,
-        ):
+        if (
+            x := cache_maker.get_cache(
+                script,
+                'all_imports_{}'.format(1 if include_self else 0),
+                persistent=True,
+            )
+        ) is not None:
             return x
         self._clear_holders()
         out = dict(self._get_all_imports(script, include_self))

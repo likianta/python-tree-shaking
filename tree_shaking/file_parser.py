@@ -7,8 +7,8 @@ import neoprint as np
 from lk_utils import Signal
 from lk_utils import fs
 
-from .cache2 import cache_maker
-from .cache2 import cache_root
+from .cache import cache_maker
+from .cache import cache_root
 from .module import ModuleInfo
 from .module import ModuleInspector
 from .module import ModuleNotFound
@@ -16,11 +16,11 @@ from .module import PathNotFound
 from .module import T as T0
 from .path_scope import path_scope
 
-new_parsing_triggered = Signal(str)
+broken_modules = set()
 module_inspector = ModuleInspector(
     ignores=fs.load('{}/ignores.txt'.format(cache_root)).splitlines()
 )
-_broken = set()
+new_parsing_triggered = Signal(str)
 
 
 class T(T0):
@@ -74,9 +74,11 @@ class FileParser:
 
     def parse_imports(self) -> T.ImportsInfo:
         # print(':dv2p', 'start', self.file)
-        if x := cache_maker.get_cache(
-            self.file, 'ast_parsing_results', persistent=True
-        ):
+        if (
+            x := cache_maker.get_cache(
+                self.file, 'ast_parsing_results', persistent=True
+            )
+        ) is not None:
             return x
         new_parsing_triggered.emit(self.file)
         out = []
@@ -85,8 +87,8 @@ class FileParser:
                 try:
                     path = self._get_module_path(module)
                 except (ModuleNotFound, PathNotFound):
-                    if module.id not in _broken:
-                        _broken.add(module.id)
+                    if module.id not in broken_modules:
+                        broken_modules.add(module.id)
                         # with _err_records.recording():
                         #     print(
                         #         ':v5l',
@@ -139,7 +141,7 @@ class FileParser:
 
     def _get_module_info(
         self, node: T.AstNode, line: str
-    ) -> t.Iterator[T.ModuleInfo]:  # noqa
+    ) -> tp.Iterator[T.ModuleInfo]:  # noqa
         if dot_cnt := self._check_if_relative_import(line):
             if dot_cnt == 1:
                 base_module = '.'.join(self.base_module_segs)
