@@ -97,6 +97,7 @@ if _path := os.getenv('TREE_SHAKING_CACHE_ROOT'):
         fs.make_dir('{}/cached_by_profile'.format(_path))
         fs.make_dir('{}/dumped_resources_maps'.format(_path))
         fs.make_dir('{}/module_graphs'.format(_path))
+        fs.make_dir('{}/watch_files'.format(_path))
         fs.dump({}, '{}/module_graphs_alias.yaml'.format(_path))
         fs.dump('', '{}/.init_ok'.format(_path))
     cache_root = _path

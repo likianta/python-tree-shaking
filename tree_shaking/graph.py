@@ -54,9 +54,9 @@ def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
-        print(':v2', p, n)
+        print('entry at {} ({})'.format(p, n), ':i')
         # build_module_graph(p, n)
-        file_i = fs.abspath(p)
+        file_i = p  # abspath
         file_o = '{}/{}.yaml'.format(graphs_root, n)
         result = dict(finder.get_all_imports(file_i))
         # prettify result data for reader friendly
