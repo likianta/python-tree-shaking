@@ -2,22 +2,36 @@
 
 ### ?.?.? (wip)
 
-- Analyze dependency tree
-- Use pyinstaller to hook imports
+- Web UI.
+- Analyze dependency tree.
+- *Use pyinstaller to hook imports.*
 
 ---
 
 ### 0.3.0 (wip)
 
-- Web UI.
-- Allow external paths in config file.
+- New cache system.
 
 ---
 
+### 0.2.7 (wip)
+
+- Store cache data separately by profile.
+
+### 0.2.6 (2026-07-02)
+
+- Remove support of dynamically getting poetry venv path.
+- Enhance stability.
+
+### 0.2.5 (2026-04-30)
+
+- Read cache location from environment variable `TREE_SHAKING_CACHE_ROOT`.
+- `config:export:source` supports special value `$venv`.
+
 ### 0.2.4 (2026-03-06)
 
-- Fix checking case-sensitive paths
-- Routine updates for "implicit_import_hooks"
+- Fix checking case-sensitive paths.
+- Routine updates for "implicit_import_hooks".
 
 ### 0.2.3 (2025-11-04)
 

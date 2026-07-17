@@ -1,18 +1,17 @@
-import atexit
-import hashlib
-import typing as t
-from functools import partial
+import typing as tp
 from os.path import isabs
 
 from lk_utils import fs
+from lk_utils import uuid
 
+from .cache import cache_root
+from .cache import file_cache
 from .path_scope import path_scope
 
 
 class T:
     AnyDirPath = str
     GraphId = str
-    #   just the md5 value of its abspath. see `_hash_path_to_uid()`.
     IgnoredName = str
     #   - must be lower case.
     #   - use underscore, not hyphen.
@@ -25,131 +24,166 @@ class T:
     #       pillow      pil
     NormPath = str  # absolute path.
     RelPath = str  # relative path, starts from `root`.
-    
-    # noinspection PyTypedDict
-    Config0 = t.TypedDict('Config0', {
-        'root'        : AnyDirPath,
-        'search_paths': t.List[RelPath],
-        'entries'     : t.List[RelPath],  # must ends with ".py"
-        'ignores'     : t.List[IgnoredName],
-        'export'      : t.Optional[t.TypedDict('SoleExportOption', {
-            'source': t.Optional[AnyDirPath], 'target': AnyDirPath,
-        })],
-    }, total=False)
-    """
+    SpecialPath = str  # '$venv' or `$venv/...`
+
+    Config0 = tp.TypedDict(
+        'Config0',
         {
-            'root': dirpath,
-            'search_paths': (dirpath, ...),
-            'entries': (script_path, ...),
-            'ignores': (module_name, ...),
-            #   module_name is case sensitive.
-        }
-    """
-    
-    # noinspection PyTypedDict
-    Config1 = t.TypedDict('Config1', {
-        'root'        : NormPath,
-        'search_paths': t.List[NormPath],
-        'entries'     : t.Dict[NormPath, GraphId],
-        'ignores'     : t.Union[t.FrozenSet[str], t.Tuple[str, ...]],
-        'export'      : t.TypedDict('SoleExportOption', {
-            'source': NormPath, 'target': NormPath,
-        }),
-    })
-    
+            'root': AnyDirPath,
+            'search_paths': tp.List[tp.Union[RelPath, SpecialPath]],
+            'entries': tp.List[RelPath],  # must ends with ".py"
+            'ignores': tp.List[IgnoredName],
+            'export': tp.Optional[
+                tp.TypedDict(  # ty: ignore
+                    'ExportOption0',
+                    {
+                        'source': tp.Union[SpecialPath, AnyDirPath],
+                        'target': AnyDirPath,
+                    },
+                )
+            ],
+        },
+        total=False,
+    )
+    #   {
+    #       'root': dirpath,
+    #       'search_paths': (dirpath, ...),
+    #       'entries': (script_path, ...),
+    #       'ignores': (module_name, ...),
+    #       #   module_name is case sensitive.
+    #   }
+
+    Config1 = tp.TypedDict(
+        'Config1',
+        {
+            'root': NormPath,
+            'search_paths': tp.List[NormPath],
+            'entries': tp.Dict[NormPath, GraphId],
+            'ignores': tp.Union[tp.FrozenSet[str], tp.Tuple[str, ...]],
+            'export': tp.TypedDict(  # ty: ignore
+                'ExportOption1', {'source': NormPath, 'target': NormPath}
+            ),
+        },
+    )
+
     Config = Config1
 
 
-graphs_root = fs.xpath('_cache/module_graphs')
+graphs_root = '{}/module_graphs'.format(cache_root)
 
 
-def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
+def parse_config(file: str, **kwargs) -> T.Config:
     """
     file:
-        - the file ext must be '.yaml' or '.yml'.
+        - file can be YAML or JSON.
         - we suggest using 'xxx-modules.yaml', 'xxx_modules.yaml' or just
         'modules.yaml' as the file name.
-        see example of `[project] depsland : -
+        see example of `[project] depsland :
         /build/build_tool/_tree_shaking_model.yaml`.
     """
     cfg_file: str = fs.abspath(file)
     cfg_dir: str = fs.parent(cfg_file)
     cfg0: T.Config0 = fs.load(cfg_file)
     cfg1: T.Config1 = {
-        'root'        : '',
+        'root': '',
         'search_paths': [],
-        'entries'     : {},
-        'ignores'     : (),
-        'export'      : {'source': '', 'target': ''},
+        'entries': {},
+        'ignores': (),
+        'export': {'source': '', 'target': ''},
     }
-    
+
     # 1
-    if isabs(cfg0['root']):
+    if isabs(cfg0['root']):  # not suggested
         cfg1['root'] = fs.normpath(cfg0['root'])
     else:
         cfg1['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg0['root']))
-    
+
     # 2
     _root = cfg1['root']
-    
-    def fmtpath(p: T.RelPath) -> T.NormPath:
-        if p == '.': return _root
+
+    def fmtpath(p: tp.Union[T.RelPath, T.SpecialPath]) -> T.NormPath:
+        if p == '':
+            raise ValueError('path cannot be empty')
+        if p == '.':
+            return _root
+        if p.startswith('$venv'):
+            return p.replace('$venv', _get_venv_root(_root), 1)
         assert not p.startswith(('./', '../', '<')), p
         out = '{}/{}'.format(_root, p)
         assert fs.exist(out), out
         return out
-    
-    temp = cfg1['search_paths']
+
     for p in map(fmtpath, reversed(cfg0['search_paths'])):
-        temp.append(p)
+        cfg1['search_paths'].append(p)
         path_scope.add_scope(p)
-    
+
     # 3
-    temp = cfg1['entries']
     for p in cfg0['entries']:
         p = fmtpath(p)
-        temp[p] = hash_path_to_uid(p)
-    
+        cfg1['entries'][p] = uuid(p)
+
     # 4
     cfg1['ignores'] = frozenset(cfg0.get('ignores', ()))
-    
+
     # 5
     dict0 = kwargs.get('export', {'source': '', 'target': ''})
     dict1 = cfg0.get('export', {'source': '', 'target': ''})
-    if src := (dict0['source'] or dict1['source']):
-        assert src in cfg0['search_paths']  # noqa
+    if src := (dict0['source'] or dict1['source']):  # type: ignore
+        assert src in cfg0['search_paths']
         cfg1['export']['source'] = fmtpath(src)
-        # cfg1['export']['source'] = src
     if dict0['target']:
         cfg1['export']['target'] = fs.abspath(dict0['target'])
-    elif dict1['target']:
-        # cfg1['export']['target'] = fmtpath(dict1['target'])
-        cfg1['export']['target'] = fs.normpath('{}/{}'.format(
-            cfg1['root'], dict1['target']
-        ))
-    
-    if _save:
-        atexit.register(partial(_save_graph_alias, cfg1))
-    
+    elif dict1['target']:  # type: ignore
+        cfg1['export']['target'] = fs.normpath(
+            '{}/{}'.format(cfg1['root'], dict1['target'])  # type: ignore
+        )
+
     # print(cfg1, ':l')
     return cfg1
 
 
-def hash_path_to_uid(abspath: str) -> str:
-    return hashlib.md5(abspath.encode()).hexdigest()
+def _get_venv_root(working_root: str) -> T.NormPath:
+    """
+    find venv root (the "site-packages" folder) by `poetry env` command.
+    """
+    if fs.exist('{}/.venv'.format(working_root)):
+        assert fs.exist('{}/.venv/Lib/site-packages'.format(working_root))
+        return '{}/.venv/Lib/site-packages'.format(working_root)
+    else:
+        raise Exception(
+            '".venv" folder should be under working root', working_root
+        )
 
+    # # https://stackoverflow.com/questions/75232761/
+    # if 'VIRTUAL_ENV' in os.environ:
+    #     del os.environ['VIRTUAL_ENV']
+    # venv_root = fs.normpath(
+    #     t.cast(
+    #         str,
+    #         run_cmd_args(
+    #             (
+    #                 sys.executable,
+    #                 '-m',
+    #                 'poetry',
+    #                 'env',
+    #                 'info',
+    #                 '--path',
+    #                 '--no-ansi',
+    #                 '--directory',
+    #                 working_root,
+    #             ),
+    #             cwd=working_root,
+    #         ),
+    #     )
+    # )
+    # print(venv_root)
+    # assert venv_root.endswith('py3.12')
 
-def _save_graph_alias(config: T.Config1) -> None:
-    map_ = fs.load(fs.xpath('_cache/module_graphs_alias.yaml'), default={})
-    if config['root'] in map_:
-        if (
-            set(config['entries'].values()) ==
-            set(map_[config['root']].values())
-        ):
-            return
-    map_[config['root']] = {
-        # k.replace(config['root'], '<root>'): v
-        fs.relpath(k, config['root']): v
-        for k, v in config['entries'].items()
-    }
-    fs.dump(map_, fs.xpath('_cache/module_graphs_alias.yaml'), sort_keys=True)
+    # if os.name == 'nt':
+    #     out = '{}/Lib/site-packages'.format(venv_root)
+    # else:
+    #     out = '{}/lib/python{}.{}/site-packages'.format(
+    #         venv_root, sys.version_info.major, sys.version_info.minor
+    #     )
+    # assert fs.exist(out), (working_root, venv_root, out)
+    # return out

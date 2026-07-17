@@ -1,24 +1,42 @@
 altair:
-  version: 6.0.0
+  version: 6.2.1
   files:
     - jupyter/js/index.js
     - vegalite/v*/__init__.py
     - vegalite/v*/schema/vega-lite-schema.json
     - vegalite/v*/schema/vega-themes.json
+    - ../altair-*.dist-info/
     - ../anywidget-*.dist-info/?
     - ../jsonschema-*.dist-info/
     - ../jsonschema_specifications/schemas/
     # - ../pyarrow/
     - ../rpds/rpds.*.pyd
+emei_kit_r6p0:
+  files:
+    - _regmap_files/
+h5py:
+  files:
+    # - '*.dll'
+    # - '*.pyd'
+    # - _conv.*.pyd
+    # - _proxy.*.pyd
+    # - defs.*.pyd
+    # - h5ac.*.pyd
+    # - hdf5.dll
+    # - hdf5_hl.dll
+    # - utils.*.pyd
+    # - z.dll
+    - ../h5py/
 httptools:
   files:
     - parser/parser.*.pyd
     - parser/url_parser.*.pyd
 IPython:
-  version: 9.2.0
+  version: 9.11.0
   imports:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
+    - ../pygments/styles/gruvbox.py
     - ../pygments/styles/monokai.py
     - ../pygments/styles/pastie.py
     - ../pygments/unistring.py
@@ -57,8 +75,9 @@ modbus_tk:
 #     - random/mtrand.*.pyd
 #     - ../numpy.libs/
 numpy:
-  version: 2.0.2
+  version: 2.4.6
   files:
+    - _core/_exceptions.py
     - _core/_multiarray_tests.*.pyd
     - fft/_pocketfft_umath.*.pyd
     - linalg/_umath_linalg.*.pyd
@@ -78,6 +97,7 @@ omni_driver_kit:
     - ../modbus_tk/modbus_tcp.py
 oss2:
   files:
+    - ../_cffi_backend.*.pyd
     - ../aliyunsdkcore/data/
     - ../Crypto/
     - ../cryptography/
@@ -89,17 +109,11 @@ pandas:
     # - _libs/pandas_parser.*.pyd
     - ../pandas.libs/
 pikepdf:
+  version: 10.10.0
   files:
-    - concrt140.dll
-    - msvcp140.dll
-    - msvcp140_1.dll
-    - msvcp140_2.dll
-    - msvcp140_atomic_wait.dll
-    - msvcp140_codecvt_ids.dll
-    - qpdf29.dll
-    - vcruntime140.dll
-    - vcruntime140_1.dll
-    - ../lxml/_elementpath.*.pyd
+    - _core.*.pyd
+    # - ../lxml/_elementpath.*.pyd
+    - ../pikepdf.libs/
 plotly:
   version: 6.3.0
   # imports:
@@ -112,13 +126,26 @@ plotly:
     # - ../scipy/
     # - ../scipy.libs/
     # - ../statsmodels/
+psutil:
+  files:
+    - _psutil_windows.pyd
+py7zr:
+  files:
+    - ../Cryptodome/Cipher/_raw_aes.pyd
+    - ../Cryptodome/Util/_cpuid_c.pyd
+    - ../backports/zstd/
+    - ../bcj/_bcj.*.pyd
+    - ../inflate64/_inflate64.*.pyd
+    - ../pyppmd/c/_ppmd.*.pyd
 # pyapp_window:
 #   files:
+#     - ../_cffi_backend.*.pyd
 #     - ../cffi/
 #     - ../pycparser/
 pyarrow:
   files:
     - ../pyarrow/
+    - ../pyarrow.libs/
 pyexcel:
   imports:
     - ../pyexcel_io/plugins.py
@@ -129,6 +156,10 @@ pyexcel:
     # - ../pyexcel_io/database/
     # - ../pyexcel_io/readers/
     # - ../pyexcel_io/writers/
+pyportable_crypto:
+  files:
+    - ../cryptography/hazmat/bindings/__init__.py
+    - ../cryptography/hazmat/bindings/_rust.pyd
 PySide6:
   version: 6.8.2
   files:
@@ -207,6 +238,11 @@ PySide6:
     - QtQuickWidgets.pyd
     - QtWidgets.pyd
     - ../shiboken6/
+pythonnet:
+  files:
+    - ../_cffi_backend.*.pyd
+    - ../cffi/
+    - ../pycparser/
 qmlease:
   version: 3.1.0a27
   files:
@@ -230,23 +266,38 @@ requests:
   files:
     - ../certifi/cacert.pem
 rich:
+  version: 14.3.3
   imports:
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/styles/default.py
     - ../pygments/unistring.py
   files:
+    - _unicode_data/
     - ../pygments/lexers/__init__.py
     - ../pygments/lexers/python.py
     - ../pygments/styles/default.py
     - ../pygments/unistring.py
-# scipy:
-#   files:
-#     - _cyutility.cp312-win_amd64.dll.a
-#     - _cyutility.cp312-win_amd64.pyd
-#     - _lib/array_api_compat/common/_fft.py
-#     - _lib/array_api_compat/numpy/fft.py
-#     - spatial/_ckdtree.cp312-win_amd64.dll.a
+scipy:
+  files:
+    - _cyutility.*.dll.a
+    - _cyutility.*.pyd
+    - _external/array_api_compat/common/_fft.py
+    - _external/array_api_compat/numpy/fft.py
+    - _lib/
+    - constants/
+    - interpolate/
+    - io/matlab/_mio_utils.*.pyd
+    - io/matlab/_mio5_utils.*.pyd
+    - io/matlab/_streams.*.pyd
+    - linalg/
+    - optimize/
+    - signal/
+    - sparse/
+    - spatial/
+    - special/
+    - stats/
+    - ../scipy.libs/
 shiboken6:
   files:
     - concrt140.dll
@@ -265,11 +316,13 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
+  version: 1.58.0
   files:
     - __main__.py
     - runtime/scriptrunner/magic_funcs.py
     - static/
     - web/
+    - ../anyio/_backends/
     - ../PIL/
     # - ../pyarrow/
     # - ../pyarrow/lib.*.pyd
@@ -278,10 +331,14 @@ streamlit:
     # - ../pyarrow/lib.pyx
     # - ../pyarrow/lib_api.h
     - ../streamlit-*.dist-info/
-    - ../tornado/
+    # - ../tornado/
+    - ../uvicorn/lifespan/
+    - ../uvicorn/protocols/http/auto.py
 streamlit_canary:
   imports:
     - ../streamlit/__main__.py
+  files:
+    - ../pyapp_window/__main__.py
 streamlit_extras:
   imports:
     - grid/__init__.py
@@ -299,9 +356,11 @@ toga:
     - sources/
     - widgets/
     - ../_cffi_backend.*.pyd
+    - ../cffi/
     - ../clr.py
     - ../clr_loader/
     - ../clr_loader-*.dist-info/
+    - ../pycparser/
     - ../pythonnet/
     - ../toga_core-*.dist-info/
     - ../toga_winforms/
@@ -312,10 +371,15 @@ tracerite:
     - style.css
 tree_shaking:
   files:
+    - _cache/auxiliary/.gitkeep
     - _cache/dumped_resources_maps/.gitkeep
     - _cache/module_graphs/.gitkeep
     - _cache/ignores.txt
     - patches/
+# uvicorn:
+#   files:
+#     - lifespan/
+#     - protocols/http/auto.py
 webui:
   files:
     - webui-windows-msvc-x64/webui-2.dll

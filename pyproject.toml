@@ -1,45 +1,65 @@
 [project]
 name = "tree-shaking"
-version = "0.2.4b0"
-description = "Python tree-shaking for dependencies to reduce the size of packaging."
+version = "0.3.0a0"
+description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
-packages = [{ include = "tree_shaking" }]
 requires-python = ">=3.12"
-dynamic = ["dependencies"]
+dependencies = [
+    "argsense>=1.1.2",
+    "lk-utils>=3.7.1",
+    "neoprint>=0.1.7",
+]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+# [dependency-groups]
+# dev = []
+
+# [project.optional-dependencies]
+# ...
+
+# [project.scripts]
+# ...
 
 [project.urls]
 homepage = "https://github.com/likianta/python-tree-shaking"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-argsense = "^1.1.0"
-lk-utils = "^3.5.0"
-streamlit = { version = "^1.55.0", optional = true }
-streamlit-canary = { version = "^0.1.0", optional = true }
+[tool.hatch.build.targets.wheel]
+packages = ["tree_shaking"]
 
-[tool.poetry.group.dev.dependencies]
-argsense = { version = "^1.1.1a0", source = "likianta" }
-lk-utils = { version = "^3.5.0", source = "likianta" }
-# pyecharts = "^2.0.8"
-pyinstaller = { version = "^6.19.0", python = ">=3.12,<3.15" }
-# pyyaml = "^6.0.0"
-streamlit = "^1.55.0"
-streamlit-canary = { version = "^0.1.1a19", source = "likianta" }
+[tool.ruff]
+line-length = 80
 
-[project.optional-dependencies]
-ui = ["streamlit", "streamlit-canary"]
+[tool.ruff.format]
+quote-style = "single"
+skip-magic-trailing-comma = true
 
-[[tool.poetry.source]]
+[tool.ruff.lint.isort]
+force-single-line = true
+relative-imports-order = "closest-to-furthest"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 83
+
+[tool.uv]
+prerelease = "allow"
+
+[[tool.uv.index]]
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-priority = "primary"
+default = true
 
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "likianta"
 url = "http://localhost:2191/"
-priority = "supplemental"
+# explicit = true
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv.sources]
+argsense = { index = "likianta" }
+lk-utils = { index = "likianta" }
