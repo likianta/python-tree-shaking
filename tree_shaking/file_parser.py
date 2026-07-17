@@ -24,10 +24,10 @@ _broken = set()
 
 
 class T(T0):
+    AstNode = tp.Union[ast.Import, ast.ImportFrom]
     ImportsInfo = tp.Iterable[tp.Tuple[T0.ModuleInfo, T0.FilePath]]
     #   ((module_info, path), ...)
     #       module_info: dataclass ModuleInfo
-    Node = tp.Union[ast.Import, ast.ImportFrom]
 
 
 class FileParser:
@@ -138,7 +138,7 @@ class FileParser:
         return dot_cnt
 
     def _get_module_info(
-        self, node: T.Node, line: str
+        self, node: T.AstNode, line: str
     ) -> t.Iterator[T.ModuleInfo]:  # noqa
         if dot_cnt := self._check_if_relative_import(line):
             if dot_cnt == 1:

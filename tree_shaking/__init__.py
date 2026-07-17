@@ -2,8 +2,8 @@
 if 1: import neoprint as _np; _np.setup()  # noqa
 # fmt: on
 
-from .cache2 import cache_maker
-from .cache2 import cache_root
+from .cache import cache_maker
+from .cache import cache_root
 from .config import T
 from .config import parse_config
 from .export import dump_tree

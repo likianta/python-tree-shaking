@@ -5,8 +5,8 @@ from lk_utils import fs
 from lk_utils import uuid
 from neoprint import format
 
-from .cache2 import cache_maker
-from .cache2 import cache_root
+from .cache import cache_maker
+from .cache import cache_root
 from .config import T as T0
 from .config import parse_config
 from .file_parser import new_parsing_triggered
@@ -58,7 +58,7 @@ def build_module_graphs(config_file: str) -> None:
                     entry: {}
                     found_source_roots_count: {}
                     dumped_modules_count: {}
-                    dumped_result_file: {} ({})
+                    save_result_to_cache_file: {} ({})
                     """.format(
                         entry_path,
                         len(result['source_roots']),

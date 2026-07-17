@@ -3,7 +3,7 @@ from os.path import isabs as is_abspath
 
 from lk_utils import fs
 
-from .cache2 import cache_maker
+from .cache import cache_maker
 from .path_scope import path_scope
 
 

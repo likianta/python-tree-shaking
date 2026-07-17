@@ -8,10 +8,8 @@ __pycache__/
 
 !**/.gitkeep
 !/tree_shaking/_cache/auxiliary/
-!/tree_shaking/_cache/auxiliary/readme.md
-!/tree_shaking/_cache/cached_by_profile/
+!/tree_shaking/_cache/auxiliary/_readme.md
 !/tree_shaking/_cache/dumped_resources_maps/
-!/tree_shaking/_cache/module_graphs/
 !/tree_shaking/_cache/watch_files/
 !/tree_shaking/_cache/watch_files/_readme.md
 !/tree_shaking/_cache/ignores.txt

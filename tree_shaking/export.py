@@ -7,8 +7,8 @@ from lk_utils import fs
 from lk_utils import uuid
 from neoprint import format
 
-from .cache2 import cache_maker
-from .cache2 import cache_root
+from .cache import cache_maker
+from .cache import cache_root
 from .config import parse_config
 from .graph import T as T0
 from .patch import patch

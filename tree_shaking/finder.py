@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from lk_utils import fs
 
-from .cache2 import cache_maker
+from .cache import cache_maker
 from .file_parser import FileParser
 from .file_parser import T
 from .patch import patch

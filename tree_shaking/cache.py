@@ -1,4 +1,4 @@
-import ast
+import atexit
 import os
 import typing as tp
 
@@ -6,105 +6,107 @@ from lk_utils import fs
 from lk_utils import uuid
 
 
-class T:
-    AstNode = tp.Union[ast.Import, ast.ImportFrom]
-    FileId = str  # see `get_file_id`
-    CacheData = tp.Dict[FileId, tp.Tuple[tp.Tuple[AstNode, str], ...]]
-    #   {file_id: tuple nodes, ...}
-    #       nodes: ((node, line), ...)
-    #           node: ast.Import | ast.ImportFrom
-    #           line: str, preserves indentation
+def _init_cache_root() -> str:
+    if path := os.getenv('TREE_SHAKING_CACHE_ROOT'):
+        assert fs.exist(path), path
+        print(':v', 'get tree-shaking cache root from environment', path)
+        if not fs.exist('{}/.init_ok'.format(path)):
+            fs.copy_file(
+                fs.here('_cache/ignores.txt'), '{}/ignores.txt'.format(path)
+            )
+            fs.make_dir('{}/auxiliary'.format(path))
+            fs.make_dir('{}/dumped_resources_maps'.format(path))
+            fs.make_dir('{}/watch_files'.format(path))
+            fs.dump('', '{}/.init_ok'.format(path))
+        cache_root = path
+    else:
+        cache_root = fs.here('_cache')
+        if not fs.exist('{}/.init_ok'.format(cache_root)):
+            fs.dump('', '{}/.init_ok'.format(cache_root))
+    return cache_root
 
 
-class FileNodesCache:
-    _cache_data: T.CacheData
-    _cache_file: str
-    _cache_root: str
-    _new_files: tp.Set[str]
-
-    def __init__(self, cache_root: str) -> None:
-        self._cache_root = cache_root
-        self._new_files = set()
-
-    def init_by_profile(self, profile: str) -> None:
-        self._cache_file = '{}/cached_by_profile/{}.pkl'.format(
-            self._cache_root, uuid(profile)
-        )
-        self._cache_data = fs.load(self._cache_file, default=lambda: {})
-        print(':vnp', profile, self._cache_file, len(self._cache_data))
-    
-    @property
-    def changed(self) -> bool:
-        return bool(self._new_files)
-
-    @property
-    def changed_files(self) -> tp.Set[str]:
-        return self._new_files
-
-    def parse_nodes(self, file: str) -> tp.Iterator[tp.Tuple[T.AstNode, str]]:
-        file_id = get_file_id(file)
-        if file_id in self._cache_data:
-            #   if AttributeError happens to `self._cache_data`, check if you
-            #   forget to call `init_by_profile`.
-            yield from self._cache_data[file_id]
-            return
-        print(':vi', 'ast parsing file', file)
-        self._new_files.add(file)
-        source = fs.load(file, 'plain')
-        lines = source.splitlines()
-        nodes = []
-        try:
-            tree = ast.parse(source, file)
-        except SyntaxError:
-            print(':v8', 'syntax error when parsing file', file_id, file)
-        else:
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.Import, ast.ImportFrom)):
-                    line = lines[node.lineno - 1]
-                    yield node, line
-                    nodes.append((node, line))
-        print(':v', file, file_id, len(nodes))
-        self._cache_data[file_id] = tuple(nodes)
-
-    def save(self, file: tp.Optional[str] = None) -> None:
-        if not file:
-            file = self._cache_file
-        fs.dump(self._cache_data, file)
-        print(
-            'saved tree shaking cache',
-            len(self._new_files),
-            file,
-            fs.filesize(file, str),
-            ':vnl',
-        )
-
-
-def get_file_id(file: str) -> T.FileId:
-    return uuid('{}:{}'.format(file, fs.filetime(file)))
-
+cache_root = _init_cache_root()
 
 # ------------------------------------------------------------------------------
 
-cache_root: str
-if _path := os.getenv('TREE_SHAKING_CACHE_ROOT'):
-    assert fs.exist(_path), _path
-    print(':v', 'get tree-shaking cache root from environment', _path)
-    if not fs.exist('{}/.init_ok'.format(_path)):
-        fs.copy_file(
-            fs.here('_cache/ignores.txt'), '{}/ignores.txt'.format(_path)
-        )
-        fs.make_dir('{}/auxiliary'.format(_path))
-        fs.make_dir('{}/cached_by_profile'.format(_path))
-        fs.make_dir('{}/dumped_resources_maps'.format(_path))
-        fs.make_dir('{}/module_graphs'.format(_path))
-        fs.make_dir('{}/watch_files'.format(_path))
-        fs.dump({}, '{}/module_graphs_alias.yaml'.format(_path))
-        fs.dump('', '{}/.init_ok'.format(_path))
-    cache_root = _path
-else:
-    cache_root = fs.here('_cache')
-    if not fs.exist('{}/.init_ok'.format(cache_root)):
-        fs.dump({}, '{}/module_graphs_alias.yaml'.format(cache_root))
-        fs.dump('', '{}/.init_ok'.format(cache_root))
 
-file_cache = FileNodesCache(cache_root)
+class _CacheMaker:
+    def __init__(self, cache_root: str) -> None:
+        self._cache_root = cache_root
+        self._quick_fetches = {}
+        self._tobe_deleted_files = set()
+        atexit.register(self._delete_outdated_files)
+
+    def is_cached(self, source_file: str, namespace: str) -> bool:
+        if source_file in self._tobe_deleted_files:
+            return False
+        else:
+            file = '{}/watch_files/{}/{}.pkl'.format(
+                self._cache_root, uuid(source_file), namespace
+            )
+            if fs.exist(file):
+                timestamp = fs.load(file)[0]
+                if timestamp == fs.filetime(source_file):
+                    return True
+                else:
+                    self._tobe_deleted_files.add(file)
+                    return False
+            else:
+                return False
+
+    def get_cache(
+        self, source_file: str, namespace: str, persistent: bool = False
+    ) -> tp.Optional[tp.Any]:
+        if persistent and (source_file, namespace) in self._quick_fetches:
+            return self._quick_fetches[(source_file, namespace)]
+
+        file = '{}/watch_files/{}/{}.pkl'.format(
+            self._cache_root, uuid(source_file), namespace
+        )
+        if source_file in self._tobe_deleted_files:
+            return None
+        if fs.exist(file):
+            timestamp, data = fs.load(file)
+            if timestamp == fs.filetime(source_file):
+                if persistent:
+                    self._quick_fetches[(source_file, namespace)] = data
+                return data
+            else:
+                self._tobe_deleted_files.add(file)
+                return None
+        else:
+            return None
+
+    def save_cache(
+        self,
+        source_file: str,
+        namespace: str,
+        data: tp.Any,
+        persistent: bool = False,
+    ) -> str:
+        file = '{}/watch_files/{}/{}.pkl'.format(
+            self._cache_root, uuid(fs.abspath(source_file)), namespace
+        )
+        if not fs.exist(fs.parent(file)):
+            fs.make_dir(fs.parent(file))
+        fs.dump((fs.filetime(source_file), data), file)
+        if file in self._tobe_deleted_files:
+            self._tobe_deleted_files.remove(file)
+        if persistent:
+            self._quick_fetches[(source_file, namespace)] = data
+        return file
+
+    def _delete_outdated_files(self) -> None:
+        if self._tobe_deleted_files:
+            for file in self._tobe_deleted_files:
+                print(
+                    ':v7i',
+                    'remove outdated cache file',
+                    fs.relpath(file, self._cache_root),
+                )
+                fs.remove(file)
+            self._tobe_deleted_files.clear()
+
+
+cache_maker = _CacheMaker(cache_root)
