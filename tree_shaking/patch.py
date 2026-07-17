@@ -1,6 +1,13 @@
-import typing as t
+import typing as tp
 
 from lk_utils import fs
+
+
+class T:
+    PatchItem = tp.TypedDict(
+        'PatchItem',
+        {'files': tp.Tuple[str, ...], 'imports': tp.Tuple[str, ...]},
+    )
 
 
 class Patch:
@@ -27,9 +34,7 @@ class Patch:
     def __contains__(self, module_name: str) -> bool:
         return module_name in self._patches
 
-    def __getitem__(self, module_name: str) -> t.TypedDict(
-        'PatchItem', {'files': t.Tuple[str, ...], 'imports': t.Tuple[str, ...]}
-    ):
+    def __getitem__(self, module_name: str) -> T.PatchItem:
         return self._patches[module_name]
 
 

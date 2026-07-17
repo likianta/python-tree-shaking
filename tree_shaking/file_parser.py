@@ -1,12 +1,13 @@
 import ast
 import atexit
-import typing as t
+import typing as tp
 from contextlib import contextmanager
 
+import neoprint as np
 from lk_utils import fs
 
-from .cache import cache_root
-from .cache import file_cache
+from .cache2 import cache_maker
+from .cache2 import cache_root
 from .module import ModuleInfo
 from .module import ModuleInspector
 from .module import ModuleNotFound
@@ -21,10 +22,10 @@ _broken = set()
 
 
 class T(T0):
-    ImportsInfo = t.Iterator[t.Tuple[T0.ModuleInfo, T0.FilePath]]
+    ImportsInfo = tp.Iterable[tp.Tuple[T0.ModuleInfo, T0.FilePath]]
     #   ((module_info, path), ...)
     #       module_info: dataclass ModuleInfo
-    Node = t.Union[ast.Import, ast.ImportFrom]
+    Node = tp.Union[ast.Import, ast.ImportFrom]
 
 
 class FileParser:
@@ -71,7 +72,12 @@ class FileParser:
 
     def parse_imports(self) -> T.ImportsInfo:
         # print(':dv2p', 'start', self.file)
-        for node, line in file_cache.parse_nodes(self.file):
+        if x := cache_maker.get_cache(
+            self.file, 'ast_parsing_results', persistent=True
+        ):
+            return x
+        out = []
+        for node, line in self.parse_nodes(self.file):
             for module in self._get_module_info(node, line):
                 try:
                     path = self._get_module_path(module)
@@ -88,13 +94,33 @@ class FileParser:
                         #     )
                     continue
                 except Exception as e:
-                    print(':v8l', self.file, node.lineno, module)
+                    e.add_note(
+                        np.format(self.file, node.lineno, module, ':v8ln')
+                    )
                     raise e
                 if path in ('<stdlib>', '<ignored>'):
                     continue
                 else:
-                    yield module, path
+                    out.append((module, path))
         # print(':vp', 'end', self.file)
+        cache_maker.save_cache(
+            self.file, 'ast_parsing_results', out, persistent=True
+        )
+        return out
+
+    def parse_nodes(self, file: str) -> tp.Iterator[tp.Tuple[T.AstNode, str]]:
+        print(':vi', 'ast parsing file', file)
+        source_text = fs.load(file, 'plain')
+        source_lines = source_text.splitlines()
+        try:
+            tree = ast.parse(source_text, file)
+        except SyntaxError:
+            print(':v8', 'syntax error when parsing file', file)
+        else:
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    line = source_lines[node.lineno - 1]
+                    yield node, line
 
     def _check_if_relative_import(self, line: str) -> int:
         x = line.lstrip().split()[1]
@@ -186,7 +212,7 @@ class ErrorRecords:
         atexit.register(self.save)
 
     @contextmanager
-    def recording(self) -> t.Generator:
+    def recording(self) -> tp.Generator:
         # FIXME: with parallel_printing(self._log):
         yield
 

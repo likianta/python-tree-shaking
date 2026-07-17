@@ -55,10 +55,8 @@ def build_module_graphs(config_file: str) -> None:
         # build_module_graph(p, n)
         if not cache_maker.is_cached(p, 'module_graphs'):
             file_i = p
-            result = dict(finder.get_all_imports(file_i))
-            # prettify result data for reader friendly
-            result = dict(sorted(result.items()))
-            result = _reformat_paths(result, cfg)
+            result = finder.get_all_imports(file_i)
+            result = _reformat_paths(sorted(result), cfg)
             # add refs info to result
             # refs = finder.references
             # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
@@ -99,7 +97,9 @@ def build_module_graphs(config_file: str) -> None:
         #     fs.dump(changed_files, file_aux)
 
 
-def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
+def _reformat_paths(
+    modules: tp.Iterable[tp.Tuple[str, str]], config: T.Config
+) -> T.DumpedModuleGraph:
     out: T.DumpedModuleGraph = {'source_roots': {}, 'modules': {}}
 
     temp = out['source_roots']
@@ -118,7 +118,7 @@ def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
             raise Exception(path)
 
     temp = out['modules']
-    for m, p in modules.items():
+    for m, p in modules:
         temp[m] = reformat_path(p)
 
     # remove unused source roots
@@ -128,7 +128,7 @@ def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
 
-    return tp.cast(dict, out)
+    return out
 
 
 # def _save_graph_alias(config: T.Config1) -> None:
