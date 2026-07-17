@@ -56,7 +56,7 @@ def build_module_graphs(config_file: str) -> None:
         if not cache_maker.is_cached(p, 'module_graphs'):
             file_i = p
             result = finder.get_all_imports(file_i)
-            result = _reformat_paths(sorted(result), cfg)
+            result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result
             # refs = finder.references
             # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}

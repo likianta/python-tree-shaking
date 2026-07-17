@@ -19,13 +19,11 @@ def _init_cache_root() -> str:
             fs.make_dir('{}/dumped_resources_maps'.format(path))
             fs.make_dir('{}/module_graphs'.format(path))
             fs.make_dir('{}/watch_files'.format(path))
-            fs.dump({}, '{}/module_graphs_alias.yaml'.format(path))
             fs.dump('', '{}/.init_ok'.format(path))
         cache_root = path
     else:
         cache_root = fs.here('_cache')
         if not fs.exist('{}/.init_ok'.format(cache_root)):
-            fs.dump({}, '{}/module_graphs_alias.yaml'.format(cache_root))
             fs.dump('', '{}/.init_ok'.format(cache_root))
     return cache_root
 

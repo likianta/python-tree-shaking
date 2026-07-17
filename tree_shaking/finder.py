@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from lk_utils import fs
 
+from .cache2 import cache_maker
 from .file_parser import FileParser
 from .file_parser import T
 from .patch import patch
@@ -30,7 +31,7 @@ class Finder:
 
     def get_all_imports(
         self, script: T.FilePath, include_self: tp.Optional[bool] = True
-    ) -> tp.Iterator[tp.Tuple[T.ModuleName, T.FilePath]]:
+    ) -> tp.Dict[T.ModuleName, T.FilePath]:
         """
         given a script file ('*.py'), return all direct and indirect modules
         that are imported by this file.
@@ -45,8 +46,21 @@ class Finder:
         yields:
             ((module_name, file_path), ...)
         """
+        if x := cache_maker.get_cache(
+            script,
+            'all_imports_{}'.format(1 if include_self else 0),
+            persistent=True,
+        ):
+            return x
         self._clear_holders()
-        yield from self._get_all_imports(script, include_self)
+        out = dict(self._get_all_imports(script, include_self))
+        cache_maker.save_cache(
+            script,
+            'all_imports_{}'.format(1 if include_self else 0),
+            out,
+            persistent=True,
+        )
+        return out
 
     def get_direct_imports(
         self, script: T.FilePath, include_self: bool = False
