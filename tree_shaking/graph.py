@@ -1,13 +1,12 @@
 import typing as tp
 
+from lk_utils import dedent
 from lk_utils import fs
 from lk_utils import uuid
-from lk_utils import dedent
 
-from .cache import cache_root
-from .cache import file_cache
+from .cache2 import cache_maker
+from .cache2 import cache_root
 from .config import T as T0
-from .config import graphs_root
 from .config import parse_config
 from .finder import Finder
 
@@ -49,58 +48,55 @@ def build_module_graph(
 
 
 def build_module_graphs(config_file: str) -> None:
-    config_file = fs.abspath(config_file)
-    file_cache.init_by_profile(config_file)
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
         print('entry at {} ({})'.format(p, n), ':i')
         # build_module_graph(p, n)
-        file_i = p  # abspath
-        file_o = '{}/{}.yaml'.format(graphs_root, n)
-        result = dict(finder.get_all_imports(file_i))
-        # prettify result data for reader friendly
-        result = dict(sorted(result.items()))
-        result = _reformat_paths(result, cfg)
-        # add refs info to result
-        # refs = finder.references
-        # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
-        fs.dump(result, file_o)
-        if file_cache.changed_files:
-            file_aux = '{}/auxiliary/{}.pkl'.format(
-                cache_root, uuid(cfg['root'])
-            )
-            if fs.exist(file_aux):
-                changed_files = fs.load(file_aux) | file_cache.changed_files
-            else:
-                changed_files = file_cache.changed_files
-            fs.dump(changed_files, file_aux)
-        print(
-            ':v2ti',
-            dedent(
-                """
-                entry at {}:
-                    graph id is {}.
-                    found {} source roots,
-                    dumped {} items,
-                    see result at "{}" ({}).
-                """.format(
-                    p,
-                    n,
-                    len(result['source_roots']),
-                    len(result['modules']),
-                    '<tree_shaking>/<graphs_root>/{}'.format(
-                        fs.relpath(file_o, graphs_root)
+        if not cache_maker.is_cached(p, 'module_graphs'):
+            file_i = p
+            result = dict(finder.get_all_imports(file_i))
+            # prettify result data for reader friendly
+            result = dict(sorted(result.items()))
+            result = _reformat_paths(result, cfg)
+            # add refs info to result
+            # refs = finder.references
+            # result['references'] = {k: sorted(refs[k]) for k in sorted(refs.keys())}
+            file_o = cache_maker.save_cache(p, 'module_graphs', result)
+
+            print(
+                ':v2ti',
+                dedent(
+                    """
+                    entry: {}
+                    graph_id: {}
+                    found_source_roots_count: {}
+                    dumped_modules_count: {}
+                    dumped_result_file: {} ({})
+                    """.format(
+                        p,
+                        n,
+                        len(result['source_roots']),
+                        len(result['modules']),
+                        '<tree_shaking_cache>/{}'.format(
+                            fs.relpath(file_o, cache_root)
+                        ),
+                        fs.filesize(file_o, str),
                     ),
-                    fs.filesize(file_o, str),
+                    indent=4,
+                    lstrip=False,
                 ),
-                indent=4,
-                lstrip=False,
-            ),
-        )
-    _save_graph_alias(cfg)
-    if file_cache.changed:
-        file_cache.save()
+            )
+
+        # if file_cache.changed_files:
+        #     file_aux = '{}/auxiliary/{}.pkl'.format(
+        #         cache_root, uuid(cfg['root'])
+        #     )
+        #     if fs.exist(file_aux):
+        #         changed_files = fs.load(file_aux) | file_cache.changed_files
+        #     else:
+        #         changed_files = file_cache.changed_files
+        #     fs.dump(changed_files, file_aux)
 
 
 def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
@@ -135,18 +131,18 @@ def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
     return tp.cast(dict, out)
 
 
-def _save_graph_alias(config: T.Config1) -> None:
-    map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
-    if config['root'] in map_:
-        if frozenset(config['entries'].values()) == frozenset(
-            map_[config['root']].values()
-        ):
-            return
-    map_[config['root']] = {
-        # k.replace(config['root'], '<root>'): v
-        fs.relpath(k, config['root']): v
-        for k, v in config['entries'].items()
-    }
-    fs.dump(
-        map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
-    )
+# def _save_graph_alias(config: T.Config1) -> None:
+#     map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
+#     if config['root'] in map_:
+#         if frozenset(config['entries'].values()) == frozenset(
+#             map_[config['root']].values()
+#         ):
+#             return
+#     map_[config['root']] = {
+#         # k.replace(config['root'], '<root>'): v
+#         fs.relpath(k, config['root']): v
+#         for k, v in config['entries'].items()
+#     }
+#     fs.dump(
+#         map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
+#     )

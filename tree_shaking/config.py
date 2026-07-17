@@ -1,11 +1,10 @@
 import typing as tp
-from os.path import isabs
+from os.path import isabs as is_abspath
 
 from lk_utils import fs
 from lk_utils import uuid
 
-from .cache import cache_root
-from .cache import file_cache
+from .cache2 import cache_maker
 from .path_scope import path_scope
 
 
@@ -69,7 +68,7 @@ class T:
     Config = Config1
 
 
-graphs_root = '{}/module_graphs'.format(cache_root)
+# graphs_root = '{}/module_graphs'.format(cache_root)
 
 
 def parse_config(file: str, **kwargs) -> T.Config:
@@ -82,6 +81,10 @@ def parse_config(file: str, **kwargs) -> T.Config:
         /build/build_tool/_tree_shaking_model.yaml`.
     """
     cfg_file: str = fs.abspath(file)
+
+    if x := cache_maker.get_cache(cfg_file, 'config'):
+        return x
+
     cfg_dir: str = fs.parent(cfg_file)
     cfg0: T.Config0 = fs.load(cfg_file)
     cfg1: T.Config1 = {
@@ -93,7 +96,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
     }
 
     # 1
-    if isabs(cfg0['root']):  # not suggested
+    if is_abspath(cfg0['root']):  # not suggested
         cfg1['root'] = fs.normpath(cfg0['root'])
     else:
         cfg1['root'] = fs.normpath('{}/{}'.format(cfg_dir, cfg0['root']))
@@ -139,6 +142,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
         )
 
     # print(cfg1, ':l')
+    cache_maker.save_cache(cfg_file, 'config', cfg1)
     return cfg1
 
 
