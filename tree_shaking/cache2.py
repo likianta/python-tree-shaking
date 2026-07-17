@@ -39,12 +39,30 @@ class _CacheMaker:
         self._cache_root = cache_root
         self._tobe_deleted_files = set()
 
-    def get_cache(self, source_file: str, namespace: str) -> tp.Optional[dict]:
+    def is_cached(self, source_file: str, namespace: str) -> bool:
+        if source_file in self._tobe_deleted_files:
+            return False
+        else:
+            file = '{}/watch_files/{}/{}.pkl'.format(
+                self._cache_root, uuid(source_file), namespace
+            )
+            if fs.exist(file):
+                timestamp = fs.load(file)[0]
+                if timestamp == fs.filetime(source_file):
+                    return True
+                else:
+                    self._tobe_deleted_files.add(file)
+                    return False
+            else:
+                return False
+
+    def get_cache(
+        self, source_file: str, namespace: str
+    ) -> tp.Optional[tp.Any]:
         file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, uuid(fs.abspath(source_file)), namespace
+            self._cache_root, uuid(source_file), namespace
         )
-        if not fs.exist(fs.parent(file)):
-            fs.make_dir(fs.parent(file))
+        if source_file in self._tobe_deleted_files:
             return None
         if fs.exist(file):
             timestamp, data = fs.load(file)
@@ -56,13 +74,16 @@ class _CacheMaker:
         else:
             return None
 
-    def save_cache(
-        self, data: tp.Any, source_file: str, namespace: str
-    ) -> None:
+    def save_cache(self, source_file: str, namespace: str, data: tp.Any) -> str:
         file = '{}/watch_files/{}/{}.pkl'.format(
             self._cache_root, uuid(fs.abspath(source_file)), namespace
         )
+        if not fs.exist(fs.parent(file)):
+            fs.make_dir(fs.parent(file))
         fs.dump((fs.filetime(source_file), data), file)
+        if file in self._tobe_deleted_files:
+            self._tobe_deleted_files.remove(file)
+        return file
 
 
 cache_maker = _CacheMaker(cache_root)
