@@ -4,6 +4,7 @@ import typing as tp
 from contextlib import contextmanager
 
 import neoprint as np
+from lk_utils import Signal
 from lk_utils import fs
 
 from .cache2 import cache_maker
@@ -15,6 +16,7 @@ from .module import PathNotFound
 from .module import T as T0
 from .path_scope import path_scope
 
+new_parsing_triggered = Signal(str)
 module_inspector = ModuleInspector(
     ignores=fs.load('{}/ignores.txt'.format(cache_root)).splitlines()
 )
@@ -76,6 +78,7 @@ class FileParser:
             self.file, 'ast_parsing_results', persistent=True
         ):
             return x
+        new_parsing_triggered.emit(self.file)
         out = []
         for node, line in self.parse_nodes(self.file):
             for module in self._get_module_info(node, line):

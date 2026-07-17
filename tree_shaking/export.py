@@ -3,12 +3,12 @@ import typing as tp
 from collections import defaultdict
 from glob import glob
 
-import neoprint as np
 from lk_utils import fs
 from lk_utils import uuid
+from neoprint import format
 
-from .cache import cache_root
-from .config import graphs_root
+from .cache2 import cache_maker
+from .cache2 import cache_root
 from .config import parse_config
 from .graph import T as T0
 from .patch import patch
@@ -432,9 +432,10 @@ def _mount_resources(
         else:
             raise Exception(top_name, relpath)
 
-    for graph_id in config['entries'].values():
-        graph_file = '{}/{}.yaml'.format(graphs_root, graph_id)
-        graph: T.DumpedModuleGraph = fs.load(graph_file)
+    for entry_path in config['entries']:
+        graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
+            entry_path, 'module_graphs'
+        )
 
         limited_uid = None
         if limited_search_root:
@@ -507,7 +508,7 @@ def _get_common_roots(absdirs: tp.Iterable[str]) -> T.KnownRoots:
                 break
         else:
             raise Exception(
-                np.format(
+                format(
                     'path should be under one of the search roots',
                     search_roots,
                     d,
@@ -568,7 +569,7 @@ def _shrink_to_single_root(
             continue
         else:
             raise Exception(
-                np.format(
+                format(
                     single_root,
                     tuple(known_roots.keys()),
                     root,
@@ -576,7 +577,7 @@ def _shrink_to_single_root(
                     ':nl',
                 )
             )
-    assert len(out) == 1, np.format(
+    assert len(out) == 1, format(
         tuple(known_roots.keys()), single_root, out, ':nl'
     )
     return out
@@ -587,5 +588,10 @@ def _split_path(path: str, known_roots: tp.Sequence[str]) -> tp.Tuple[str, str]:
         if path.startswith(root + '/'):
             return root, path.removeprefix(root + '/')
     raise Exception(
-        'path should be under one of the search roots', known_roots, path
+        format(
+            'path should be under one of the search roots',
+            known_roots,
+            path,
+            ':nl',
+        )
     )

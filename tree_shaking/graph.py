@@ -3,11 +3,13 @@ import typing as tp
 from lk_utils import dedent
 from lk_utils import fs
 from lk_utils import uuid
+from neoprint import format
 
 from .cache2 import cache_maker
 from .cache2 import cache_root
 from .config import T as T0
 from .config import parse_config
+from .file_parser import new_parsing_triggered
 from .finder import Finder
 
 
@@ -50,8 +52,16 @@ def build_module_graph(
 def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
-    for p, n in cfg['entries'].items():  # 'p': path, 'n': name
-        print('entry at {} ({})'.format(p, n), ':i')
+
+    changed_files = set()
+
+    def _record_changed_file(file: str) -> None:
+        changed_files.add(file)
+
+    new_parsing_triggered.bind(_record_changed_file)
+
+    for p, i in cfg['entries'].items():  # 'p': path, 'i': id
+        print('entry at {} ({})'.format(p, i), ':i')
         # build_module_graph(p, n)
         if not cache_maker.is_cached(p, 'module_graphs'):
             file_i = p
@@ -73,7 +83,7 @@ def build_module_graphs(config_file: str) -> None:
                     dumped_result_file: {} ({})
                     """.format(
                         p,
-                        n,
+                        i,
                         len(result['source_roots']),
                         len(result['modules']),
                         '<tree_shaking_cache>/{}'.format(
@@ -86,15 +96,13 @@ def build_module_graphs(config_file: str) -> None:
                 ),
             )
 
-        # if file_cache.changed_files:
-        #     file_aux = '{}/auxiliary/{}.pkl'.format(
-        #         cache_root, uuid(cfg['root'])
-        #     )
-        #     if fs.exist(file_aux):
-        #         changed_files = fs.load(file_aux) | file_cache.changed_files
-        #     else:
-        #         changed_files = file_cache.changed_files
-        #     fs.dump(changed_files, file_aux)
+    new_parsing_triggered.unbind(_record_changed_file)
+    if changed_files:
+        print(':n', 'save changed files list to auxiliary', len(changed_files))
+        file_aux = '{}/auxiliary/{}.pkl'.format(cache_root, uuid(cfg['root']))
+        if fs.exist(file_aux):
+            changed_files = fs.load(file_aux) | changed_files
+        fs.dump(changed_files, file_aux)
 
 
 def _reformat_paths(
@@ -102,9 +110,12 @@ def _reformat_paths(
 ) -> T.DumpedModuleGraph:
     out: T.DumpedModuleGraph = {'source_roots': {}, 'modules': {}}
 
+    def path_to_short_id(path: str) -> str:
+        return uuid(path)[::4]
+
     temp = out['source_roots']
     for root in sorted(config['search_paths'], reverse=True):
-        temp[uuid(root)] = root
+        temp[path_to_short_id(root)] = root
     _frozen_source_roots = tuple((k, v + '/') for k, v in temp.items())
     used_source_roots = set()
 
@@ -114,8 +125,7 @@ def _reformat_paths(
                 used_source_roots.add(uid)
                 return '<{}>/{}'.format(uid, path[len(root) :])
         else:
-            print(':lv4', _frozen_source_roots, path)
-            raise Exception(path)
+            raise Exception(format(':nlv8', _frozen_source_roots, path))
 
     temp = out['modules']
     for m, p in modules:
@@ -127,7 +137,6 @@ def _reformat_paths(
         for k in tuple(out['source_roots'].keys()):
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
-
     return out
 
 
