@@ -1,8 +1,6 @@
-if 1:
-    # fmt: off
-    import neoprint as _np
-    _np.setup()
-    # fmt: on
+# fmt: off
+if 1: import neoprint as _np; _np.setup()  # noqa
+# fmt: on
 
 from .cache import cache_root
 from .config import T

@@ -1,5 +1,4 @@
 import ast
-import atexit
 import os
 import typing as tp
 
@@ -26,13 +25,17 @@ class FileNodesCache:
     def __init__(self, cache_root: str) -> None:
         self._cache_root = cache_root
         self._new_files = set()
-        atexit.register(self._save)
 
     def init_by_profile(self, profile: str) -> None:
         self._cache_file = '{}/cached_by_profile/{}.pkl'.format(
             self._cache_root, uuid(profile)
         )
         self._cache_data = fs.load(self._cache_file, default=lambda: {})
+        print(':vnp', profile, self._cache_file, len(self._cache_data))
+    
+    @property
+    def changed(self) -> bool:
+        return bool(self._new_files)
 
     @property
     def changed_files(self) -> tp.Set[str]:
@@ -63,16 +66,17 @@ class FileNodesCache:
         print(':v', file, file_id, len(nodes))
         self._cache_data[file_id] = tuple(nodes)
 
-    def _save(self) -> None:
-        if self._new_files:
-            fs.dump(self._cache_data, self._cache_file)
-            print(
-                'saved tree shaking cache',
-                len(self._new_files),
-                self._cache_file,
-                fs.filesize(self._cache_file, str),
-                ':vnl',
-            )
+    def save(self, file: tp.Optional[str] = None) -> None:
+        if not file:
+            file = self._cache_file
+        fs.dump(self._cache_data, file)
+        print(
+            'saved tree shaking cache',
+            len(self._new_files),
+            file,
+            fs.filesize(file, str),
+            ':vnl',
+        )
 
 
 def get_file_id(file: str) -> T.FileId:

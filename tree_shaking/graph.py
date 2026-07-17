@@ -49,7 +49,9 @@ def build_module_graph(
 
 
 def build_module_graphs(config_file: str) -> None:
-    cfg = parse_config(config_file, _save=True)
+    config_file = fs.abspath(config_file)
+    file_cache.init_by_profile(config_file)
+    cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
     for p, n in cfg['entries'].items():  # 'p': path, 'n': name
         print(':v2', p, n)
@@ -96,6 +98,9 @@ def build_module_graphs(config_file: str) -> None:
                 lstrip=False,
             ),
         )
+    _save_graph_alias(cfg)
+    if file_cache.changed:
+        file_cache.save()
 
 
 def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
@@ -128,3 +133,20 @@ def _reformat_paths(modules: tp.Dict[str, str], config: T.Config) -> dict:
                 out['source_roots'].pop(k)
 
     return tp.cast(dict, out)
+
+
+def _save_graph_alias(config: T.Config1) -> None:
+    map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
+    if config['root'] in map_:
+        if frozenset(config['entries'].values()) == frozenset(
+            map_[config['root']].values()
+        ):
+            return
+    map_[config['root']] = {
+        # k.replace(config['root'], '<root>'): v
+        fs.relpath(k, config['root']): v
+        for k, v in config['entries'].items()
+    }
+    fs.dump(
+        map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
+    )

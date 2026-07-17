@@ -1,6 +1,4 @@
-import atexit
 import typing as tp
-from functools import partial
 from os.path import isabs
 
 from lk_utils import fs
@@ -36,7 +34,7 @@ class T:
             'entries': tp.List[RelPath],  # must ends with ".py"
             'ignores': tp.List[IgnoredName],
             'export': tp.Optional[
-                tp.TypedDict(
+                tp.TypedDict(  # ty: ignore
                     'ExportOption0',
                     {
                         'source': tp.Union[SpecialPath, AnyDirPath],
@@ -47,15 +45,13 @@ class T:
         },
         total=False,
     )
-    """
-        {
-            'root': dirpath,
-            'search_paths': (dirpath, ...),
-            'entries': (script_path, ...),
-            'ignores': (module_name, ...),
-            #   module_name is case sensitive.
-        }
-    """
+    #   {
+    #       'root': dirpath,
+    #       'search_paths': (dirpath, ...),
+    #       'entries': (script_path, ...),
+    #       'ignores': (module_name, ...),
+    #       #   module_name is case sensitive.
+    #   }
 
     Config1 = tp.TypedDict(
         'Config1',
@@ -64,7 +60,7 @@ class T:
             'search_paths': tp.List[NormPath],
             'entries': tp.Dict[NormPath, GraphId],
             'ignores': tp.Union[tp.FrozenSet[str], tp.Tuple[str, ...]],
-            'export': tp.TypedDict(
+            'export': tp.TypedDict(  # ty: ignore
                 'ExportOption1', {'source': NormPath, 'target': NormPath}
             ),
         },
@@ -76,7 +72,7 @@ class T:
 graphs_root = '{}/module_graphs'.format(cache_root)
 
 
-def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
+def parse_config(file: str, **kwargs) -> T.Config:
     """
     file:
         - file can be YAML or JSON.
@@ -86,7 +82,6 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
         /build/build_tool/_tree_shaking_model.yaml`.
     """
     cfg_file: str = fs.abspath(file)
-    file_cache.init_by_profile(cfg_file)
     cfg_dir: str = fs.parent(cfg_file)
     cfg0: T.Config0 = fs.load(cfg_file)
     cfg1: T.Config1 = {
@@ -143,9 +138,6 @@ def parse_config(file: str, _save: bool = False, **kwargs) -> T.Config:
             '{}/{}'.format(cfg1['root'], dict1['target'])  # type: ignore
         )
 
-    if _save:
-        atexit.register(partial(_save_graph_alias, cfg1))
-
     # print(cfg1, ':l')
     return cfg1
 
@@ -195,20 +187,3 @@ def _get_venv_root(working_root: str) -> T.NormPath:
     #     )
     # assert fs.exist(out), (working_root, venv_root, out)
     # return out
-
-
-def _save_graph_alias(config: T.Config1) -> None:
-    map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
-    if config['root'] in map_:
-        if set(config['entries'].values()) == set(
-            map_[config['root']].values()
-        ):
-            return
-    map_[config['root']] = {
-        # k.replace(config['root'], '<root>'): v
-        fs.relpath(k, config['root']): v
-        for k, v in config['entries'].items()
-    }
-    fs.dump(
-        map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
-    )
