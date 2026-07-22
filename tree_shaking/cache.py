@@ -38,16 +38,16 @@ class _CacheMaker:
         self._tobe_deleted_files = set()
         atexit.register(self._delete_outdated_files)
 
-    def is_cached(self, source_file: str, namespace: str) -> bool:
-        if source_file in self._tobe_deleted_files:
+    def is_cached(self, source: str, namespace: str) -> bool:
+        if source in self._tobe_deleted_files:
             return False
         else:
             file = '{}/watch_files/{}/{}.pkl'.format(
-                self._cache_root, uuid(source_file), namespace
+                self._cache_root, uuid(source), namespace
             )
             if fs.exist(file):
                 timestamp = fs.load(file)[0]
-                if timestamp == fs.filetime(source_file):
+                if timestamp == fs.filetime(source):
                     return True
                 else:
                     self._tobe_deleted_files.add(file)
@@ -56,25 +56,27 @@ class _CacheMaker:
                 return False
 
     def get_cache(
-        self, source_file: str, namespace: str, persistent: bool = False
+        self, source: str, namespace: str, persistent: bool = False
     ) -> tp.Optional[tp.Any]:
         """
+        source: suggest passing script path. generally, any string is ok.
+
         notice: the return value may be empty list, empty dict or something.
         you should not use generic `if data: ...` to check it.
         """
-        if persistent and (source_file, namespace) in self._quick_fetches:
-            return self._quick_fetches[(source_file, namespace)]
+        if persistent and (source, namespace) in self._quick_fetches:
+            return self._quick_fetches[(source, namespace)]
 
         file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, uuid(source_file), namespace
+            self._cache_root, uuid(source), namespace
         )
-        if source_file in self._tobe_deleted_files:
+        if file in self._tobe_deleted_files:
             return None
         if fs.exist(file):
             timestamp, data = fs.load(file)
-            if timestamp == fs.filetime(source_file):
+            if timestamp == fs.filetime(source):
                 if persistent:
-                    self._quick_fetches[(source_file, namespace)] = data
+                    self._quick_fetches[(source, namespace)] = data
                 return data
             else:
                 self._tobe_deleted_files.add(file)
@@ -84,21 +86,21 @@ class _CacheMaker:
 
     def save_cache(
         self,
-        source_file: str,
+        source: str,
         namespace: str,
         data: tp.Any,
         persistent: bool = False,
     ) -> str:
         file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, uuid(fs.abspath(source_file)), namespace
+            self._cache_root, uuid(fs.abspath(source)), namespace
         )
         if not fs.exist(fs.parent(file)):
             fs.make_dir(fs.parent(file))
-        fs.dump((fs.filetime(source_file), data), file)
+        fs.dump((fs.filetime(source), data), file)
         if file in self._tobe_deleted_files:
             self._tobe_deleted_files.remove(file)
         if persistent:
-            self._quick_fetches[(source_file, namespace)] = data
+            self._quick_fetches[(source, namespace)] = data
         return file
 
     def _delete_outdated_files(self) -> None:
