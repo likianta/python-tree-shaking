@@ -6,7 +6,9 @@ from .cache import cache_maker
 from .cache import cache_root
 from .config import T
 from .config import parse_config
+from .dynamic_analyzer import grab_global_modules
 from .export import dump_tree
+from .export import dynamic_dump_tree
 from .graph import build_module_graphs
 from .patch import implicit_hooks_file
 

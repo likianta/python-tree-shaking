@@ -17,8 +17,8 @@ from .path_scope import path_scope
 
 class T(T0):
     KnownRoots = tp.Dict[T0.NormPath, tp.Set[T0.RelPath]]
-    TodoDirs = tp.Set[str]  # a set of absolute paths
-    TodoFiles = tp.Set[str]  # a set of absolute paths
+    TodoDirs = tp.Union[tp.Set[T0.NormPath], tp.FrozenSet[T0.NormPath]]
+    TodoFiles = tp.Union[tp.Set[T0.NormPath], tp.FrozenSet[T0.NormPath]]
     Resources = tp.Tuple[TodoFiles, TodoDirs]
     ResourcesMap = tp.TypedDict(
         'ResourcesMap',
@@ -89,32 +89,94 @@ def dump_tree(
             dry_run,
             cfg['root'],
         )
+
     fs.dump(
         {
             'created_directories': tobe_created_dirs,
             'linked_resources': (files, dirs),
         },
-        '{}/dumped_resources_maps/{}.pkl'.format(cache_root, x := uuid(target)),
+        '{}/dumped_resources_maps/{}.pkl'.format(cache_root, uuid(target)),
     )
-    print('(cache) saved resources map', x, ':v')
+    print('(cache) saved resources map', uuid(target), ':v')
 
     print('export done', ':tv4')
+
+
+def dynamic_dump_tree(
+    files_i: tp.Iterable[str],
+    dir_o: str,
+    single_source_entry: str = '',
+    dry_run: bool = False,
+) -> None:
+    """
+    files_i: see `.dynamic_analyzer.grab_global_modules`.
+    """
+    if single_source_entry:
+        todo_files = frozenset(
+            x for x in files_i if x.startswith(single_source_entry + '/')
+        )
+    else:
+        todo_files = frozenset(files_i)
+    assert todo_files
+
+    # todo_dirs = _analyze_dirs_to_be_created(todo_files, frozenset())
+    todo_dirs = set()
+    for f in todo_files:
+        todo_dirs.update(_grind_down_dirpath(fs.parent(f)))
+    todo_dirs = frozenset(
+        x for x in todo_dirs if fs.is_parent(single_source_entry, x)
+    )
+    # for d in sorted(todo_dirs, key=lambda x: (len(x), x)):
+    #     if fs.is_parent(d, single_source_entry):
+    #         print('pick out existing dir', d, ':vi')
+    #         todo_dirs.remove(d)
+    #     elif d == single_source_entry:
+    #         todo_dirs.remove(d)
+    #     else:
+    #         break
+
+    print(len(todo_files), len(todo_dirs), ':n')
+
+    if _check_if_first_time_export(dir_o):
+        print(':v', 'first time export')
+        _first_time_exports(
+            dir_o,
+            todo_dirs,
+            (todo_files, frozenset()),
+            sole_root=single_source_entry,
+            dry_run=dry_run,
+        )
+    else:
+        print(':v', 'incremental update')
+        _incremental_updates(
+            dir_o,
+            todo_dirs,
+            (todo_files, frozenset()),
+            sole_root=single_source_entry,
+            dry_run=dry_run,
+        )
 
 
 def _first_time_exports(
     root: str,
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
-    copyfiles: bool,
+    copyfiles: bool = False,
     sole_root: tp.Optional[str] = None,
     dry_run: bool = False,
 ) -> None:
     if not fs.exist(root) and not dry_run:
         fs.make_dir(root)
 
-    roots = _get_common_roots(tobe_created_dirs)
     if sole_root:
-        roots = _shrink_to_single_root(roots, sole_root)
+        temp = set()
+        for d in tobe_created_dirs:
+            assert fs.is_parent(sole_root, d)
+            temp.add(fs.relpath(d, sole_root))
+        roots = {sole_root: temp}
+    else:
+        roots = _get_common_roots(tobe_created_dirs)
+
     for subroot, reldirs in roots.items():
         if sole_root:
             dir_prefix = root
@@ -126,15 +188,15 @@ def _first_time_exports(
             d = '{}/{}'.format(dir_prefix, x)
             if dry_run:
                 print(
-                    ':i', '(dry run) make dir: {}'.format(fs.relpath(d, root))
+                    ':i', '[dry run] make dir: {}'.format(fs.relpath(d, root))
                 )
             else:
                 fs.make_dir(d)
 
     files, dirs = tobe_linked_resources
     known_roots = tuple(sorted(roots.keys(), reverse=True))
-    print(known_roots, ':vl')
-    for f in files:
+    print(known_roots, ':nvl')
+    for f in sorted(files):
         r, s = _split_path(f, known_roots)
         i, o = (
             f,
@@ -147,7 +209,7 @@ def _first_time_exports(
         if dry_run:
             print(
                 ':i',
-                '(dry run) {}: {}'.format(
+                '[dry run] {}: {}'.format(
                     'copying file' if copyfiles else 'symlinking file',
                     '<root>/{}'.format(o[len(root) + 1 :]),
                 ),
@@ -175,7 +237,7 @@ def _first_time_exports(
         if dry_run:
             print(
                 ':i',
-                '(dry run) {}: {}'.format(
+                '[dry run] {}: {}'.format(
                     'copying dir' if copyfiles else 'symlinking dir',
                     '<root>/{}/'.format(o[len(root) + 1 :]),
                 ),
@@ -191,7 +253,7 @@ def _incremental_updates(
     root: str,
     tobe_created_dirs: T.TodoDirs,
     tobe_linked_resources: T.Resources,
-    copyfiles: bool,
+    copyfiles: bool = False,
     sole_root: tp.Optional[str] = None,
     dry_run: bool = False,
     _source_root: tp.Optional[str] = None,  # experimental
@@ -284,14 +346,16 @@ def _incremental_updates(
 
 def _analyze_dirs_to_be_created(
     files: T.TodoFiles, dirs: T.TodoDirs
-) -> tp.Set[str]:
+) -> T.TodoDirs:
     """
-    returns: a set of dir paths, the paths are grind down to each level of
+    returns: a list of dir paths, the paths are grind down to each level of
     directories.
     note: the returned value is a set of "source" paths, not "target" paths.
     """
     out = set()
-    for x in files | dirs:
+    for x in files:
+        out.update(_grind_down_dirpath(fs.parent(x)))
+    for x in dirs:
         out.update(_grind_down_dirpath(fs.parent(x)))
     # remove existing dirs that out of search roots
     search_roots = _get_search_roots(shrink=True)
@@ -371,11 +435,13 @@ def _analyze_incremental_updates(
 
 
 def _check_if_first_time_export(root: str) -> bool:
-    if not fs.exist(root):
-        return True
-    if not fs.find_dir_names(root):
-        return True
-    return False
+    if fs.exist(root):
+        for one in fs.find_dir_names(root):
+            return False
+        else:
+            return True  # empty root
+    else:
+        return True  # inexistent root
 
 
 # TODO or DELETE

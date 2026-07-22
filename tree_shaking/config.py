@@ -15,7 +15,7 @@ class T:
     #   - use correct name.
     #   for example:
     #       wrong       right
-    #       -----       -------
+    #       --------    --------
     #       IPython     ipython
     #       lk-utils    lk_utils
     #       pillow      pil
@@ -134,7 +134,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
             '{}/{}'.format(cfg1['root'], dict1['target'])  # type: ignore
         )
 
-    # print(cfg1, ':l')
+    # print(cfg1, ':ln')
     cache_maker.save_cache(cfg_file, 'config', cfg1)
     return cfg1
 
