@@ -112,6 +112,7 @@ def dynamic_dump_tree(
     files_i: see `.dynamic_analyzer.grab_global_modules`.
     """
     if single_source_entry:
+        single_source_entry = fs.abspath(single_source_entry)
         todo_files = frozenset(
             x for x in files_i if x.startswith(single_source_entry + '/')
         )
