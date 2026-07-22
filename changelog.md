@@ -8,6 +8,12 @@
 
 ---
 
+### 0.4.0 (wip)
+
+- Dynamic analysis and tree shaking.
+
+---
+
 ### 0.3.0 (2026-07-17)
 
 - New cache system.
