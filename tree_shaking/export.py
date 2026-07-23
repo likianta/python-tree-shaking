@@ -4,7 +4,6 @@ from glob import glob
 
 import neoprint as np
 from lk_utils import fs
-from lk_utils import slice
 
 from .cache import cache_maker
 from .config import parse_config
@@ -146,7 +145,7 @@ def _dump_single_source(
     for p in todo_relfiles | todo_reldirs:
         if '/' in p:
             tobe_created_reldirs.update(
-                _grind_down_dirpath(slice(p).cut().rfind('/').cut().out())
+                _grind_down_dirpath(p.rsplit('/', 1)[0])
             )
     print(
         len(todo_relfiles), len(todo_reldirs), len(tobe_created_reldirs), ':n'
@@ -250,16 +249,17 @@ def _dump_single_source(
                 o = '{}/{}'.format(root_o, r)
                 fs.make_link('{}/{}'.format(root_i, r), o, False)
 
-    records1: T.Records = {
-        'created_directories': frozenset(tree1),
-        'resource_records': res1,
-    }
-    cache_maker.save_cache(
-        '{};{}'.format(root_i, root_o),
-        'last_dumped_records',
-        records1,
-        check=False,
-    )
+    if not dry_run:
+        records1: T.Records = {
+            'created_directories': frozenset(tree1),
+            'resource_records': res1,
+        }
+        cache_maker.save_cache(
+            '{};{}'.format(root_i, root_o),
+            'last_dumped_records',
+            records1,
+            check=False,
+        )
     print('export done', ':ptv4')
 
 
