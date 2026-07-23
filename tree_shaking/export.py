@@ -1,5 +1,6 @@
 import sys
 import typing as tp
+from collections import defaultdict
 from glob import glob
 
 import neoprint as np
@@ -327,6 +328,7 @@ def _eliminate_overlapping_resources(
     because "A/B" already covers "A/B/C".
     """
     before_count = (len(reldirs), len(relfiles))
+    
     for d0 in sorted(reldirs):
         if d0 in reldirs:
             for d1 in sorted(reldirs, reverse=True):
@@ -336,11 +338,25 @@ def _eliminate_overlapping_resources(
                         reldirs.remove(d1)
                 else:
                     break
-    for f0 in relfiles:
-        for d0 in reldirs:
-            if f0.startswith(d0 + '/'):
-                print('remove covered file', f0, ':i2v')
-                relfiles.remove(f0)
+
+    temp_dict = defaultdict(set)
+    for f in relfiles:
+        if '/' in f:
+            temp_dict[f.rsplit('/', 1)[0]].add(f)
+        else:
+            temp_dict[''].add(f)
+    for d1 in temp_dict.keys():
+        if d1:
+            for d0 in reldirs:
+                if d1.startswith(d0 + '/'):
+                    print(
+                        'remove covered files',
+                        '{} (count={})'.format(d1, len(temp_dict[d1])),
+                        ':i2v',
+                    )
+                    relfiles -= temp_dict[d1]
+                    break
+
     after_count = (len(reldirs), len(relfiles))
     if after_count != before_count:
         print(
