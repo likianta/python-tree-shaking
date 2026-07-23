@@ -20,7 +20,7 @@ class T:
     #   0: no dry run
     #   1: no actual file operations, only prints.
     #   2: same as 1, but disable incremental update
-    RelDirPath = RelPath = str
+    RelDirPath = RelFilePath = RelPath = str
 
     Records = tp.TypedDict(
         'Records',
@@ -29,8 +29,8 @@ class T:
             'resource_records': tp.Dict[RelPath, int],
         },
     )
-    TodoDirs = tp.Union[tp.Set[AbsDirPath], tp.FrozenSet[AbsDirPath]]
-    TodoFiles = tp.Union[tp.Set[AbsFilePath], tp.FrozenSet[AbsFilePath]]
+    TodoDirs = tp.Union[tp.Set[RelDirPath]]
+    TodoFiles = tp.Union[tp.Set[RelFilePath]]
 
 
 def dump_tree_from_config_file(
@@ -158,6 +158,12 @@ def _dump_single_source(
             elif dry_run:
                 print('ignore dir resource out of root_i', d, ':i2v5')
 
+    if todo_reldirs:
+        todo_reldirs, todo_relfiles = _eliminate_overlapping_resources(
+            todo_reldirs, todo_relfiles
+        )
+        assert todo_relfiles
+
     tobe_created_reldirs = set()
     for p in todo_relfiles | todo_reldirs:
         if '/' in p:
@@ -205,17 +211,17 @@ def _dump_single_source(
                 i = '{}/{}'.format(root_i, r)
                 o = '{}/{}'.format(root_o, r)
                 # FIXME
-                fs.make_link(i, o, True)
+                # fs.make_link(i, o, True)
                 # fs.make_link(i, o, False)
-                # if fs.exist(o):
-                #     print(
-                #         ':v8il',
-                #         'target file exists! (this should not happen)',
-                #         i,
-                #         o,
-                #     )
-                # else:
-                #     fs.make_link(i, o, False)
+                if fs.exist(o):
+                    print(
+                        ':v8il',
+                        'target file exists! (this should not happen)',
+                        i,
+                        o,
+                    )
+                else:
+                    fs.make_link(i, o, False)
     else:
         assert (
             x := cache_maker.get_cache(
@@ -297,6 +303,53 @@ def _dump_single_source(
             cache_reference_file, 'last_dumped_records', records1
         )
     print('export done', ':ptv4')
+
+
+# ------------------------------------------------------------------------------
+
+
+# def _analyze_dirs_tobe_created(todo_relfiles, todo_reldirs):
+#     tobe_created_reldirs = set()
+#     for p in todo_relfiles | todo_reldirs:
+#         if '/' in p:
+#             tobe_created_reldirs.update(
+#                 _grind_down_dirpath(p.rsplit('/', 1)[0])
+#             )
+#     tobe_created_reldirs -= todo_reldirs
+#     return tobe_created_reldirs
+
+
+def _eliminate_overlapping_resources(
+    reldirs: T.TodoDirs, relfiles: T.TodoFiles
+) -> tp.Tuple[T.TodoDirs, T.TodoFiles]:
+    """
+    if there "A/B" and "A/B/C", then "A/B/C" is eliminated.
+    because "A/B" already covers "A/B/C".
+    """
+    before_count = (len(reldirs), len(relfiles))
+    for d0 in sorted(reldirs):
+        if d0 in reldirs:
+            for d1 in sorted(reldirs, reverse=True):
+                if len(d1) > len(d0):
+                    if d1.startswith(d0 + '/'):
+                        print('remove covered dir', d1, ':i2v')
+                        reldirs.remove(d1)
+                else:
+                    break
+    for f0 in relfiles:
+        for d0 in reldirs:
+            if f0.startswith(d0 + '/'):
+                print('remove covered file', f0, ':i2v')
+                relfiles.remove(f0)
+    after_count = (len(reldirs), len(relfiles))
+    if after_count != before_count:
+        print(
+            'eliminate overlapping resources: {} -> {}'.format(
+                before_count, after_count
+            ),
+            ':r2',
+        )
+    return reldirs, relfiles
 
 
 def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
