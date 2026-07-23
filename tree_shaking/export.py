@@ -59,6 +59,7 @@ def dump_tree_from_config(
         files, dirs = _mount_resources(
             config, verbose=bool(dry_run), limited_search_root=source
         )
+        print(len(files), len(dirs), ':n')
         _dump_single_source(
             root_i=source,
             root_o=target,
@@ -130,10 +131,9 @@ def _dump_single_source(
     dirs_i: tp.Iterable[T.AbsDirPath] = (),
     # copy_files: bool = False,
     dry_run: T.DryRun = False,
-    cache_reference_file: str = '',
+    cache_reference_file: str = '',  # TODO or DELETE
 ) -> None:
     if not cache_reference_file:
-        # FIXME
         # cache_reference_file = '{};{}'.format(root_i, root_o)
         raise Exception('please provide a cache_reference_file')
 
@@ -158,12 +158,6 @@ def _dump_single_source(
                     print(':v6', 'dir not exists', d)
             elif dry_run:
                 print('ignore dir resource out of root_i', d, ':i2v5')
-
-    if todo_reldirs:
-        todo_reldirs, todo_relfiles = _eliminate_overlapping_resources(
-            todo_reldirs, todo_relfiles
-        )
-        assert todo_relfiles
 
     tobe_created_reldirs = set()
     for p in todo_relfiles | todo_reldirs:
@@ -216,17 +210,24 @@ def _dump_single_source(
                 # fs.make_link(i, o, False)
                 if fs.exist(o):
                     print(
-                        ':v8il',
+                        ':v8iln',
                         'target file exists! (this should not happen)',
                         i,
                         o,
                     )
                 else:
                     fs.make_link(i, o, False)
+        
+        # TEST
+        from lk_utils import start_ipython
+        start_ipython(globals() | locals())
+
     else:
         assert (
             x := cache_maker.get_cache(
-                cache_reference_file, 'last_dumped_records'
+                '{};{}'.format(root_i, root_o),
+                'last_dumped_records',
+                check=False,
             )
         )
         records0: T.Records = x
@@ -301,7 +302,10 @@ def _dump_single_source(
             'resource_records': res1,
         }
         cache_maker.save_cache(
-            cache_reference_file, 'last_dumped_records', records1
+            '{};{}'.format(root_i, root_o),
+            'last_dumped_records',
+            records1,
+            check=False,
         )
     print('export done', ':ptv4')
 
@@ -328,13 +332,18 @@ def _eliminate_overlapping_resources(
     because "A/B" already covers "A/B/C".
     """
     before_count = (len(reldirs), len(relfiles))
-    
+
     for d0 in sorted(reldirs):
         if d0 in reldirs:
             for d1 in sorted(reldirs, reverse=True):
                 if len(d1) > len(d0):
                     if d1.startswith(d0 + '/'):
-                        print('remove covered dir', d1, ':i2v')
+                        print(
+                            'remove dir "{}" that is covered by "{}"'.format(
+                                d1, d0
+                            ),
+                            ':i2v',
+                        )
                         reldirs.remove(d1)
                 else:
                     break
@@ -350,8 +359,8 @@ def _eliminate_overlapping_resources(
             for d0 in reldirs:
                 if d1.startswith(d0 + '/'):
                     print(
-                        'remove covered files',
-                        '{} (count={})'.format(d1, len(temp_dict[d1])),
+                        'remove files "{}/*" (count={}) that are covered by '
+                        '"{}"'.format(d1, len(temp_dict[d1]), d0),
                         ':i2v',
                     )
                     relfiles -= temp_dict[d1]
@@ -398,20 +407,22 @@ def _mount_resources(
         else:
             nullable = False
 
+        suffix = '/' if relpath.endswith('/') else ''
+
         if '*' in relpath:
             candidates = glob('{}/{}'.format(base_dir, relpath))
             if len(candidates) == 0 and nullable:
                 return ''
             elif len(candidates) == 1:
                 if fs.exist(candidates[0]):
-                    return fs.normpath(candidates[0])
+                    return fs.normpath(candidates[0]) + suffix
             else:
                 # currently we don't allow multiple candidates. i think it's
                 # fine to unlock this behavior. let me review this case later.
                 raise Exception(relpath, candidates, nullable)
         else:
             if fs.exist(x := fs.normpath('{}/{}'.format(base_dir, relpath))):
-                return x
+                return x + suffix
 
         if nullable:
             return ''
@@ -451,22 +462,9 @@ def _mount_resources(
                     for relpath1 in patch[top_name]['files']:
                         if abspath1 := resolve_patched_path(base_dir, relpath1):
                             if abspath1.endswith('/'):
-                                dirs.add(abspath1)
+                                dirs.add(abspath1[:-1])
                             else:
                                 files.add(abspath1)
 
-    for f in tuple(files):
-        # since `len(dirs)` is usually small, we can simply for-loop it -
-        # without worrying about efficiency.
-        for d in dirs:
-            if f.startswith(d + '/'):
-                if verbose:
-                    print(
-                        'remove file "{}" that has been covered by "{}"'.format(
-                            f, d
-                        ),
-                        ':v7i',
-                    )
-                files.remove(f)
-
+    dirs, files = _eliminate_overlapping_resources(dirs, files)
     return files, dirs
