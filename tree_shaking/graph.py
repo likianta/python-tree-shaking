@@ -9,7 +9,6 @@ from .cache import cache_maker
 from .cache import cache_root
 from .config import T as T0
 from .config import parse_config
-from .file_parser import new_parsing_triggered
 from .finder import Finder
 
 
