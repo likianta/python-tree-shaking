@@ -1,473 +1,272 @@
-import os
+import sys
 import typing as tp
-from collections import defaultdict
 from glob import glob
 
+import neoprint as np
 from lk_utils import fs
-from lk_utils import uuid
-from neoprint import format
+from lk_utils import slice
 
 from .cache import cache_maker
-from .cache import cache_root
 from .config import parse_config
+from .dynamic_analyzer import grab_global_modules
 from .graph import T as T0
 from .patch import patch
-from .path_scope import path_scope
 
 
-class T(T0):
-    KnownRoots = tp.Dict[T0.NormPath, tp.Set[T0.RelPath]]
-    TodoDirs = tp.Union[tp.Set[T0.NormPath], tp.FrozenSet[T0.NormPath]]
-    TodoFiles = tp.Union[tp.Set[T0.NormPath], tp.FrozenSet[T0.NormPath]]
-    Resources = tp.Tuple[TodoFiles, TodoDirs]
-    ResourcesMap = tp.TypedDict(
-        'ResourcesMap',
-        {'created_directories': TodoDirs, 'linked_resources': Resources},
+class T:
+    AbsDirPath = AbsFilePath = str
+    AnyDirPath = AnyFilePath = str
+    Config = T0.Config
+    RelDirPath = RelPath = str
+
+    Records = tp.TypedDict(
+        'Records',
+        {
+            'created_directories': tp.FrozenSet[RelDirPath],
+            'resource_records': tp.Dict[RelPath, int],
+        },
     )
+    TodoDirs = tp.Union[tp.Set[AbsDirPath], tp.FrozenSet[AbsDirPath]]
+    TodoFiles = tp.Union[tp.Set[AbsFilePath], tp.FrozenSet[AbsFilePath]]
 
 
-def dump_tree(
-    file_i: str,
-    dir_o: str = '',
-    single_source_entry: str = '',
-    copyfiles: bool = False,
+def dump_tree_from_config_file(
+    file_i: T.AnyFilePath,
+    dir_o: T.AnyDirPath = '',
+    single_source_entry: T.AnyDirPath = '',
     dry_run: bool = False,
-) -> None:
-    """
-    params:
-        file_i (-i):
-        dir_o (-o):
-            an empty folder to store the tree. it can be an inexistent path.
-            if not set, will try to get it from `file_i:export:target`.
-        single_source_entry (-s):
-            if set, make sure it is one of `file_i:export:search_paths`.
-            if not set, will try to get it from `file_i:export:source`.
-            if `file_i:export:source` is an empty string, will export all
-            entries of `file_i:export:search_paths`.
-        copyfiles (-c): if true, use copy instead of symlink.
-        dry_run (-d):
-
-    file content for example:
-        search_paths:
-            - .
-            - chore/site_packages
-        module_graphs:
-            # the name must be existed in `data/module_graphs/<name>.yaml`
-            # see generation at `tree_shaking/__main__.py:dump_module_graph`
-            - depsland
-            - streamlit
-            - toga-winforms
-    """
+):
     cfg: T.Config = parse_config(
         file_i, export={'source': single_source_entry, 'target': dir_o}
     )
+    dump_tree_from_config(cfg, dry_run)
 
-    source = cfg['export']['source']  # an optional relative path
-    target = cfg['export']['target']  # a valid abspath
+
+def dump_tree_from_config(config: T.Config, dry_run: bool = False) -> None:
+    source = config['export']['source']  # an optional absolute path
+    target = config['export']['target']  # a valid abspath
     print(source, target, ':nv2l')
     assert target
-    # del dir_o
 
-    files, dirs = _mount_resources(
-        cfg, verbose=dry_run, limited_search_root=source
-    )
-
-    tobe_created_dirs = _analyze_dirs_to_be_created(files, dirs)
-    print(len(tobe_created_dirs), len(files), len(dirs), ':n')
-
-    if _check_if_first_time_export(target):
-        _first_time_exports(
-            target, tobe_created_dirs, (files, dirs), copyfiles, source, dry_run
+    if source:
+        files, dirs = _mount_resources(
+            config, verbose=dry_run, limited_search_root=source
         )
-    else:
-        _incremental_updates(
-            target,
-            tobe_created_dirs,
-            (files, dirs),
-            copyfiles,
-            source,
-            dry_run,
-            cfg['root'],
-        )
-
-    fs.dump(
-        {
-            'created_directories': tobe_created_dirs,
-            'linked_resources': (files, dirs),
-        },
-        '{}/dumped_resources_maps/{}.pkl'.format(cache_root, uuid(target)),
-    )
-    print('(cache) saved resources map', uuid(target), ':v')
-
-    print('export done', ':tv4')
-
-
-def dynamic_dump_tree(
-    files_i: tp.Iterable[str],
-    dir_o: str,
-    single_source_entry: str = '',
-    dry_run: bool = False,
-) -> None:
-    """
-    files_i: see `.dynamic_analyzer.grab_global_modules`.
-    """
-    if single_source_entry:
-        single_source_entry = fs.abspath(single_source_entry)
-        todo_files = frozenset(
-            x for x in files_i if x.startswith(single_source_entry + '/')
-        )
-    else:
-        todo_files = frozenset(files_i)
-    assert todo_files
-
-    # todo_dirs = _analyze_dirs_to_be_created(todo_files, frozenset())
-    todo_dirs = set()
-    for f in todo_files:
-        todo_dirs.update(_grind_down_dirpath(fs.parent(f)))
-    todo_dirs = frozenset(
-        x for x in todo_dirs if fs.is_parent(single_source_entry, x)
-    )
-    # for d in sorted(todo_dirs, key=lambda x: (len(x), x)):
-    #     if fs.is_parent(d, single_source_entry):
-    #         print('pick out existing dir', d, ':vi')
-    #         todo_dirs.remove(d)
-    #     elif d == single_source_entry:
-    #         todo_dirs.remove(d)
-    #     else:
-    #         break
-
-    print(len(todo_files), len(todo_dirs), ':n')
-
-    if _check_if_first_time_export(dir_o):
-        print(':v', 'first time export')
-        _first_time_exports(
-            dir_o,
-            todo_dirs,
-            (todo_files, frozenset()),
-            sole_root=single_source_entry,
+        _dump_single_source(
+            root_i=source,
+            root_o=target,
+            files_i=files,
+            dirs_i=dirs,
             dry_run=dry_run,
         )
     else:
-        print(':v', 'incremental update')
-        _incremental_updates(
-            dir_o,
-            todo_dirs,
-            (todo_files, frozenset()),
-            sole_root=single_source_entry,
-            dry_run=dry_run,
+        """
+        memo:
+            is_single_source:
+                it affects direct folder structure of `dir_o`.
+                for example:
+                    if is_single_source:
+                        roots_i = ('/aaa',)  # assert len(roots_i) == 1
+                        dir_o = '/bbb'
+                        tobe_linked_resources = (
+                            {'/aaa/ccc.py',}, {'/aaa/ddd',}
+                        )
+                        tree_result:
+                            bbb
+                            |= ddd
+                            |- ccc.py
+                    else:
+                        roots_i = ('/aaa', '/eee', '/fff')
+                        dir_o = '/bbb'
+                        tobe_linked_resources = (
+                            {'/aaa/ccc.py',}, {'/aaa/ddd',}
+                        )
+                        tree_result:
+                            bbb
+                            |= aaa
+                                |= ddd
+                                |- ccc.py
+                            |= eee
+                            |= fff
+        """
+        raise NotImplementedError(
+            'multi-roots mode is not implemented', config['search_paths']
         )
 
 
-def _first_time_exports(
-    root: str,
-    tobe_created_dirs: T.TodoDirs,
-    tobe_linked_resources: T.Resources,
-    copyfiles: bool = False,
-    sole_root: tp.Optional[str] = None,
+def dump_tree_from_modules(dir_o: T.AnyDirPath, dry_run: bool = False) -> None:
+    assert sys.exec_prefix.endswith('.venv')
+    root_i = fs.normpath('{}/Lib/site-packages'.format(sys.exec_prefix))
+    root_o = fs.abspath(dir_o)
+
+    mods = tuple(grab_global_modules())
+    _dump_single_source(
+        root_i=root_i,
+        root_o=root_o,
+        files_i=(x for _, x, d in mods if not d),
+        dirs_i=(x for _, x, d in mods if d),
+        dry_run=dry_run,
+    )
+
+
+# ------------------------------------------------------------------------------
+
+
+def _dump_single_source(
+    root_i: T.AbsDirPath,
+    root_o: T.AbsDirPath,
+    files_i: tp.Iterable[T.AbsFilePath],
+    dirs_i: tp.Iterable[T.AbsDirPath] = (),
+    # copy_files: bool = False,
     dry_run: bool = False,
 ) -> None:
-    if not fs.exist(root) and not dry_run:
-        fs.make_dir(root)
+    with np.scope():
+        todo_relfiles = set()
+        for f in files_i:
+            if f.startswith(root_i + '/'):
+                todo_relfiles.add(f.removeprefix(root_i + '/'))
+            else:
+                print('ignore file resource out of root_i', f, ':i2v5')
+        assert todo_relfiles
 
-    if sole_root:
-        temp = set()
-        for d in tobe_created_dirs:
-            assert fs.is_parent(sole_root, d)
-            temp.add(fs.relpath(d, sole_root))
-        roots = {sole_root: temp}
-    else:
-        roots = _get_common_roots(tobe_created_dirs)
+        todo_reldirs = set()
+        for d in dirs_i:
+            if d.startswith(root_i + '/'):
+                todo_reldirs.add(fs.relpath(d, root_i))
+            else:
+                print('ignore dir resource out of root_i', d, ':i2v5')
 
-    for subroot, reldirs in roots.items():
-        if sole_root:
-            dir_prefix = root
-        else:
-            dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
-            if not dry_run:
-                fs.make_dir(dir_prefix)
-        for x in sorted(reldirs):
-            d = '{}/{}'.format(dir_prefix, x)
+    tobe_created_reldirs = set()
+    for p in todo_relfiles | todo_reldirs:
+        if '/' in p:
+            tobe_created_reldirs.update(
+                _grind_down_dirpath(slice(p).cut().rfind('/').cut().out())
+            )
+    print(
+        len(todo_relfiles), len(todo_reldirs), len(tobe_created_reldirs), ':n'
+    )
+
+    if x := cache_maker.get_cache(
+        '{};{}'.format(root_i, root_o), 'last_dumped_records', check=False
+    ):
+        print('incremental update')
+        records0: T.Records = x[root_i]
+
+        tree0 = records0['created_directories']
+        tree1 = tobe_created_reldirs
+        for d in sorted(tree1 - tree0):
+            # make directory
             if dry_run:
-                print(
-                    ':i', '[dry run] make dir: {}'.format(fs.relpath(d, root))
-                )
+                print(':iv4', '[dry run] make dir: {}'.format(d))
             else:
-                fs.make_dir(d)
+                o = '{}/{}'.format(root_o, d)
+                fs.make_dir(o)
+        for d in sorted(tree0 - tree1):
+            # delete directory
+            if dry_run:
+                print(':iv8', '[dry run] drop dir: {}'.format(d))
+            else:
+                o = '{}/{}'.format(root_o, d)
+                fs.remove_tree(o)
 
-    files, dirs = tobe_linked_resources
-    known_roots = tuple(sorted(roots.keys(), reverse=True))
-    print(known_roots, ':nvl')
-    for f in sorted(files):
-        r, s = _split_path(f, known_roots)
-        i, o = (
-            f,
-            fs.normpath(
-                '{}/{}'.format(root, s)
-                if sole_root
-                else '{}/{}/{}'.format(root, fs.basename(r), s)
-            ),
-        )
-        if dry_run:
-            print(
-                ':i',
-                '[dry run] {}: {}'.format(
-                    'copying file' if copyfiles else 'symlinking file',
-                    '<root>/{}'.format(o[len(root) + 1 :]),
-                ),
+        res0 = records0['resource_records']
+        res1 = {}
+        for r in todo_relfiles:
+            res1[r] = tp.cast(int, fs.mtime('{}/{}'.format(root_i, r)))
+        for r in sorted(todo_reldirs, reverse=True):
+            #   note: be careful the `todo_reldirs` may contain "A/B" and
+            #   "A/B/C" paths -- i.e. the cross-including paths. we need to
+            #   process "A/B/C" first, then "A/B". that's why we use
+            #   `sorted(todo_reldirs, reverse=True)`.
+            #   TODO: maybe we can eliminate cross-including paths in
+            #   `_mount_resources()` stage.
+            res1[r] = tp.cast(
+                int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
             )
-        else:
-            if copyfiles:
-                fs.copy_file(i, o, overwrite=True)
+        with np.scope():
+            for r1 in res1:
+                if r1 not in res0:
+                    # add resource
+                    if dry_run:
+                        print(':i2v4', '[dry run] add res: {}'.format(r1))
+                    else:
+                        o = '{}/{}'.format(root_o, r1)
+                        fs.make_link('{}/{}'.format(root_i, r1), o, True)
+                else:
+                    t1 = res1[r1]
+                    t0 = res0[r1]
+                    if t1 != t0:
+                        # update resource
+                        if dry_run:
+                            print(
+                                ':i2v6', '[dry run] update res: {}'.format(r1)
+                            )
+                        else:
+                            o = '{}/{}'.format(root_o, r1)
+                            fs.make_link('{}/{}'.format(root_i, r1), o, True)
+            for r0 in res0:
+                if r0 not in res1:
+                    # delete resource
+                    if dry_run:
+                        print(':i2v8', '[dry run] drop res: {}'.format(r0))
+                    else:
+                        o = '{}/{}'.format(root_o, r0)
+                        if fs.exist(o):
+                            fs.remove(o)
+                        else:
+                            print('already removed?', r0)
+    else:
+        print('first time dump')
+
+        tree1 = tobe_created_reldirs
+        for d in sorted(tree1):
+            # make directory
+            if dry_run:
+                print(':iv4', '[dry run] make dir: {}'.format(d))
             else:
-                fs.make_link(i, o, overwrite=True)
-    for d in sorted(dirs, reverse=True):
-        #   note: be careful the `dirs` may contain "A/B" and "A/B/C" paths, -
-        #   i.e. the cross-including paths. we need to process "A/B/C" first, -
-        #   then "A/B". that's why we use "sorted(dirs, reverse=True)".
-        #   TODO: maybe we can eliminate cross-including paths in -
-        #       "_mount_resources()" stage.
-        r, s = _split_path(d, known_roots)
-        i, o = (
-            d,
-            fs.normpath(
-                '{}/{}'.format(root, s)
-                if sole_root
-                else '{}/{}/{}'.format(root, fs.basename(r), s)
-            ),
-        )
-        if dry_run:
-            print(
-                ':i',
-                '[dry run] {}: {}'.format(
-                    'copying dir' if copyfiles else 'symlinking dir',
-                    '<root>/{}/'.format(o[len(root) + 1 :]),
-                ),
+                o = '{}/{}'.format(root_o, d)
+                fs.make_dir(o)
+
+        res1 = {}
+        for r in todo_relfiles:
+            res1[r] = tp.cast(int, fs.mtime('{}/{}'.format(root_i, r)))
+        for r in todo_reldirs:
+            res1[r] = tp.cast(
+                int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
             )
-        else:
-            if copyfiles:
-                fs.copy_tree(i, o, overwrite=True)
+        for r in res1:
+            # add resource
+            if dry_run:
+                print(':i2v4', '[dry run] add res: {}'.format(r))
             else:
-                fs.make_link(i, o, overwrite=True)
+                o = '{}/{}'.format(root_o, r)
+                fs.make_link('{}/{}'.format(root_i, r), o, False)
 
-
-def _incremental_updates(
-    root: str,
-    tobe_created_dirs: T.TodoDirs,
-    tobe_linked_resources: T.Resources,
-    copyfiles: bool = False,
-    sole_root: tp.Optional[str] = None,
-    dry_run: bool = False,
-    _source_root: tp.Optional[str] = None,  # experimental
-) -> None:
-    assert fs.exist(
-        x := ('{}/dumped_resources_maps/{}.pkl'.format(cache_root, uuid(root)))
-    ), x  # devnote: if AssertionError, check if file was dumped by another -
-    #   venv provider.
-    old_res_map: T.ResourcesMap = fs.load(x)
-    new_res_map: T.ResourcesMap = {
-        'created_directories': tobe_created_dirs,
-        'linked_resources': tobe_linked_resources,
+    records1: T.Records = {
+        'created_directories': frozenset(tree1),
+        'resource_records': res1,
     }
-    known_roots = (
-        (sole_root,)
-        if sole_root
-        else tuple(
-            sorted(_get_common_roots(tobe_created_dirs).keys(), reverse=True)
-        )
+    cache_maker.save_cache(
+        '{};{}'.format(root_i, root_o),
+        'last_dumped_records',
+        records1,
+        check=False,
     )
-    for action, path_i in _analyze_incremental_updates(
-        old_res_map, new_res_map, _source_root, known_roots
-    ):
-        a, b = _split_path(path_i, known_roots)
-        path_o = fs.normpath(
-            '{}/{}'.format(root, b)
-            if sole_root
-            else '{}/{}/{}'.format(root, fs.basename(a), b)
-        )
-        if dry_run:
-            print(
-                ':i',
-                '(dry run) {}: {}'.format(
-                    action, '<root>/{}'.format(path_o[len(root) + 1 :])
-                ),
-            )
-        else:
-            if action in ('drop_dir', 'del_file', 'del_dir') and not fs.exist(
-                path_o
-            ):
-                print(':v6', 'already removed?', action, path_o)
-                continue
-            match action:
-                case 'add_dir':
-                    if copyfiles:
-                        fs.copy_tree(path_i, path_o, overwrite=True)
-                    else:
-                        fs.make_link(path_i, path_o, overwrite=True)
-                case 'add_file':
-                    if copyfiles:
-                        fs.copy_file(path_i, path_o, overwrite=True)
-                    else:
-                        fs.make_link(path_i, path_o, overwrite=True)
-                case 'delete_dir':
-                    if copyfiles:
-                        fs.remove_tree(path_o)
-                    else:
-                        os.unlink(path_o)
-                case 'delete_file':
-                    if copyfiles:
-                        fs.remove_file(path_o)
-                    else:
-                        os.unlink(path_o)
-                case 'drop_dir':
-                    fs.remove_tree(path_o)
-                case 'make_dir':
-                    fs.make_dir(path_o)
-                case 'make_dirs':
-                    fs.make_dirs(path_o)
-                case 'update_file':
-                    # print(':vl', path_i, path_o)
-                    if copyfiles:
-                        fs.copy_file(path_i, path_o, overwrite=True)
-                    else:
-                        fs.make_link(path_i, path_o, overwrite=True)
-
-    if _source_root and fs.exist(
-        x := ('{}/auxiliary/{}.pkl'.format(cache_root, uuid(_source_root)))
-    ):
-        print(
-            'complete checking content-changed files, delete the auxiliary',
-            x,
-            ':v7',
-        )
-        fs.remove_file(x)
+    print('export done', ':ptv4')
 
 
-# -----------------------------------------------------------------------------
-
-
-def _analyze_dirs_to_be_created(
-    files: T.TodoFiles, dirs: T.TodoDirs
-) -> T.TodoDirs:
-    """
-    returns: a list of dir paths, the paths are grind down to each level of
-    directories.
-    note: the returned value is a set of "source" paths, not "target" paths.
-    """
-    out = set()
-    for x in files:
-        out.update(_grind_down_dirpath(fs.parent(x)))
-    for x in dirs:
-        out.update(_grind_down_dirpath(fs.parent(x)))
-    # remove existing dirs that out of search roots
-    search_roots = _get_search_roots(shrink=True)
-    for d in tuple(out):
-        if any(fs.is_parent(d, x) for x in search_roots):
-            print('pick out high-priority existing dir', d, ':vi')
-            out.remove(d)
-    return out
-
-
-def _analyze_incremental_updates(
-    old_resources_map: T.ResourcesMap,
-    new_resources_map: T.ResourcesMap,
-    source_root: tp.Optional[str] = None,
-    known_roots: tp.Optional[tp.Tuple[str, ...]] = None,
-) -> tp.Iterator[
-    tp.Tuple[
-        tp.Literal[
-            'add_dir',
-            'add_file',
-            'delete_dir',
-            'delete_file',
-            'drop_dir',
-            'make_dir',
-            'make_dirs',
-            'update_file',
-        ],
-        T.NormPath,
-    ]
-]:
-    """
-    yields: ((action, path), ...)
-    """
-    tree0 = old_resources_map['created_directories']
-    tree1 = new_resources_map['created_directories']
-    for d in sorted(tree1 - tree0):
-        yield 'make_dir', d
-    for d in sorted(tree0 - tree1, reverse=True):
-        yield 'drop_dir', d
-
-    # f2f: "file-to-file"
-    f2f0 = old_resources_map['linked_resources'][0]
-    f2f1 = new_resources_map['linked_resources'][0]
-    for f in f2f1 - f2f0:
-        yield 'add_file', f
-    for f in f2f0 - f2f1:
-        yield 'delete_file', f
-
-    # d2d: "dir-to-dir"
-    d2d0 = old_resources_map['linked_resources'][1]
-    d2d1 = new_resources_map['linked_resources'][1]
-    for d in sorted(d2d1 - d2d0, reverse=True):
-        yield 'add_dir', d
-    for d in sorted(d2d0 - d2d1, reverse=True):
-        yield 'delete_dir', d
-
-    content_changed_files_count = 0
-    if source_root and fs.exist(
-        aux_file := (
-            '{}/auxiliary/{}.pkl'.format(cache_root, uuid(source_root))
-        )
-    ):
-        assert known_roots
-        known_roots = tuple(x + '/' for x in known_roots)
-        for f in sorted(fs.load(aux_file)):
-            if f.startswith(known_roots) and fs.exist(f):
-                # print(
-                #     ':vi',
-                #     'detect content-changed file',
-                #     fs.relpath(f, source_root),
-                # )
-                content_changed_files_count += 1
-                if fs.parent(f) not in tree1:
-                    yield 'make_dirs', fs.parent(f)
-                yield 'update_file', f
-    print('found content-changed files: {}'.format(content_changed_files_count))
-
-
-def _check_if_first_time_export(root: str) -> bool:
-    if fs.exist(root):
-        for one in fs.find_dir_names(root):
-            return False
-        else:
-            return True  # empty root
-    else:
-        return True  # inexistent root
-
-
-# TODO or DELETE
-def _init_target_tree(
-    root: str, tobe_created_dirs: T.TodoDirs, dry_run: bool = False
-) -> None:
-    roots = _get_common_roots(tobe_created_dirs)
-    for subroot, reldirs in roots.items():
-        dir_prefix = '{}/{}'.format(root, fs.basename(subroot))
-        if not dry_run:
-            fs.make_dir(dir_prefix)
-        for x in sorted(reldirs):
-            d = '{}/{}'.format(dir_prefix, x)
-            if dry_run:
-                print(
-                    ':i', '(dry run) make dir: {}'.format(fs.relpath(d, root))
-                )
-            else:
-                fs.make_dir(d)
+def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
+    a, *b = path.split('/')
+    yield a
+    for c in b:
+        a += '/' + c
+        yield a
 
 
 def _mount_resources(
     config: T.Config,
     verbose: bool = False,
-    limited_search_root: tp.Optional[str] = None,
+    limited_search_root: tp.Optional[T.AbsDirPath] = None,
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     """
     limited_search_root: an absolute path.
@@ -510,7 +309,7 @@ def _mount_resources(
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
             entry_path, 'module_graphs'
         )
-        # assert graph is not None
+        assert graph
 
         limited_uid = None
         if limited_search_root:
@@ -558,115 +357,3 @@ def _mount_resources(
                 files.remove(f)
 
     return files, dirs
-
-
-# -----------------------------------------------------------------------------
-# neutral
-
-
-def _get_common_roots(absdirs: tp.Iterable[str]) -> T.KnownRoots:
-    """
-    returns: {known_root: {relpath, ...}, ...}
-        note that all `return:keys` are existing dirs. but the keys' sequence is
-        not guaranteed to be ordered. i.e. the returned dict cannot be
-        definitely treated as an "ordered" dict, though in most cases it should
-        be.
-    """
-    search_roots = _get_search_roots(shrink=False)
-    out = defaultdict(set)  # {root: {reldir, ...}, ...}
-    for d in absdirs:
-        if d in search_roots:
-            continue
-        for root in search_roots:
-            if fs.is_parent(root, d):
-                out[root].add(d.removeprefix(root + '/'))
-                break
-        else:
-            raise Exception(
-                format(
-                    'path should be under one of the search roots',
-                    search_roots,
-                    d,
-                    ':nl',
-                )
-            )
-    # print(':l', search_roots, tuple(out.keys()))
-    return out
-
-
-def _get_search_roots(shrink: bool = False) -> tp.Tuple[str, ...]:
-    search_roots = set()
-    for path, isdir in path_scope.module_2_path.values():
-        # e.g.
-        #   isdir = True:
-        #       '<project>/venv/site-packages/numpy'
-        #       -> '<project>/venv/site-packages'
-        #   isdir = False:
-        #       '<project>/venv/site-packages/typing_extensions.py'
-        #       -> '<project>/venv/site-packages'
-        search_roots.add(fs.parent(path))
-    if shrink:
-        buried_search_roots = set()
-        for root in search_roots:
-            for other in search_roots:
-                if (
-                    other != root
-                    and other not in buried_search_roots
-                    and fs.is_parent(root, other)
-                ):
-                    buried_search_roots.add(other)
-        if buried_search_roots:
-            print(
-                'shrink search roots count from {} to {}'.format(
-                    len(search_roots), len(search_roots - buried_search_roots)
-                )
-            )
-            search_roots = search_roots - buried_search_roots
-    return tuple(sorted(search_roots, reverse=True))
-
-
-def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
-    a, *b = path.split('/')
-    yield a
-    for c in b:
-        a += '/' + c
-        yield a
-
-
-def _shrink_to_single_root(
-    known_roots: T.KnownRoots, single_root: str
-) -> T.KnownRoots:
-    out = {}
-    for root in known_roots.keys():
-        if root == single_root:
-            out[single_root] = known_roots[root]
-        elif fs.is_parent(root, single_root):
-            continue
-        else:
-            raise Exception(
-                format(
-                    single_root,
-                    tuple(known_roots.keys()),
-                    root,
-                    known_roots[root],
-                    ':nl',
-                )
-            )
-    assert len(out) == 1, format(
-        tuple(known_roots.keys()), single_root, out, ':nl'
-    )
-    return out
-
-
-def _split_path(path: str, known_roots: tp.Sequence[str]) -> tp.Tuple[str, str]:
-    for root in known_roots:
-        if path.startswith(root + '/'):
-            return root, path.removeprefix(root + '/')
-    raise Exception(
-        format(
-            'path should be under one of the search roots',
-            known_roots,
-            path,
-            ':nl',
-        )
-    )
