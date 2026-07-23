@@ -1,6 +1,7 @@
 import atexit
 import os
 import typing as tp
+from time import time
 
 from lk_utils import fs
 from lk_utils import uuid
@@ -14,8 +15,6 @@ def _init_cache_root() -> str:
             fs.copy_file(
                 fs.here('_cache/ignores.txt'), '{}/ignores.txt'.format(path)
             )
-            fs.make_dir('{}/auxiliary'.format(path))
-            fs.make_dir('{}/dumped_resources_maps'.format(path))
             fs.make_dir('{}/watch_files'.format(path))
             fs.dump('', '{}/.init_ok'.format(path))
         cache_root = path
@@ -38,6 +37,12 @@ class _CacheMaker:
         self._tobe_deleted_files = set()
         atexit.register(self._delete_outdated_files)
 
+    def does_cache_file_exist(self, source: str, namespace: str) -> bool:
+        file = '{}/watch_files/{}/{}.pkl'.format(
+            self._cache_root, uuid(source), namespace
+        )
+        return fs.exist(file)
+
     def is_cached(self, source: str, namespace: str) -> bool:
         if source in self._tobe_deleted_files:
             return False
@@ -56,10 +61,17 @@ class _CacheMaker:
                 return False
 
     def get_cache(
-        self, source: str, namespace: str, persistent: bool = False
+        self,
+        source: str,
+        namespace: str,
+        persistent: bool = False,
+        check: bool = True,
     ) -> tp.Optional[tp.Any]:
         """
-        source: suggest passing script path. generally, any string is ok.
+        source: suggest passing script path; generally, any string is ok.
+            for the latter case, you must set `check=False`.
+        namespace: characters must be valid filename pattern (without
+            extension).
 
         notice: the return value may be empty list, empty dict or something.
         you should not use generic `if data: ...` to check it.
@@ -74,7 +86,7 @@ class _CacheMaker:
             return None
         if fs.exist(file):
             timestamp, data = fs.load(file)
-            if timestamp == fs.filetime(source):
+            if not check or timestamp == fs.filetime(source):
                 if persistent:
                     self._quick_fetches[(source, namespace)] = data
                 return data
@@ -90,13 +102,14 @@ class _CacheMaker:
         namespace: str,
         data: tp.Any,
         persistent: bool = False,
+        check: bool = True,
     ) -> str:
         file = '{}/watch_files/{}/{}.pkl'.format(
             self._cache_root, uuid(fs.abspath(source)), namespace
         )
         if not fs.exist(fs.parent(file)):
             fs.make_dir(fs.parent(file))
-        fs.dump((fs.filetime(source), data), file)
+        fs.dump((fs.filetime(source) if check else int(time()), data), file)
         if file in self._tobe_deleted_files:
             self._tobe_deleted_files.remove(file)
         if persistent:

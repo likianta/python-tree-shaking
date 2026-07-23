@@ -141,7 +141,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
 
 def _get_venv_root(working_root: str) -> T.NormPath:
     """
-    find venv root (the "site-packages" folder) by `poetry env` command.
+    find venv root (the "site-packages" folder).
     """
     if fs.exist('{}/.venv'.format(working_root)):
         assert fs.exist('{}/.venv/Lib/site-packages'.format(working_root))
