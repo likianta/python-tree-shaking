@@ -159,12 +159,9 @@ def _dump_single_source(
             elif dry_run:
                 print('ignore dir resource out of root_i', d, ':i2v5')
 
-    tobe_created_reldirs = set()
-    for p in todo_relfiles | todo_reldirs:
-        if '/' in p:
-            tobe_created_reldirs.update(
-                _grind_down_dirpath(p.rsplit('/', 1)[0])
-            )
+    tobe_created_reldirs = _analyze_dirs_tobe_created(
+        todo_relfiles, todo_reldirs
+    )
     print(
         len(todo_relfiles), len(todo_reldirs), len(tobe_created_reldirs), ':n'
     )
@@ -205,22 +202,22 @@ def _dump_single_source(
             else:
                 i = '{}/{}'.format(root_i, r)
                 o = '{}/{}'.format(root_o, r)
-                # FIXME
+                fs.make_link(i, o, False)
                 # fs.make_link(i, o, True)
-                # fs.make_link(i, o, False)
-                if fs.exist(o):
-                    print(
-                        ':v8iln',
-                        'target file exists! (this should not happen)',
-                        i,
-                        o,
-                    )
-                else:
-                    fs.make_link(i, o, False)
-        
-        # TEST
+                # if fs.exist(o):
+                #     print(
+                #         ':v8iln',
+                #         'target file exists! (this should not happen)',
+                #         i,
+                #         o,
+                #     )
+                # else:
+                #     fs.make_link(i, o, False)
+
+        # fmt: off
         from lk_utils import start_ipython
-        start_ipython(globals() | locals())
+        start_ipython(globals() | locals())  # TEST
+        # fmt: on
 
     else:
         assert (
@@ -313,15 +310,13 @@ def _dump_single_source(
 # ------------------------------------------------------------------------------
 
 
-# def _analyze_dirs_tobe_created(todo_relfiles, todo_reldirs):
-#     tobe_created_reldirs = set()
-#     for p in todo_relfiles | todo_reldirs:
-#         if '/' in p:
-#             tobe_created_reldirs.update(
-#                 _grind_down_dirpath(p.rsplit('/', 1)[0])
-#             )
-#     tobe_created_reldirs -= todo_reldirs
-#     return tobe_created_reldirs
+def _analyze_dirs_tobe_created(todo_relfiles, todo_reldirs):
+    out = set()
+    for p in todo_relfiles | todo_reldirs:
+        if '/' in p:
+            out.update(_grind_down_dirpath(p.rsplit('/', 1)[0]))
+    out -= todo_reldirs
+    return out
 
 
 def _eliminate_overlapping_resources(
@@ -333,7 +328,7 @@ def _eliminate_overlapping_resources(
     """
     before_count = (len(reldirs), len(relfiles))
 
-    for d0 in sorted(reldirs):
+    for d0 in sorted(reldirs)[:-1]:
         if d0 in reldirs:
             for d1 in sorted(reldirs, reverse=True):
                 if len(d1) > len(d0):
