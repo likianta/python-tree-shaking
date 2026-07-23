@@ -38,14 +38,17 @@ def dump_tree_from_config_file(
     dir_o: T.AnyDirPath = '',
     single_source_entry: T.AnyDirPath = '',
     dry_run: T.DryRun = False,
+    **kwargs,
 ):
     cfg: T.Config = parse_config(
         file_i, export={'source': single_source_entry, 'target': dir_o}
     )
-    dump_tree_from_config(cfg, dry_run)
+    dump_tree_from_config(cfg, dry_run, **kwargs)
 
 
-def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
+def dump_tree_from_config(
+    config: T.Config, dry_run: T.DryRun = False, **kwargs
+) -> None:
     source = config['export']['source']  # an optional absolute path
     target = config['export']['target']  # a valid abspath
     print(source, target, ':nv2l')
@@ -61,6 +64,7 @@ def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
             files_i=files,
             dirs_i=dirs,
             dry_run=dry_run,
+            **kwargs,
         )
     else:
         """
@@ -98,7 +102,7 @@ def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
 
 
 def dump_tree_from_modules(
-    dir_o: T.AnyDirPath, dry_run: T.DryRun = False
+    dir_o: T.AnyDirPath, dry_run: T.DryRun = False, **kwargs
 ) -> None:
     assert sys.exec_prefix.endswith('.venv')
     root_i = fs.normpath('{}/Lib/site-packages'.format(sys.exec_prefix))
@@ -111,6 +115,7 @@ def dump_tree_from_modules(
         files_i=(x for _, x, d in mods if not d),
         dirs_i=(x for _, x, d in mods if d),
         dry_run=dry_run,
+        **kwargs,
     )
 
 
@@ -124,21 +129,33 @@ def _dump_single_source(
     dirs_i: tp.Iterable[T.AbsDirPath] = (),
     # copy_files: bool = False,
     dry_run: T.DryRun = False,
+    cache_reference_file: str = '',
 ) -> None:
+    if not cache_reference_file:
+        # FIXME
+        # cache_reference_file = '{};{}'.format(root_i, root_o)
+        raise Exception('please provide a cache_reference_file')
+
     with np.scope():
         todo_relfiles = set()
         for f in files_i:
             if f.startswith(root_i + '/'):
-                todo_relfiles.add(f.removeprefix(root_i + '/'))
-            else:
+                if fs.exist(f):
+                    todo_relfiles.add(f.removeprefix(root_i + '/'))
+                else:
+                    print(':v6', 'file not exists', f)
+            elif dry_run:
                 print('ignore file resource out of root_i', f, ':i2v5')
         assert todo_relfiles
 
         todo_reldirs = set()
         for d in dirs_i:
             if d.startswith(root_i + '/'):
-                todo_reldirs.add(fs.relpath(d, root_i))
-            else:
+                if fs.exist(d):
+                    todo_reldirs.add(d.removeprefix(root_i + '/'))
+                else:
+                    print(':v6', 'dir not exists', d)
+            elif dry_run:
                 print('ignore dir resource out of root_i', d, ':i2v5')
 
     tobe_created_reldirs = set()
@@ -151,12 +168,60 @@ def _dump_single_source(
         len(todo_relfiles), len(todo_reldirs), len(tobe_created_reldirs), ':n'
     )
 
-    if dry_run != 2 and (
-        x := cache_maker.get_cache(
-            '{};{}'.format(root_i, root_o), 'last_dumped_records', check=False
+    def is_first_time_dump() -> bool:
+        if dry_run == 2:
+            return True
+        elif fs.exist(root_o):
+            for _ in fs.find_dirs(root_o):
+                return False
+            return True
+        else:
+            return True
+
+    if is_first_time_dump():
+        print('first time dump', ':v2')
+
+        tree1 = tobe_created_reldirs
+        for d in sorted(tree1):
+            # make directory
+            if dry_run:
+                print(':iv4', '[dry run] make dir: {}'.format(d))
+            else:
+                o = '{}/{}'.format(root_o, d)
+                fs.make_dir(o)
+
+        res1 = {}
+        for r in todo_relfiles:
+            res1[r] = tp.cast(int, fs.mtime('{}/{}'.format(root_i, r)))
+        for r in todo_reldirs:
+            res1[r] = tp.cast(
+                int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
+            )
+        for r in sorted(res1, reverse=True):
+            # add resource
+            if dry_run:
+                print(':i2v4', '[dry run] add res: {}'.format(r))
+            else:
+                i = '{}/{}'.format(root_i, r)
+                o = '{}/{}'.format(root_o, r)
+                # FIXME
+                fs.make_link(i, o, True)
+                # fs.make_link(i, o, False)
+                # if fs.exist(o):
+                #     print(
+                #         ':v8il',
+                #         'target file exists! (this should not happen)',
+                #         i,
+                #         o,
+                #     )
+                # else:
+                #     fs.make_link(i, o, False)
+    else:
+        assert (
+            x := cache_maker.get_cache(
+                cache_reference_file, 'last_dumped_records'
+            )
         )
-    ):
-        print('incremental update')
         records0: T.Records = x
 
         tree0 = records0['created_directories']
@@ -191,7 +256,7 @@ def _dump_single_source(
                 int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
             )
         with np.scope():
-            for r1 in res1:
+            for r1 in sorted(res1, reverse=True):
                 if r1 not in res0:
                     # add resource
                     if dry_run:
@@ -211,7 +276,7 @@ def _dump_single_source(
                         else:
                             o = '{}/{}'.format(root_o, r1)
                             fs.make_link('{}/{}'.format(root_i, r1), o, True)
-            for r0 in res0:
+            for r0 in sorted(res0, reverse=True):
                 if r0 not in res1:
                     # delete resource
                     if dry_run:
@@ -222,32 +287,6 @@ def _dump_single_source(
                             fs.remove(o)
                         else:
                             print('already removed?', r0)
-    else:
-        print('first time dump')
-
-        tree1 = tobe_created_reldirs
-        for d in sorted(tree1):
-            # make directory
-            if dry_run:
-                print(':iv4', '[dry run] make dir: {}'.format(d))
-            else:
-                o = '{}/{}'.format(root_o, d)
-                fs.make_dir(o)
-
-        res1 = {}
-        for r in todo_relfiles:
-            res1[r] = tp.cast(int, fs.mtime('{}/{}'.format(root_i, r)))
-        for r in todo_reldirs:
-            res1[r] = tp.cast(
-                int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
-            )
-        for r in res1:
-            # add resource
-            if dry_run:
-                print(':i2v4', '[dry run] add res: {}'.format(r))
-            else:
-                o = '{}/{}'.format(root_o, r)
-                fs.make_link('{}/{}'.format(root_i, r), o, False)
 
     if not dry_run:
         records1: T.Records = {
@@ -255,10 +294,7 @@ def _dump_single_source(
             'resource_records': res1,
         }
         cache_maker.save_cache(
-            '{};{}'.format(root_i, root_o),
-            'last_dumped_records',
-            records1,
-            check=False,
+            cache_reference_file, 'last_dumped_records', records1
         )
     print('export done', ':ptv4')
 
@@ -283,7 +319,7 @@ def _mount_resources(
     dirs: T.TodoDirs = set()
     patched_modules = set()
 
-    def resolve_patched_path(relpath: str) -> str:
+    def resolve_patched_path(base_dir: str, relpath: str) -> str:
         """
         returns: a must-exist abspath or empty string.
         """
@@ -299,13 +335,13 @@ def _mount_resources(
                 return ''
             elif len(candidates) == 1:
                 if fs.exist(candidates[0]):
-                    return candidates[0].replace('\\', '/')
+                    return fs.normpath(candidates[0])
             else:
                 # currently we don't allow multiple candidates. i think it's
                 # fine to unlock this behavior. let me review this case later.
                 raise Exception(relpath, candidates, nullable)
         else:
-            if fs.exist(x := '{}/{}'.format(base_dir, relpath)):
+            if fs.exist(x := fs.normpath('{}/{}'.format(base_dir, relpath))):
                 return x
 
         if nullable:
@@ -344,7 +380,7 @@ def _mount_resources(
                         graph['source_roots'][uid], top_name
                     )
                     for relpath1 in patch[top_name]['files']:
-                        if abspath1 := resolve_patched_path(relpath1):
+                        if abspath1 := resolve_patched_path(base_dir, relpath1):
                             if abspath1.endswith('/'):
                                 dirs.add(abspath1)
                             else:

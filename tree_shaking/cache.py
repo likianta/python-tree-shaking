@@ -76,6 +76,7 @@ class _CacheMaker:
         notice: the return value may be empty list, empty dict or something.
         you should not use generic `if data: ...` to check it.
         """
+        assert check, 'TODO: we are going to remove `check` argument'
         if persistent and (source, namespace) in self._quick_fetches:
             return self._quick_fetches[(source, namespace)]
 
@@ -104,6 +105,7 @@ class _CacheMaker:
         persistent: bool = False,
         check: bool = True,
     ) -> str:
+        assert check, 'TODO: we are going to remove `check` argument'
         file = '{}/watch_files/{}/{}.pkl'.format(
             self._cache_root, uuid(fs.abspath(source)), namespace
         )
