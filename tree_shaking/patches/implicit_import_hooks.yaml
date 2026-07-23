@@ -371,8 +371,6 @@ tracerite:
     - style.css
 tree_shaking:
   files:
-    - _cache/auxiliary/_readme.md
-    - _cache/dumped_resources_maps/.gitkeep
     - _cache/watch_files/_readme.md
     - _cache/ignores.txt
     - patches/

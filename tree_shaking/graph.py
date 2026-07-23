@@ -31,13 +31,6 @@ def build_module_graphs(config_file: str) -> None:
     cfg = parse_config(config_file)
     finder = Finder(cfg['ignores'])
 
-    changed_files = set()
-
-    def _record_changed_file(file: str) -> None:
-        changed_files.add(file)
-
-    new_parsing_triggered.bind(_record_changed_file)
-
     for entry_path in cfg['entries']:
         print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
         if not cache_maker.is_cached(entry_path, 'module_graphs'):
@@ -79,14 +72,6 @@ def build_module_graphs(config_file: str) -> None:
                     lstrip=False,
                 ),
             )
-
-    new_parsing_triggered.unbind(_record_changed_file)
-    if changed_files:
-        print(':n', 'save changed files list to auxiliary', len(changed_files))
-        file_aux = '{}/auxiliary/{}.pkl'.format(cache_root, uuid(cfg['root']))
-        if fs.exist(file_aux):
-            changed_files = fs.load(file_aux) | changed_files
-        fs.dump(changed_files, file_aux)
 
 
 def _reformat_paths(
