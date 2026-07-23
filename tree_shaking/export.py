@@ -17,6 +17,10 @@ class T:
     AbsDirPath = AbsFilePath = str
     AnyDirPath = AnyFilePath = str
     Config = T0.Config
+    DryRun = tp.Union[bool, tp.Literal[0, 1, 2]]
+    #   0: no dry run
+    #   1: no actual file operations, only prints.
+    #   2: same as 1, but disable incremental update
     RelDirPath = RelPath = str
 
     Records = tp.TypedDict(
@@ -34,7 +38,7 @@ def dump_tree_from_config_file(
     file_i: T.AnyFilePath,
     dir_o: T.AnyDirPath = '',
     single_source_entry: T.AnyDirPath = '',
-    dry_run: bool = False,
+    dry_run: T.DryRun = False,
 ):
     cfg: T.Config = parse_config(
         file_i, export={'source': single_source_entry, 'target': dir_o}
@@ -42,7 +46,7 @@ def dump_tree_from_config_file(
     dump_tree_from_config(cfg, dry_run)
 
 
-def dump_tree_from_config(config: T.Config, dry_run: bool = False) -> None:
+def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
     source = config['export']['source']  # an optional absolute path
     target = config['export']['target']  # a valid abspath
     print(source, target, ':nv2l')
@@ -50,7 +54,7 @@ def dump_tree_from_config(config: T.Config, dry_run: bool = False) -> None:
 
     if source:
         files, dirs = _mount_resources(
-            config, verbose=dry_run, limited_search_root=source
+            config, verbose=bool(dry_run), limited_search_root=source
         )
         _dump_single_source(
             root_i=source,
@@ -94,7 +98,9 @@ def dump_tree_from_config(config: T.Config, dry_run: bool = False) -> None:
         )
 
 
-def dump_tree_from_modules(dir_o: T.AnyDirPath, dry_run: bool = False) -> None:
+def dump_tree_from_modules(
+    dir_o: T.AnyDirPath, dry_run: T.DryRun = False
+) -> None:
     assert sys.exec_prefix.endswith('.venv')
     root_i = fs.normpath('{}/Lib/site-packages'.format(sys.exec_prefix))
     root_o = fs.abspath(dir_o)
@@ -118,7 +124,7 @@ def _dump_single_source(
     files_i: tp.Iterable[T.AbsFilePath],
     dirs_i: tp.Iterable[T.AbsDirPath] = (),
     # copy_files: bool = False,
-    dry_run: bool = False,
+    dry_run: T.DryRun = False,
 ) -> None:
     with np.scope():
         todo_relfiles = set()
@@ -146,11 +152,13 @@ def _dump_single_source(
         len(todo_relfiles), len(todo_reldirs), len(tobe_created_reldirs), ':n'
     )
 
-    if x := cache_maker.get_cache(
-        '{};{}'.format(root_i, root_o), 'last_dumped_records', check=False
+    if dry_run != 2 and (
+        x := cache_maker.get_cache(
+            '{};{}'.format(root_i, root_o), 'last_dumped_records', check=False
+        )
     ):
         print('incremental update')
-        records0: T.Records = x[root_i]
+        records0: T.Records = x
 
         tree0 = records0['created_directories']
         tree1 = tobe_created_reldirs
