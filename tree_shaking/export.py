@@ -59,7 +59,6 @@ def dump_tree_from_config(
         files, dirs = _mount_resources(
             config, verbose=bool(dry_run), limited_search_root=source
         )
-        print(len(files), len(dirs), ':n')
         _dump_single_source(
             root_i=source,
             root_o=target,
@@ -141,10 +140,11 @@ def _dump_single_source(
         todo_relfiles = set()
         for f in files_i:
             if f.startswith(root_i + '/'):
-                if fs.exist(f):
-                    todo_relfiles.add(f.removeprefix(root_i + '/'))
-                else:
-                    print(':v6', 'file not exists', f)
+                todo_relfiles.add(f.removeprefix(root_i + '/'))
+                # if fs.exist(f):
+                #     todo_relfiles.add(f.removeprefix(root_i + '/'))
+                # else:
+                #     print(':v6', 'file not exists', f)
             elif dry_run:
                 print('ignore file resource out of root_i', f, ':i2v5')
         assert todo_relfiles
@@ -172,9 +172,7 @@ def _dump_single_source(
         elif fs.exist(root_o):
             for _ in fs.find_dirs(root_o):
                 return False
-            return True
-        else:
-            return True
+        return True
 
     if is_first_time_dump():
         print('first time dump', ':v2')
@@ -213,11 +211,6 @@ def _dump_single_source(
                 #     )
                 # else:
                 #     fs.make_link(i, o, False)
-
-        # fmt: off
-        from lk_utils import start_ipython
-        start_ipython(globals() | locals())  # TEST
-        # fmt: on
 
     else:
         assert (
@@ -331,8 +324,8 @@ def _eliminate_overlapping_resources(
     reldirs: T.TodoDirs, relfiles: T.TodoFiles
 ) -> tp.Tuple[T.TodoDirs, T.TodoFiles]:
     """
-    if there "A/B" and "A/B/C", then "A/B/C" is eliminated.
-    because "A/B" already covers "A/B/C".
+    if there are "A/B" and "A/B/C", then "A/B/C" is eliminated. because "A/B" 
+    already covers "A/B/C".
     """
     before_count = (len(reldirs), len(relfiles))
 
@@ -354,7 +347,7 @@ def _eliminate_overlapping_resources(
     temp_dict = defaultdict(set)
     for f in relfiles:
         if '/' in f:
-            temp_dict[f.rsplit('/', 1)[0]].add(f)
+            temp_dict[f.rsplit('/', 1)[0] + '/'].add(f)
         else:
             temp_dict[''].add(f)
     for d1 in temp_dict.keys():
