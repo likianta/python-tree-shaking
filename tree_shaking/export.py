@@ -310,12 +310,20 @@ def _dump_single_source(
 # ------------------------------------------------------------------------------
 
 
-def _analyze_dirs_tobe_created(todo_relfiles, todo_reldirs):
+def _analyze_dirs_tobe_created(
+    todo_relfiles: T.TodoFiles, todo_reldirs: T.TodoDirs
+) -> T.TodoDirs:
     out = set()
     for p in todo_relfiles | todo_reldirs:
         if '/' in p:
             out.update(_grind_down_dirpath(p.rsplit('/', 1)[0]))
-    out -= todo_reldirs
+    # remove paths that are covered by todo_reldirs.
+    out = set(
+        x
+        for x in out
+        if x not in todo_reldirs
+        and not any(x.startswith(y + '/') for y in todo_reldirs)
+    )
     return out
 
 
