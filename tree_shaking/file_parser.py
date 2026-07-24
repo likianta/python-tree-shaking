@@ -16,10 +16,11 @@ from .module import PathNotFound
 from .module import T as T0
 from .path_scope import path_scope
 
+# devnote: currently, this is an empty tuple.
+DEFAULT_IGNORES = tuple(fs.load(fs.here('_cache/ignores.txt')).splitlines())
+
 broken_modules = set()
-module_inspector = ModuleInspector(
-    ignores=fs.load('{}/ignores.txt'.format(cache_root)).splitlines()
-)
+module_inspector = ModuleInspector(ignores=DEFAULT_IGNORES)
 new_parsing_triggered = Signal(str)
 
 

@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.4.0a5"
+version = "0.4.0a7"
 description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
@@ -8,7 +8,7 @@ requires-python = ">=3.12"
 dependencies = [
     "argsense>=1.1.2",
     "lk-utils>=3.7.4a0",
-    "neoprint>=0.1.9b1",
+    "neoprint>=0.1.9b7",
 ]
 
 [build-system]
@@ -17,12 +17,6 @@ requires = ["hatchling"]
 
 # [dependency-groups]
 # dev = []
-
-# [project.optional-dependencies]
-# ...
-
-# [project.scripts]
-# ...
 
 [project.urls]
 homepage = "https://github.com/likianta/python-tree-shaking"
@@ -58,7 +52,7 @@ default = true
 [[tool.uv.index]]
 name = "likianta"
 url = "http://localhost:2191/"
-# explicit = true
+explicit = true
 
 [tool.uv.sources]
 # argsense = { index = "likianta" }

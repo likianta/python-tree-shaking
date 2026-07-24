@@ -33,15 +33,14 @@ def build_module_graphs(config_file: str) -> None:
     for entry_path in cfg['entries']:
         print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
         if not cache_maker.is_cached(entry_path, 'module_graphs'):
-            file_i = entry_path
-            result = finder.get_all_imports(file_i)
+            result = finder.get_all_imports(entry_path)
             result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result
             # refs = finder.references
             # result['references'] = {
             #   k: sorted(refs[k]) for k in sorted(refs.keys())
             # }
-            file_o = cache_maker.save_cache(entry_path, 'module_graphs', result)
+            file_c = cache_maker.save_cache(entry_path, 'module_graphs', result)
 
             print(
                 ':v2ti',
@@ -63,9 +62,9 @@ def build_module_graphs(config_file: str) -> None:
                         ),
                         len(result['modules']),
                         '<tree_shaking_cache>/{}'.format(
-                            fs.relpath(file_o, cache_root)
+                            fs.relpath(file_c, cache_root)
                         ),
-                        fs.filesize(file_o, str),
+                        fs.filesize(file_c, str),
                     ),
                     indent=4,
                     lstrip=False,
@@ -106,20 +105,3 @@ def _reformat_paths(
             if k not in used_source_roots:
                 out['source_roots'].pop(k)
     return out
-
-
-# def _save_graph_alias(config: T.Config1) -> None:
-#     map_ = fs.load('{}/module_graphs_alias.yaml'.format(cache_root))
-#     if config['root'] in map_:
-#         if frozenset(config['entries'].values()) == frozenset(
-#             map_[config['root']].values()
-#         ):
-#             return
-#     map_[config['root']] = {
-#         # k.replace(config['root'], '<root>'): v
-#         fs.relpath(k, config['root']): v
-#         for k, v in config['entries'].items()
-#     }
-#     fs.dump(
-#         map_, '{}/module_graphs_alias.yaml'.format(cache_root), sort_keys=True
-#     )

@@ -118,7 +118,7 @@ class T:
     FilePath = str  # absolute filepath
     ModuleId = str
     ModuleInfo = ModuleInfo
-    ModuleName = str
+    ModuleName = str  # e.g. 'lk_utils', 'IPython', 'numpy'
 
 
 class ModuleInspector:

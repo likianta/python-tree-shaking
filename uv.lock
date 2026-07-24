@@ -7,14 +7,14 @@ prerelease-mode = "allow"
 
 [[package]]
 name = "argsense"
-version = "1.2.0a7"
-source = { registry = "http://localhost:2191/" }
+version = "1.1.2"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple/" }
 dependencies = [
     { name = "neoprint" },
     { name = "rich" },
 ]
 wheels = [
-    { url = "http://localhost:2191/argsense/argsense-1.2.0a7-py3-none-any.whl" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/23/d7/2d4cb64c745fb9149733e4cd02305f8222fc8b84cca8d460366d5bf02416/argsense-1.1.2-py3-none-any.whl", hash = "sha256:4b8dfd0ce8ba7d5be91784507c2afca7220a9786e76f94096da53c1ea40a0dac", size = 47773, upload-time = "2026-06-30T02:39:09.112Z" },
 ]
 
 [[package]]
@@ -55,13 +55,13 @@ wheels = [
 
 [[package]]
 name = "neoprint"
-version = "0.1.9b1"
+version = "0.1.9b7"
 source = { registry = "http://localhost:2191/" }
 dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "http://localhost:2191/neoprint/neoprint-0.1.9b1-py3-none-any.whl" },
+    { url = "http://localhost:2191/neoprint/neoprint-0.1.9b7-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -162,7 +162,7 @@ wheels = [
 
 [[package]]
 name = "tree-shaking"
-version = "0.4.0a3"
+version = "0.4.0a7"
 source = { editable = "." }
 dependencies = [
     { name = "argsense" },
@@ -174,5 +174,5 @@ dependencies = [
 requires-dist = [
     { name = "argsense", specifier = ">=1.1.2" },
     { name = "lk-utils", specifier = ">=3.7.4a0", index = "http://localhost:2191/" },
-    { name = "neoprint", specifier = ">=0.1.9b1", index = "http://localhost:2191/" },
+    { name = "neoprint", specifier = ">=0.1.9b7", index = "http://localhost:2191/" },
 ]

@@ -4,6 +4,7 @@ from collections import defaultdict
 from lk_utils import fs
 
 from .cache import cache_maker
+from .file_parser import DEFAULT_IGNORES
 from .file_parser import FileParser
 from .file_parser import T
 from .patch import patch
@@ -14,7 +15,7 @@ class Finder:
         self,
         global_ignores: tp.Union[
             tp.FrozenSet[T.ModuleName], tp.Tuple[T.ModuleName, ...]
-        ],
+        ] = DEFAULT_IGNORES,
     ) -> None:
         self._global_ignores = global_ignores
         self._patched_modules = set()
@@ -42,7 +43,7 @@ class Finder:
                 False: not yield itself.
                 None: not yield itself, but yield its children-selves if needed.
                     note: None is only for internal use!
-                as a caller, you should always give True or False to this param.
+                as a caller, you should always give True or False.
         yields:
             ((module_name, file_path), ...)
         """
