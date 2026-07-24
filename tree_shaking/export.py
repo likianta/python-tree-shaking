@@ -11,27 +11,25 @@ from .config import parse_config
 from .dynamic_analyzer import grab_global_modules
 from .graph import T as T0
 from .patch import patch
+from .path_typing import T as T1
 
 
-class T:
-    AbsDirPath = AbsFilePath = str
-    AnyDirPath = AnyFilePath = str
+class T(T1):
     Config = T0.Config
     DryRun = tp.Union[bool, tp.Literal[0, 1, 2]]
     #   0: no dry run
     #   1: no actual file operations, only prints.
     #   2: same as 1, but disable incremental update
-    RelDirPath = RelFilePath = RelPath = str
 
     Records = tp.TypedDict(
         'Records',
         {
-            'created_directories': tp.FrozenSet[RelDirPath],
-            'resource_records': tp.Dict[RelPath, int],
+            'created_directories': tp.FrozenSet[T1.RelDirPath],
+            'resource_records': tp.Dict[T1.RelPath, int],
         },
     )
-    TodoDirs = tp.Union[tp.Set[RelDirPath]]
-    TodoFiles = tp.Union[tp.Set[RelFilePath]]
+    TodoDirs = tp.Union[tp.Set[T1.RelDirPath]]
+    TodoFiles = tp.Union[tp.Set[T1.RelFilePath]]
 
 
 def dump_tree_from_config_file(
@@ -47,25 +45,21 @@ def dump_tree_from_config_file(
     dump_tree_from_config(cfg, dry_run, **kwargs)
 
 
-def dump_tree_from_config(
-    config: T.Config, dry_run: T.DryRun = False, **kwargs
-) -> None:
-    source = config['export']['source']  # an optional absolute path
+def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
+    source = config['export']['source']  # an absolute path
     target = config['export']['target']  # a valid abspath
     print(source, target, ':nv2l')
-    assert target
+    assert source and target
 
     if source:
-        files, dirs = _mount_resources(
-            config, verbose=bool(dry_run), limited_search_root=source
-        )
+        files, dirs = _mount_resources(config, source)
         _dump_single_source(
             root_i=source,
             root_o=target,
             files_i=files,
             dirs_i=dirs,
             dry_run=dry_run,
-            **kwargs,
+            _exempt=True,
         )
     else:
         """
@@ -103,7 +97,7 @@ def dump_tree_from_config(
 
 
 def dump_tree_from_modules(
-    dir_o: T.AnyDirPath, dry_run: T.DryRun = False, **kwargs
+    dir_o: T.AnyDirPath, dry_run: T.DryRun = False
 ) -> None:
     assert sys.exec_prefix.endswith('.venv')
     root_i = fs.normpath('{}/Lib/site-packages'.format(sys.exec_prefix))
@@ -116,7 +110,6 @@ def dump_tree_from_modules(
         files_i=(x for _, x, d in mods if not d),
         dirs_i=(x for _, x, d in mods if d),
         dry_run=dry_run,
-        **kwargs,
     )
 
 
@@ -126,38 +119,35 @@ def dump_tree_from_modules(
 def _dump_single_source(
     root_i: T.AbsDirPath,
     root_o: T.AbsDirPath,
-    files_i: tp.Iterable[T.AbsFilePath],
-    dirs_i: tp.Iterable[T.AbsDirPath] = (),
+    files_i: tp.Union[tp.Iterable[T.RelPath], tp.Iterable[T.AbsPath]],
+    dirs_i: tp.Union[tp.Iterable[T.RelPath], tp.Iterable[T.AbsPath]] = (),
     # copy_files: bool = False,
     dry_run: T.DryRun = False,
-    cache_reference_file: str = '',  # TODO or DELETE
+    _exempt: bool = False,
 ) -> None:
-    if not cache_reference_file:
-        # cache_reference_file = '{};{}'.format(root_i, root_o)
-        raise Exception('please provide a cache_reference_file')
+    if _exempt:
+        todo_relfiles = set(files_i)
+        todo_reldirs = set(dirs_i)
+    else:
+        with np.scope():
+            todo_relfiles = set()
+            for f in files_i:
+                if f.startswith(root_i + '/'):
+                    todo_relfiles.add(f.removeprefix(root_i + '/'))
+                    # if fs.exist(f):
+                    #     todo_relfiles.add(f.removeprefix(root_i + '/'))
+                    # else:
+                    #     print(':v6', 'file not exists', f)
+                elif dry_run:
+                    print('ignore file resource out of root_i', f, ':i2v5')
+            assert todo_relfiles
 
-    with np.scope():
-        todo_relfiles = set()
-        for f in files_i:
-            if f.startswith(root_i + '/'):
-                todo_relfiles.add(f.removeprefix(root_i + '/'))
-                # if fs.exist(f):
-                #     todo_relfiles.add(f.removeprefix(root_i + '/'))
-                # else:
-                #     print(':v6', 'file not exists', f)
-            elif dry_run:
-                print('ignore file resource out of root_i', f, ':i2v5')
-        assert todo_relfiles
-
-        todo_reldirs = set()
-        for d in dirs_i:
-            if d.startswith(root_i + '/'):
-                if fs.exist(d):
+            todo_reldirs = set()
+            for d in dirs_i:
+                if d.startswith(root_i + '/'):
                     todo_reldirs.add(d.removeprefix(root_i + '/'))
-                else:
-                    print(':v6', 'dir not exists', d)
-            elif dry_run:
-                print('ignore dir resource out of root_i', d, ':i2v5')
+                elif dry_run:
+                    print('ignore dir resource out of root_i', d, ':i2v5')
 
     tobe_created_reldirs = _analyze_dirs_tobe_created(
         todo_relfiles, todo_reldirs
@@ -215,8 +205,7 @@ def _dump_single_source(
     else:
         assert (
             x := cache_maker.get_cache(
-                '{};{}'.format(root_i, root_o) + ':0',
-                'last_dumped_records',
+                '{};{}'.format(root_i, root_o) + ':0', 'last_dumped_records'
             )
         )
         records0: T.Records = x
@@ -243,12 +232,6 @@ def _dump_single_source(
         for r in todo_relfiles:
             res1[r] = tp.cast(int, fs.mtime('{}/{}'.format(root_i, r)))
         for r in sorted(todo_reldirs, reverse=True):
-            #   note: be careful the `todo_reldirs` may contain "A/B" and
-            #   "A/B/C" paths -- i.e. the cross-including paths. we need to
-            #   process "A/B/C" first, then "A/B". that's why we use
-            #   `sorted(todo_reldirs, reverse=True)`.
-            #   TODO: maybe we can eliminate cross-including paths in
-            #   `_mount_resources()` stage.
             res1[r] = tp.cast(
                 int, fs.mtime('{}/{}'.format(root_i, r), recursive=True)
             )
@@ -322,7 +305,7 @@ def _eliminate_overlapping_resources(
     reldirs: T.TodoDirs, relfiles: T.TodoFiles
 ) -> tp.Tuple[T.TodoDirs, T.TodoFiles]:
     """
-    if there are "A/B" and "A/B/C", then "A/B/C" is eliminated. because "A/B" 
+    if there are "A/B" and "A/B/C", then "A/B/C" is eliminated. because "A/B"
     already covers "A/B/C".
     """
     before_count = (len(reldirs), len(relfiles))
@@ -380,16 +363,11 @@ def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
 
 
 def _mount_resources(
-    config: T.Config,
-    verbose: bool = False,
-    limited_search_root: tp.Optional[T.AbsDirPath] = None,
+    config: T.Config, source_root: T.AbsDirPath
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
-    """
-    limited_search_root: an absolute path.
-    """
     files: T.TodoFiles = set()
     dirs: T.TodoDirs = set()
-    patched_modules = set()
+    patched_modules: tp.Set[str] = set()
 
     def resolve_patched_path(base_dir: str, relpath: str) -> str:
         """
@@ -425,24 +403,27 @@ def _mount_resources(
 
     for entry_path in config['entries']:
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
-            entry_path + ':1', 'module_graphs'
+            entry_path + ':1', 'module_graphs', persistent=True
         )
         assert graph
 
-        limited_uid = None
-        if limited_search_root:
-            for uid, root in graph['source_roots'].items():
-                if root == limited_search_root:
-                    limited_uid = uid
-                    break
+        # required_uid = dict(
+        #     (v, k) for k, v in graph['source_roots'].items()
+        # )[source_root]
+        required_uid: tp.Optional[str] = None
+        for uid, root in graph['source_roots'].items():
+            if root == source_root:
+                required_uid = uid
+                break
+        assert required_uid
 
         for module_name, relpath in graph['modules'].items():
             uid, relpath = relpath.split('/', 1)
             uid = uid[1:-1]
-            if limited_uid and uid != limited_uid:
+            if uid != required_uid:
                 continue
-            abspath = '{}/{}'.format(graph['source_roots'][uid], relpath)
-            files.add(abspath)
+
+            files.add(relpath)
 
             # patch: fill extra files
             top_name = module_name.split('.', 1)[0]
@@ -450,15 +431,15 @@ def _mount_resources(
                 if top_name not in patched_modules:
                     patched_modules.add(top_name)
                     # assert relpath.startswith(top)
-                    base_dir = '{}/{}'.format(
-                        graph['source_roots'][uid], top_name
-                    )
+                    base_dir = '{}/{}'.format(source_root, top_name)
                     for relpath1 in patch[top_name]['files']:
                         if abspath1 := resolve_patched_path(base_dir, relpath1):
-                            if abspath1.endswith('/'):
-                                dirs.add(abspath1[:-1])
+                            assert abspath1.startswith(source_root + '/')
+                            relpath2 = abspath1.removesuffix(source_root + '/')
+                            if relpath2.endswith('/'):
+                                dirs.add(relpath2[:-1])
                             else:
-                                files.add(abspath1)
+                                files.add(relpath2)
 
     dirs, files = _eliminate_overlapping_resources(dirs, files)
     return files, dirs

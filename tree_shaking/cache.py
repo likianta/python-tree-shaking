@@ -18,8 +18,8 @@ class T:
     #   file path, and ':2' for directory path.
     #   trick: if you mark a dir path with ':1', it will read the folder mtime
     #   instead of recursively reading all subfiles' mtimes.
-    #   see also `_CacheMaker:get_cache:source_factors`.
-    AnySourceFactors = tp.Union[str, tp.Iterable[SourceFactor]]
+    #   see also `_CacheMaker:_parse_source_factors`.
+    AnySourceFactors = tp.Union[SourceFactor, tp.Iterable[SourceFactor]]
     SourceId = str
 
 
