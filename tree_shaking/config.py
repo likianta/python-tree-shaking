@@ -77,7 +77,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
     """
     cfg_file: str = fs.abspath(file)
 
-    if x := cache_maker.get_cache(cfg_file, 'config'):
+    if x := cache_maker.get_cache(cfg_file + ':1', 'config'):
         return x
 
     cfg_dir: str = fs.parent(cfg_file)
@@ -135,7 +135,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
         )
 
     # print(cfg1, ':ln')
-    cache_maker.save_cache(cfg_file, 'config', cfg1)
+    cache_maker.save_cache(cfg_file + ':1', 'config', cfg1)
     return cfg1
 
 

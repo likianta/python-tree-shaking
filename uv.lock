@@ -19,7 +19,7 @@ wheels = [
 
 [[package]]
 name = "lk-utils"
-version = "3.7.4a0"
+version = "3.7.5a0"
 source = { registry = "http://localhost:2191/" }
 dependencies = [
     { name = "argsense" },
@@ -29,7 +29,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "http://localhost:2191/lk-utils/lk_utils-3.7.4a0-py3-none-any.whl" },
+    { url = "http://localhost:2191/lk-utils/lk_utils-3.7.5a0-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -55,13 +55,13 @@ wheels = [
 
 [[package]]
 name = "neoprint"
-version = "0.1.9b7"
+version = "0.1.9"
 source = { registry = "http://localhost:2191/" }
 dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "http://localhost:2191/neoprint/neoprint-0.1.9b7-py3-none-any.whl" },
+    { url = "http://localhost:2191/neoprint/neoprint-0.1.9-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -162,7 +162,7 @@ wheels = [
 
 [[package]]
 name = "tree-shaking"
-version = "0.4.0a7"
+version = "0.4.0a9"
 source = { editable = "." }
 dependencies = [
     { name = "argsense" },
@@ -173,6 +173,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "argsense", specifier = ">=1.1.2" },
-    { name = "lk-utils", specifier = ">=3.7.4a0", index = "http://localhost:2191/" },
-    { name = "neoprint", specifier = ">=0.1.9b7", index = "http://localhost:2191/" },
+    { name = "lk-utils", specifier = ">=3.7.4", index = "http://localhost:2191/" },
+    { name = "neoprint", specifier = ">=0.1.9", index = "http://localhost:2191/" },
 ]

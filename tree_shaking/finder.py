@@ -49,7 +49,7 @@ class Finder:
         """
         if (
             x := cache_maker.get_cache(
-                script,
+                script + ':1',
                 'all_imports_{}'.format(1 if include_self else 0),
                 persistent=True,
             )
@@ -58,7 +58,7 @@ class Finder:
         self._clear_holders()
         out = dict(self._get_all_imports(script, include_self))
         cache_maker.save_cache(
-            script,
+            script + ':1',
             'all_imports_{}'.format(1 if include_self else 0),
             out,
             persistent=True,

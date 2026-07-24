@@ -215,9 +215,8 @@ def _dump_single_source(
     else:
         assert (
             x := cache_maker.get_cache(
-                '{};{}'.format(root_i, root_o),
+                '{};{}'.format(root_i, root_o) + ':0',
                 'last_dumped_records',
-                check=False,
             )
         )
         records0: T.Records = x
@@ -292,10 +291,9 @@ def _dump_single_source(
             'resource_records': res1,
         }
         cache_maker.save_cache(
-            '{};{}'.format(root_i, root_o),
+            '{};{}'.format(root_i, root_o) + ':0',
             'last_dumped_records',
             records1,
-            check=False,
         )
     print('export done', ':ptv4')
 
@@ -427,7 +425,7 @@ def _mount_resources(
 
     for entry_path in config['entries']:
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
-            entry_path, 'module_graphs'
+            entry_path + ':1', 'module_graphs'
         )
         assert graph
 

@@ -32,7 +32,7 @@ def build_module_graphs(config_file: str) -> None:
 
     for entry_path in cfg['entries']:
         print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
-        if not cache_maker.is_cached(entry_path, 'module_graphs'):
+        if not cache_maker.is_cached(entry_path + ':1', 'module_graphs'):
             result = finder.get_all_imports(entry_path)
             result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result
@@ -40,7 +40,9 @@ def build_module_graphs(config_file: str) -> None:
             # result['references'] = {
             #   k: sorted(refs[k]) for k in sorted(refs.keys())
             # }
-            file_c = cache_maker.save_cache(entry_path, 'module_graphs', result)
+            file_c = cache_maker.save_cache(
+                entry_path + ':1', 'module_graphs', result
+            )
 
             print(
                 ':v2ti',

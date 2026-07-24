@@ -1,14 +1,14 @@
 [project]
 name = "tree-shaking"
-version = "0.4.0a7"
+version = "0.4.0a9"
 description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argsense>=1.1.2",
-    "lk-utils>=3.7.4a0",
-    "neoprint>=0.1.9b7",
+    "lk-utils>=3.7.4",
+    "neoprint>=0.1.9",
 ]
 
 [build-system]

@@ -77,7 +77,7 @@ class FileParser:
         # print(':dv2p', 'start', self.file)
         if (
             x := cache_maker.get_cache(
-                self.file, 'ast_parsing_results', persistent=True
+                self.file + ':1', 'ast_parsing_results', persistent=True
             )
         ) is not None:
             return x
@@ -110,7 +110,7 @@ class FileParser:
                     out.append((module, path))
         # print(':vp', 'end', self.file)
         cache_maker.save_cache(
-            self.file, 'ast_parsing_results', out, persistent=True
+            self.file + ':1', 'ast_parsing_results', out, persistent=True
         )
         return out
 
