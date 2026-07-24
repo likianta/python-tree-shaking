@@ -32,19 +32,17 @@ cache_root = _init_cache_root()
 
 class _CacheMaker:
     def __init__(self, cache_root: str) -> None:
+        self._bad_mode = False
         self._cache_root = cache_root
+        self._fixed_broken_files = set()
         self._quick_fetches = {}
         self._tobe_deleted_files = set()
         atexit.register(self._delete_outdated_files)
 
-    def does_cache_file_exist(self, source: str, namespace: str) -> bool:
-        file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, uuid(source), namespace
-        )
-        return fs.exist(file)
-
     def is_cached(self, source: str, namespace: str) -> bool:
         if source in self._tobe_deleted_files:
+            return False
+        elif self._bad_mode and source not in self._fixed_broken_files:
             return False
         else:
             file = '{}/watch_files/{}/{}.pkl'.format(
@@ -59,6 +57,13 @@ class _CacheMaker:
                     return False
             else:
                 return False
+
+    def invalidate_cache(self) -> None:
+        """
+        mark all existing cache files invalid.
+        """
+        self._bad_mode = True
+        self._fixed_broken_files.clear()
 
     def get_cache(
         self,
@@ -84,6 +89,8 @@ class _CacheMaker:
             self._cache_root, uuid(source), namespace
         )
         if file in self._tobe_deleted_files:
+            return None
+        if self._bad_mode and source not in self._fixed_broken_files:
             return None
         if fs.exist(file):
             timestamp, data = fs.load(file)
@@ -112,6 +119,8 @@ class _CacheMaker:
         if not fs.exist(fs.parent(file)):
             fs.make_dir(fs.parent(file))
         fs.dump((fs.filetime(source) if check else int(time()), data), file)
+        if self._bad_mode:
+            self._fixed_broken_files.add(source)
         if file in self._tobe_deleted_files:
             self._tobe_deleted_files.remove(file)
         if persistent:
