@@ -1,6 +1,6 @@
 /.idea/
 /dist/
-/test/_test_root_*
+/test/_dynamic_dumped/
 /tree_shaking/_cache/watch_files/*
 /tree_shaking/_cache/.init_ok
 

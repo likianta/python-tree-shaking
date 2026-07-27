@@ -1,7 +1,6 @@
 import sys
 import typing as tp
 from collections import defaultdict
-from glob import glob
 
 import neoprint as np
 from lk_utils import fs
@@ -10,7 +9,7 @@ from .cache import cache_maker
 from .config import parse_config
 from .dynamic_analyzer import grab_global_modules
 from .graph import T as T0
-from .patch import patch
+from .patch import ResourcePatch
 from .path_typing import T as T1
 
 
@@ -38,7 +37,7 @@ def dump_tree_from_config_file(
     single_source_entry: T.AnyDirPath = '',
     dry_run: T.DryRun = False,
     **kwargs,
-):
+) -> None:
     cfg: T.Config = parse_config(
         file_i, export={'source': single_source_entry, 'target': dir_o}
     )
@@ -370,39 +369,7 @@ def _mount_resources(
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     files: T.TodoFiles = set()
     dirs: T.TodoDirs = set()
-    patched_modules: tp.Set[str] = set()
-
-    def resolve_patched_path(base_dir: str, relpath: str) -> str:
-        """
-        returns: a must-exist abspath or empty string.
-        """
-        if relpath.endswith('?'):
-            nullable = True
-            relpath = relpath[:-1]
-        else:
-            nullable = False
-
-        suffix = '/' if relpath.endswith('/') else ''
-
-        if '*' in relpath:
-            candidates = glob('{}/{}'.format(base_dir, relpath))
-            if len(candidates) == 0 and nullable:
-                return ''
-            elif len(candidates) == 1:
-                if fs.exist(candidates[0]):
-                    return fs.normpath(candidates[0]) + suffix
-            else:
-                # currently we don't allow multiple candidates. i think it's
-                # fine to unlock this behavior. let me review this case later.
-                raise Exception(relpath, candidates, nullable)
-        else:
-            if fs.exist(x := fs.normpath('{}/{}'.format(base_dir, relpath))):
-                return x + suffix
-
-        if nullable:
-            return ''
-        else:
-            raise Exception(top_name, relpath)
+    patch = ResourcePatch(source_root)
 
     for entry_path in config['entries']:
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
@@ -430,19 +397,10 @@ def _mount_resources(
 
             # patch: fill extra files
             top_name = module_name.split('.', 1)[0]
-            if top_name in patch:
-                if top_name not in patched_modules:
-                    patched_modules.add(top_name)
-                    # assert relpath.startswith(top)
-                    base_dir = '{}/{}'.format(source_root, top_name)
-                    for relpath1 in patch[top_name]['files']:
-                        if abspath1 := resolve_patched_path(base_dir, relpath1):
-                            assert abspath1.startswith(source_root + '/')
-                            relpath2 = abspath1.removeprefix(source_root + '/')
-                            if relpath2.endswith('/'):
-                                dirs.add(relpath2[:-1])
-                            else:
-                                files.add(relpath2)
+            if not patch.is_resolved(top_name):
+                a, b = patch.resolve(top_name)
+                files.update(a)
+                dirs.update(b)
 
     dirs, files = _eliminate_overlapping_resources(dirs, files)
     return files, dirs

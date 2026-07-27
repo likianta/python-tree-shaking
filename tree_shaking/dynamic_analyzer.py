@@ -7,6 +7,7 @@ from .module import KNOWN_STDLIB_MODULE_NAMES
 
 
 def grab_global_modules() -> tp.Iterator[tp.Tuple[str, str, bool]]:
+    # yields: tuple[name, path, isdir]
     for key, mod in sys.modules.items():
         if key.split('.')[0] in KNOWN_STDLIB_MODULE_NAMES:
             continue
