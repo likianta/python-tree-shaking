@@ -30,6 +30,8 @@ class T(T1):
     TodoDirs = tp.Union[tp.Set[T1.RelDirPath]]
     TodoFiles = tp.Union[tp.Set[T1.RelFilePath]]
 
+    Resources = tp.Tuple[TodoFiles, TodoDirs]
+
 
 def dump_tree_from_config_file(
     file_i: T.AnyFilePath,
@@ -58,7 +60,6 @@ def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
             files_i=files,
             dirs_i=dirs,
             dry_run=dry_run,
-            _exempt=True,
         )
     else:
         """
@@ -103,11 +104,27 @@ def dump_tree_from_modules(
     root_o = fs.abspath(dir_o)
 
     mods = tuple(grab_global_modules())
+
+    files, dirs = set(), set()
+    patch = ResourcePatch(root_i)
+    for name, path, isdir in mods:
+        if path.startswith(root_i + '/'):
+            relpath = path.removeprefix(root_i + '/')
+            if isdir:
+                dirs.add(relpath)
+            else:
+                files.add(relpath)
+        if not patch.is_resolved(name):
+            a, b = patch.resolve(name)
+            files.update(a)
+            dirs.update(b)
+    dirs, files = _eliminate_overlapping_resources(dirs, files)
+
     _dump_single_source(
         root_i=root_i,
         root_o=root_o,
-        files_i=(x for _, x, d in mods if not d),
-        dirs_i=(x for _, x, d in mods if d),
+        files_i=files,
+        dirs_i=dirs,
         dry_run=dry_run,
     )
 
@@ -118,36 +135,13 @@ def dump_tree_from_modules(
 def _dump_single_source(
     root_i: T.AbsDirPath,
     root_o: T.AbsDirPath,
-    files_i: tp.Union[tp.Iterable[T.RelPath], tp.Iterable[T.AbsPath]],
-    dirs_i: tp.Union[tp.Iterable[T.RelPath], tp.Iterable[T.AbsPath]] = (),
+    files_i: tp.Iterable[T.RelPath],
+    dirs_i: tp.Iterable[T.RelPath] = (),
     # copy_files: bool = False,
     dry_run: T.DryRun = False,
-    _exempt: bool = False,
 ) -> None:
-    if _exempt:
-        todo_relfiles = set(files_i)
-        todo_reldirs = set(dirs_i)
-    else:
-        with np.scope():
-            todo_relfiles = set()
-            for f in files_i:
-                if f.startswith(root_i + '/'):
-                    todo_relfiles.add(f.removeprefix(root_i + '/'))
-                    # if fs.exist(f):
-                    #     todo_relfiles.add(f.removeprefix(root_i + '/'))
-                    # else:
-                    #     print(':v6', 'file not exists', f)
-                elif dry_run:
-                    print('ignore file resource out of root_i', f, ':i2v5')
-            assert todo_relfiles
-
-            todo_reldirs = set()
-            for d in dirs_i:
-                if d.startswith(root_i + '/'):
-                    todo_reldirs.add(d.removeprefix(root_i + '/'))
-                elif dry_run:
-                    print('ignore dir resource out of root_i', d, ':i2v5')
-
+    todo_relfiles = set(files_i)
+    todo_reldirs = set(dirs_i)
     tobe_created_reldirs = _analyze_dirs_tobe_created(
         todo_relfiles, todo_reldirs
     )

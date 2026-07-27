@@ -50,7 +50,7 @@ class ResourcePatch:
 
     def resolve(
         self, module_name: str
-    ) -> tp.Tuple[tp.Set[T.AbsFilePath], tp.Set[T.AbsDirPath]]:
+    ) -> tp.Tuple[tp.Set[T.RelFilePath], tp.Set[T.RelDirPath]]:
         files, dirs = set(), set()
         base_dir = '{}/{}'.format(self._source_root, module_name)
         for relpath in patch[module_name]['files']:
