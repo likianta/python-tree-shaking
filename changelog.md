@@ -11,6 +11,8 @@
 ### 0.4.0 (wip)
 
 - Dynamic analysis and tree shaking.
+- Refactor `export` module.
+- Change cache source forms.
 
 ---
 

@@ -102,11 +102,13 @@ oss2:
     - ../Crypto/
     - ../cryptography/
 pandas:
-  version: 2.2.3
+  version: 3.0.2
   files:
     - _libs/
     # - _libs/pandas_datetime.*.pyd
     # - _libs/pandas_parser.*.pyd
+    - api/
+    - io/json/__init__.py
     - ../pandas.libs/
 pikepdf:
   version: 10.10.0

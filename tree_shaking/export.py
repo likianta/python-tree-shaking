@@ -225,7 +225,10 @@ def _dump_single_source(
                 print(':iv8', '[dry run] drop dir: {}'.format(d))
             else:
                 o = '{}/{}'.format(root_o, d)
-                fs.remove_tree(o)
+                if fs.exist(o):
+                    fs.remove_tree(o)
+                else:
+                    print('already removed?', d, ':v5')
 
         res0 = records0['resource_records']
         res1 = {}
@@ -266,7 +269,7 @@ def _dump_single_source(
                         if fs.exist(o):
                             fs.remove(o)
                         else:
-                            print('already removed?', r0)
+                            print('already removed?', r0, ':v5')
 
     if not dry_run:
         records1: T.Records = {
@@ -435,7 +438,7 @@ def _mount_resources(
                     for relpath1 in patch[top_name]['files']:
                         if abspath1 := resolve_patched_path(base_dir, relpath1):
                             assert abspath1.startswith(source_root + '/')
-                            relpath2 = abspath1.removesuffix(source_root + '/')
+                            relpath2 = abspath1.removeprefix(source_root + '/')
                             if relpath2.endswith('/'):
                                 dirs.add(relpath2[:-1])
                             else:
