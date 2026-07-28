@@ -31,7 +31,10 @@ class Finder:
         return self._references
 
     def get_all_imports(
-        self, script: T.FilePath, include_self: tp.Optional[bool] = True
+        self,
+        script: T.FilePath,
+        include_self: tp.Optional[bool] = True,
+        reference_file: str = '',
     ) -> tp.Dict[T.ModuleName, T.FilePath]:
         """
         given a script file ('*.py'), return all direct and indirect modules
@@ -49,7 +52,10 @@ class Finder:
         """
         if (
             x := cache_maker.get_cache(
-                script + ':1',
+                (
+                    script + ':1',
+                    reference_file + ':1' if reference_file else 'null:0',
+                ),
                 'all_imports_{}'.format(1 if include_self else 0),
                 persistent=True,
             )
@@ -58,7 +64,10 @@ class Finder:
         self._clear_holders()
         out = dict(self._get_all_imports(script, include_self))
         cache_maker.save_cache(
-            script + ':1',
+            (
+                script + ':1',
+                reference_file + ':1' if reference_file else 'null:0',
+            ),
             'all_imports_{}'.format(1 if include_self else 0),
             out,
             persistent=True,

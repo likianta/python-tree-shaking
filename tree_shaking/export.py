@@ -43,17 +43,33 @@ def dump_tree_from_config_file(
     cfg: T.Config = parse_config(
         file_i, export={'source': single_source_entry, 'target': dir_o}
     )
-    dump_tree_from_config(cfg, dry_run, **kwargs)
+    if 'graph_lock_reference_file' not in kwargs:
+        if 'reference_file' in kwargs:
+            kwargs['graph_lock_reference_file'] = kwargs.pop('reference_file')
+    dump_tree_from_config(cfg, dry_run=dry_run, **kwargs)
 
 
-def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
+def dump_tree_from_config(
+    config: T.Config,
+    graph_lock_reference_file: T.AbsFilePath = '',
+    dry_run: T.DryRun = False,
+) -> None:
+    """
+    graph_lock_reference_file: see `./graph.py:build_module_graphs
+        :reference_file`.
+    """
     source = config['export']['source']  # an absolute path
     target = config['export']['target']  # a valid abspath
     print(source, target, ':nv2l')
     assert source and target
 
     if source:
-        files, dirs = _mount_resources(config, source, verbose=bool(dry_run))
+        files, dirs = _mount_resources(
+            config,
+            source,
+            graph_lock_reference_file=graph_lock_reference_file,
+            verbose=bool(dry_run),
+        )
         _dump_single_source(
             root_i=source,
             root_o=target,
@@ -160,7 +176,7 @@ def _dump_single_source(
         return True
 
     if is_first_time_dump():
-        print('first time dump', ':v2')
+        print('first time dump', ':v2d')
         fs.make_dir(root_o)
 
         tree1 = tobe_created_reldirs
@@ -199,9 +215,10 @@ def _dump_single_source(
                 #     fs.make_link(i, o, False)
 
     else:
+        print('incremental dump', ':v2d')
         assert (
             x := cache_maker.get_cache(
-                '{};{}'.format(root_i, root_o) + ':0', 'last_dumped_records'
+                (root_i + ':0', root_o + ':0'), 'last_dumped_records'
             )
         )
         records0: T.Records = x
@@ -273,9 +290,7 @@ def _dump_single_source(
             'resource_records': res1,
         }
         cache_maker.save_cache(
-            '{};{}'.format(root_i, root_o) + ':0',
-            'last_dumped_records',
-            records1,
+            (root_i + ':0', root_o + ':0'), 'last_dumped_records', records1
         )
     print('export done', ':ptv4')
 
@@ -363,7 +378,10 @@ def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
 
 
 def _mount_resources(
-    config: T.Config, source_root: T.AbsDirPath, verbose: bool = False
+    config: T.Config,
+    source_root: T.AbsDirPath,
+    graph_lock_reference_file: str = '',
+    verbose: bool = False,
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     files: T.TodoFiles = set()
     dirs: T.TodoDirs = set()
@@ -371,7 +389,14 @@ def _mount_resources(
 
     for entry_path in config['entries']:
         graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
-            entry_path + ':1', 'module_graphs', persistent=True
+            (
+                entry_path + ':1',
+                graph_lock_reference_file + ':1'
+                if graph_lock_reference_file
+                else 'null:0',
+            ),
+            'module_graphs',
+            persistent=True,
         )
         assert graph
 
