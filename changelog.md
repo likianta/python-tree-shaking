@@ -3,16 +3,15 @@
 ### ?.?.? (wip)
 
 - Web UI.
-- Analyze dependency tree.
-- *Use pyinstaller to hook imports.*
 
 ---
 
 ### 0.4.0 (wip)
 
-- Dynamic analysis and tree shaking.
+- Analyze dependency tree.
 - Refactor `export` module.
 - Change cache source forms.
+- Dynamic analysis and tree shaking (very limited support).
 
 ---
 

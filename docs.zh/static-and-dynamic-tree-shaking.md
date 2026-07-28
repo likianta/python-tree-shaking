@@ -8,27 +8,35 @@
 
 ### 缺点
 
-1. 容易丢失文件, 只能在测试后发现.
+1.  容易丢失文件, 只能在测试后发现.
 
-2. 一些只存在于 `if` 条件下的导入语句, 也会被静态分析纳入依赖范围.
+2.  冗余: 一些只存在于 `if` 条件下的导入语句, 也会被静态分析纳入依赖范围.
 
-3. 无法分析动态导入的包 (比如通过 importlib 动态加载的).
+    例如: 我在主依赖中添加了 altair, 它有一个可选依赖 vl_convert.
 
-4. 补丁方案 (implicit_package_hooks.yaml) 存在诸多限制.
+    如果我在 dev-dependencies 中添加了 vl_convert, tree-shaking 会发现它, 并添加到裁剪结果中, 导致体积增大 50MB+.
 
-   1. 同一依赖的不同版本包含的文件可能有差异, 补丁对多版本的兼容性差.
+3.  无法分析动态导入的包 (比如通过 importlib 动态加载的).
 
-   2. 不同项目有不同的依赖需求, 如果用 implicit_package_hooks.yaml 来解决, 可能会出现冗余
+4.  补丁方案 (implicit_package_hooks.yaml) 存在诸多限制.
+    1. 同一依赖的不同版本包含的文件可能有差异, 补丁对多版本的兼容性差.
 
-      例如, A 项目依赖了 `.venv/Lib/site-packages/packageB/fileC`, 由于常规的静态分析没有命中, 我们在 implicit_package_hooks.yaml 中添加了这个文件, A 项目的问题被解决了.
+    2. 不同项目有不同的依赖需求, 如果用 implicit_package_hooks.yaml 来解决, 可能会出现冗余
 
-      但是 B 项目虽然也依赖 packageB, 但用不到 fileC. 这种情况下也会强行加入 fileC. 当这种情况增多时, 会导致 B 的瘦身后的体积受到影响.
+        例如, A 项目依赖了 `.venv/Lib/site-packages/packageB/fileC`, 由于常规的静态分析没有命中, 我们在 implicit_package_hooks.yaml 中添加了这个文件, A 项目的问题被解决了.
+
+        但是 B 项目虽然也依赖 packageB, 但用不到 fileC. 这种情况下也会强行加入 fileC. 当这种情况增多时, 会导致 B 的瘦身后的体积受到影响.
 
 ## 动态分析
+
+> [!WARNING]
+> 该思路已验证不可行.
 
 ### 思路
 
 运行应用, 完整地跑一遍, 然后获取此时的 `sys.modules`, 将它们提取出来.
 
+### 缺点
 
-
+1. 非常容易丢模块
+2. 多进程导致模块隔离 (特别是 `subprocess.run`)

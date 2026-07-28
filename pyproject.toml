@@ -1,6 +1,6 @@
 [project]
 name = "tree-shaking"
-version = "0.4.0a9"
+version = "0.4.0a12"
 description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
@@ -15,8 +15,11 @@ dependencies = [
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
-# [dependency-groups]
-# dev = []
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.21.0",
+    "pyinstaller-hooks-contrib>=2026.6",
+]
 
 [project.urls]
 homepage = "https://github.com/likianta/python-tree-shaking"

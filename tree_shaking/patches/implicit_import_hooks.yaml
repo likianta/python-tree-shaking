@@ -58,22 +58,6 @@ matplotlib:
 modbus_tk:
   files:
     - modbus_tcp.py
-# numpy:
-#   files:
-#     - core/_multiarray_tests.*.pyd
-#     - core/_multiarray_umath.*.pyd
-#     - fft/_pocketfft_internal.*.pyd
-#     - linalg/_umath_linalg.*.pyd
-#     - random/_bounded_integers.*.pyd
-#     - random/_common.*.pyd
-#     - random/_generator.*.pyd
-#     - random/_mt19937.*.pyd
-#     - random/_pcg64.*.pyd
-#     - random/_philox.*.pyd
-#     - random/_sfc64.*.pyd
-#     - random/bit_generator.*.pyd
-#     - random/mtrand.*.pyd
-#     - ../numpy.libs/
 numpy:
   version: 2.4.6
   files:
