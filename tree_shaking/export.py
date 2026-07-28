@@ -53,7 +53,7 @@ def dump_tree_from_config(config: T.Config, dry_run: T.DryRun = False) -> None:
     assert source and target
 
     if source:
-        files, dirs = _mount_resources(config, source)
+        files, dirs = _mount_resources(config, source, verbose=bool(dry_run))
         _dump_single_source(
             root_i=source,
             root_o=target,
@@ -106,7 +106,7 @@ def dump_tree_from_modules(
     mods = tuple(grab_global_modules())
 
     files, dirs = set(), set()
-    patch = ResourcePatch(root_i)
+    # patch = ResourcePatch(root_i)
     for name, path, isdir in mods:
         if path.startswith(root_i + '/'):
             relpath = path.removeprefix(root_i + '/')
@@ -114,11 +114,13 @@ def dump_tree_from_modules(
                 dirs.add(relpath)
             else:
                 files.add(relpath)
-        if not patch.is_resolved(name):
-            a, b = patch.resolve(name)
-            files.update(a)
-            dirs.update(b)
-    dirs, files = _eliminate_overlapping_resources(dirs, files)
+        # if patch.is_patchable(name) and not patch.is_resolved(name):
+        #     a, b = patch.resolve(name)
+        #     files.update(a)
+        #     dirs.update(b)
+    dirs, files = _eliminate_overlapping_resources(
+        dirs, files, verbose=bool(dry_run)
+    )
 
     _dump_single_source(
         root_i=root_i,
@@ -159,6 +161,7 @@ def _dump_single_source(
 
     if is_first_time_dump():
         print('first time dump', ':v2')
+        fs.make_dir(root_o)
 
         tree1 = tobe_created_reldirs
         for d in sorted(tree1):
@@ -298,7 +301,7 @@ def _analyze_dirs_tobe_created(
 
 
 def _eliminate_overlapping_resources(
-    reldirs: T.TodoDirs, relfiles: T.TodoFiles
+    reldirs: T.TodoDirs, relfiles: T.TodoFiles, verbose: bool = False
 ) -> tp.Tuple[T.TodoDirs, T.TodoFiles]:
     """
     if there are "A/B" and "A/B/C", then "A/B/C" is eliminated. because "A/B"
@@ -309,17 +312,15 @@ def _eliminate_overlapping_resources(
     for d0 in sorted(reldirs)[:-1]:
         if d0 in reldirs:
             for d1 in sorted(reldirs, reverse=True):
-                if len(d1) > len(d0):
-                    if d1.startswith(d0 + '/'):
+                if len(d1) > len(d0) and d1.startswith(d0 + '/'):
+                    if verbose:
                         print(
+                            ':i2v',
                             'remove dir "{}" that is covered by "{}"'.format(
                                 d1, d0
                             ),
-                            ':i2v',
                         )
-                        reldirs.remove(d1)
-                else:
-                    break
+                    reldirs.remove(d1)
 
     temp_dict = defaultdict(set)
     for f in relfiles:
@@ -331,11 +332,14 @@ def _eliminate_overlapping_resources(
         if d1:
             for d0 in reldirs:
                 if d1.startswith(d0 + '/'):
-                    print(
-                        'remove files "{}/*" (count={}) that are covered by '
-                        '"{}"'.format(d1, len(temp_dict[d1]), d0),
-                        ':i2v',
-                    )
+                    if verbose:
+                        print(
+                            'remove files "{}/*" (count={}) that are covered '
+                            'by "{}"'.format(
+                                d1.rstrip('/'), len(temp_dict[d1]), d0
+                            ),
+                            ':i2v',
+                        )
                     relfiles -= temp_dict[d1]
                     break
 
@@ -359,7 +363,7 @@ def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
 
 
 def _mount_resources(
-    config: T.Config, source_root: T.AbsDirPath
+    config: T.Config, source_root: T.AbsDirPath, verbose: bool = False
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     files: T.TodoFiles = set()
     dirs: T.TodoDirs = set()
@@ -391,10 +395,10 @@ def _mount_resources(
 
             # patch: fill extra files
             top_name = module_name.split('.', 1)[0]
-            if not patch.is_resolved(top_name):
+            if patch.is_patchable(top_name) and not patch.is_resolved(top_name):
                 a, b = patch.resolve(top_name)
                 files.update(a)
                 dirs.update(b)
 
-    dirs, files = _eliminate_overlapping_resources(dirs, files)
+    dirs, files = _eliminate_overlapping_resources(dirs, files, verbose=verbose)
     return files, dirs

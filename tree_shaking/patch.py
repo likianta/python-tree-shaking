@@ -45,6 +45,9 @@ class ResourcePatch:
         self._resolved_modules = set()
         self._source_root = source_root
 
+    def is_patchable(self, module_name: str) -> bool:
+        return module_name in patch
+
     def is_resolved(self, module_name: str) -> bool:
         return module_name in self._resolved_modules
 

@@ -16,7 +16,7 @@ def grab_global_modules() -> tp.Iterator[tp.Tuple[str, str, bool]]:
                 assert mod.__file__, mod
                 yield mod.__name__, fs.normpath(mod.__file__), False
             else:
-                print(':v7n', 'mod has invalid __file__ attr', mod)
+                print(':v5n', 'mod has invalid __file__ attr', mod)
                 assert len(mod.__path__) == 1, mod
                 yield mod.__name__, fs.normpath(mod.__path__[0]), True
         else:  # e.g. '_cython_runtime', '_cython_3_1_4'
