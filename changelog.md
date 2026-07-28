@@ -1,11 +1,5 @@
 # Changelog
 
-### ?.?.? (wip)
-
-- Web UI.
-
----
-
 ### 0.4.0 (wip)
 
 - Analyze dependency tree.
