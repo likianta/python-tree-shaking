@@ -53,14 +53,12 @@ def trace(entry_script: T.AnyFilePath, target_module: T.ModuleFullName) -> None:
 
 
 def trace_all(
-    entry_script: T.AnyFilePath,
-    _check_if_cached: bool = True,
-    _quiet: bool = False,
+    entry_script: T.AnyFilePath, _quiet: bool = False
 ) -> T.DumpedModuleGraph:
     entry_script = fs.abspath(entry_script)
-    if (
-        x := cache_maker.get_cache(entry_script + ':1', 'module_trace')
-    ) is not None:
+    # cache_key = (entry_script + ':1', 'v2:0')
+    cache_key = entry_script + ':1'
+    if (x := cache_maker.get_cache(cache_key, 'module_trace')) is not None:
         if not _quiet:
             print('already cached', ':v4')
         return x
@@ -74,7 +72,7 @@ def trace_all(
             'graph': graph,
         }
         print(len(result), ':n')
-        cache_maker.save_cache(entry_script + ':1', 'module_trace', result)
+        cache_maker.save_cache(cache_key, 'module_trace', result)
         return result
 
 
@@ -87,11 +85,11 @@ def _trace_all(
     list_holder: tp.List[T.ModuleFullName],
 ) -> T.ModuleGraph:
     for m0, p0 in _finder.get_direct_imports(entry_script):
-        assert m0.full_name
-        list_holder.append(m0.full_name)
-        if m0.full_name not in result_holder:
-            print(m0.full_name, ':i2n')
-            x0 = result_holder[m0.full_name] = []
+        assert m0.name0
+        list_holder.append(m0.name0)
+        if m0.name0 not in result_holder:
+            print(m0.name0, ':i2n')
+            x0 = result_holder[m0.name0] = []
             if p0.endswith('.py'):
                 _trace_all(p0, result_holder, x0)
     return result_holder
