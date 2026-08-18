@@ -10,6 +10,14 @@ from .file_parser import T
 from .patch import patch
 
 
+class _ExistingFiles(dict):
+    def __missing__(self, key: str) -> bool:
+        return fs.exist(key)
+
+
+_existing_files = tp.cast(tp.Dict[str, bool], _ExistingFiles())
+
+
 class Finder:
     def __init__(
         self,
@@ -87,10 +95,27 @@ class Finder:
             yield x.module_info, x.file
 
     def _get_all_imports(
-        self, script: T.FilePath, include_self: tp.Optional[bool] = True
+        self,
+        script: T.FilePath,
+        include_self: tp.Optional[bool] = True,
+        _parent_info: tp.Optional[tp.Any] = None,
     ) -> tp.Iterator[tp.Tuple[T.ModuleName, T.FilePath]]:
         # each script can only be resolved once
         if script in self._resolved_files:
+            return
+        if not _existing_files[script]:
+            # why this may be happened?
+            # when we parsed a script that hit the cache through
+            # `FileParser.parse_imports:cache_maker.get_cache`, it returned a
+            # list of module infos. but the module info may contain outdated
+            # and broken data.
+            # for example, `streamlit_canary/session.py` was cached before, it
+            # gave us a list of module infos, said that `lk_utils/textwrap.py`
+            # was imported, but actually `lk_utils@3.8.0` did not have this
+            # file. thus we can not resolve it by this method.
+            # this was usually happened in recursive calls.
+            # TODO: should we invalidate the cache in this case?
+            print(':nv6il', 'script not exists', script, _parent_info)
             return
 
         parser = FileParser(script)
@@ -146,7 +171,9 @@ class Finder:
         self._resolved_files.add(script)
 
         for p, s in more_files:  # 'p': path, 's': self included
-            yield from self._get_all_imports(p, s)
+            yield from self._get_all_imports(
+                p, s, _parent_info=(parser.module_info, parser.file)
+            )
 
     def _clear_holders(self) -> None:
         self._patched_modules.clear()

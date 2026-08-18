@@ -100,9 +100,11 @@ class _CacheMaker:
         persistent: bool = False,
     ) -> tp.Optional[tp.Any]:
         """
-        thread: characters must be valid filename pattern (without extension).
-        notice: the return value may be empty list, empty dict or something.
-        you should not use generic `if data: ...` to check it.
+        Args:
+            thread: Characters must be valid filename pattern (without 
+                extension).
+        Notice: The return value may be an empty list, empty dict or something.
+        You should not use the bare pattern of `if data: ...` to check it.
         """
         source_id, revision = self._parse_source_factors(source_factors)
 
