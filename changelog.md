@@ -1,6 +1,6 @@
 # Changelog
 
-### 0.4.0 (wip)
+### 0.4.0 (2026-08-18)
 
 - Analyze dependency tree.
 - Refactor `export` module.

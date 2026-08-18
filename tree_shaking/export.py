@@ -8,6 +8,7 @@ from lk_utils import fs
 from .cache import cache_maker
 from .config import parse_config
 from .dynamic_analyzer import grab_global_modules
+from .file_parser import file_exists
 from .graph import T as T0
 from .patch import ResourcePatch
 from .path_typing import T as T1
@@ -241,7 +242,7 @@ def _dump_single_source(
                 if fs.exist(o):
                     fs.remove_tree(o)
                 else:
-                    print('already removed?', d, ':v5')
+                    print('directory already removed?', d, ':v5')
 
         res0 = records0['resource_records']
         res1 = {}
@@ -388,7 +389,7 @@ def _mount_resources(
     patch = ResourcePatch(source_root)
 
     for entry_path in config['entries']:
-        graph: T.DumpedModuleGraph = cache_maker.get_cache(  # type: ignore
+        graph: T.DumpedModuleGraph = cache_maker.get_cache(
             (
                 entry_path + ':1',
                 graph_lock_reference_file + ':1'
@@ -416,7 +417,14 @@ def _mount_resources(
             if uid != required_uid:
                 continue
 
-            files.add(relpath)
+            if file_exists('{}/{}'.format(source_root, relpath)):
+                files.add(relpath)
+            else:
+                # related: ./finder.py:Finder:_get_all_imports
+                print(
+                    'file is recorded in graph but not exists!', relpath, ':v6n'
+                )
+                continue
 
             # patch: fill extra files
             top_name = module_name.split('.', 1)[0]

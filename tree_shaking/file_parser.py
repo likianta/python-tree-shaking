@@ -2,6 +2,7 @@ import ast
 import atexit
 import typing as tp
 from contextlib import contextmanager
+from functools import cache
 
 import neoprint as np
 from lk_utils import Signal
@@ -239,3 +240,8 @@ class ErrorRecords:
 
 
 _err_records = ErrorRecords()
+
+
+@cache
+def file_exists(file: T.FilePath) -> bool:
+    return fs.exist(file)

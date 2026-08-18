@@ -7,15 +7,8 @@ from .cache import cache_maker
 from .file_parser import DEFAULT_IGNORES
 from .file_parser import FileParser
 from .file_parser import T
+from .file_parser import file_exists
 from .patch import patch
-
-
-class _ExistingFiles(dict):
-    def __missing__(self, key: str) -> bool:
-        return fs.exist(key)
-
-
-_existing_files = tp.cast(tp.Dict[str, bool], _ExistingFiles())
 
 
 class Finder:
@@ -103,7 +96,7 @@ class Finder:
         # each script can only be resolved once
         if script in self._resolved_files:
             return
-        if not _existing_files[script]:
+        if not file_exists(script):
             # why this may be happened?
             # when we parsed a script that hit the cache through
             # `FileParser.parse_imports:cache_maker.get_cache`, it returned a
