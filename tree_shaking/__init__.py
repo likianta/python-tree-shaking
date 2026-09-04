@@ -13,4 +13,4 @@ from .export import dump_tree_from_modules
 from .graph import build_module_graphs
 from .patch import implicit_hooks_file
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'

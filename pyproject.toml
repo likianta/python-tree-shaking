@@ -1,13 +1,13 @@
 [project]
 name = "tree-shaking"
-version = "0.4.0"
+version = "0.4.1a0"
 description = 'Detect and eliminate "unused" files from dependencies to reduce packaging size of target application.'
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "argsense>=1.1.2",
-    "lk-utils>=3.7.5",
+    "lk-utils>=3.8.0",
     "neoprint>=0.1.9",
 ]
 
@@ -54,7 +54,7 @@ default = true
 
 [[tool.uv.index]]
 name = "likianta"
-url = "http://localhost:2191/"
+url = "http://localhost:2131/"
 explicit = true
 
 [tool.uv.sources]

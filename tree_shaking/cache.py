@@ -1,3 +1,7 @@
+"""
+Doc: docs/the-cache-system.zh.md
+"""
+
 import atexit
 import os
 import typing as tp
@@ -11,9 +15,9 @@ class T:
     SourceFactor = str
     #   source factor is a string with suffix ':0', ':1' or ':2'.
     #   the string has three types:
-    #   1. valid file path
-    #   2. valid directory path
-    #   3. any other string (we call it "solid factor")
+    #   - valid file path
+    #   - valid directory path
+    #   - any other string (we call it "solid factor")
     #   to let cache maker recognize them, use ':0' for solid factor, ':1' for
     #   file path, and ':2' for directory path.
     #   trick: if you mark a dir path with ':1', it will read the folder mtime

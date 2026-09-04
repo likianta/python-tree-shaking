@@ -230,16 +230,15 @@ pythonnet:
     - ../cffi/
     - ../pycparser/
 qmlease:
-  version: 3.1.0a27
+  version: 4.0.0a23
   files:
-    - qmlside/hot_reloader/_view.qml
-    - qmlside/hot_reloader/_view2.qml
+    - qmlside/hot_reloader/_embed_view.qml
+    - qmlside/hot_reloader/_separate_reload_button.qml
     - qmlside/js_evaluator.mjs
     - qmlside/js_evaluator.qml
+    - qmlside/layout_engine/layout_helper.qml
     - qmlside/qml_eval.qml
     - style/stylesheet/
-    - widget_support/_cache/
-    - widget_support/layout_supplement.qml
     - widgets/
 remote_ipython:
   files:
@@ -302,7 +301,7 @@ shiboken6:
     - vcruntime140.dll
     - vcruntime140_1.dll
 streamlit:
-  version: 1.58.0
+  version: 1.62.0
   files:
     - __main__.py
     - runtime/scriptrunner/magic_funcs.py
@@ -317,7 +316,6 @@ streamlit:
     # - ../pyarrow/lib.pyx
     # - ../pyarrow/lib_api.h
     - ../streamlit-*.dist-info/
-    # - ../tornado/
     - ../uvicorn/lifespan/
     - ../uvicorn/protocols/http/auto.py
 streamlit_canary:
