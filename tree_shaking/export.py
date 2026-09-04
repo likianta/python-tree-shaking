@@ -20,6 +20,7 @@ class T(T1):
     #   0: no dry run
     #   1: no actual file operations, only prints.
     #   2: same as 1, but disable incremental update
+    DumpedModuleGraph = T0.DumpedModuleGraph
 
     Records = tp.TypedDict(
         'Records',
@@ -389,15 +390,18 @@ def _mount_resources(
     patch = ResourcePatch(source_root)
 
     for entry_path in config['entries']:
-        graph: T.DumpedModuleGraph = cache_maker.get_cache(
-            (
-                entry_path + ':1',
-                graph_lock_reference_file + ':1'
-                if graph_lock_reference_file
-                else 'null:0',
+        graph = tp.cast(
+            T.DumpedModuleGraph,
+            cache_maker.get_cache(
+                (
+                    entry_path + ':1',
+                    graph_lock_reference_file + ':1'
+                    if graph_lock_reference_file
+                    else '_:0',
+                ),
+                'module_graphs',
+                persistent=True,
             ),
-            'module_graphs',
-            persistent=True,
         )
         assert graph
 

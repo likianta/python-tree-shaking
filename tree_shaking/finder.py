@@ -4,21 +4,19 @@ from collections import defaultdict
 from lk_utils import fs
 
 from .cache import cache_maker
-from .file_parser import DEFAULT_IGNORES
+from .config import T as T0
 from .file_parser import FileParser
-from .file_parser import T
+from .file_parser import T as T1
 from .file_parser import file_exists
 from .patch import patch
 
 
+class T(T1):
+    Ignores = T0.Ignores
+
+
 class Finder:
-    def __init__(
-        self,
-        global_ignores: tp.Union[
-            tp.FrozenSet[T.ModuleName], tp.Tuple[T.ModuleName, ...]
-        ] = DEFAULT_IGNORES,
-    ) -> None:
-        self._global_ignores = global_ignores
+    def __init__(self) -> None:
         self._patched_modules = set()
         self._references = defaultdict(set)
         #   {module_name: {module_name, ...}, ...}
@@ -35,40 +33,40 @@ class Finder:
         self,
         script: T.FilePath,
         include_self: tp.Optional[bool] = True,
+        ignores: T.Ignores = (),
         reference_file: str = '',
     ) -> tp.Dict[T.ModuleName, T.FilePath]:
         """
-        given a script file ('*.py'), return all direct and indirect modules
+        Given a script file ('*.py'), return all direct and indirect modules
         that are imported by this file.
-        params:
-            script: must be formalized and absolute path.
+        Args:
+            script: Must be formalized and absolute path.
             include_self:
-                True: yield module of script itself.
-                False: not yield itself.
-                None: not yield itself, but yield its children-selves if needed.
-                    note: None is only for internal use!
-                as a caller, you should always give True or False.
-        yields:
+                True: Yield module of script itself.
+                False: Not yield itself.
+                None: Not yield itself, but yield its children-selves if needed.
+                    Note: `None` is only for internal use!
+                As a caller, you should always give True or False.
+        Yields:
             ((module_name, file_path), ...)
         """
+        cache_key = (
+            script + ':1',
+            reference_file + ':1' if reference_file else '_:0',
+            str(sorted(ignores)) + ':1' if ignores else '_:0',
+        )
         if (
             x := cache_maker.get_cache(
-                (
-                    script + ':1',
-                    reference_file + ':1' if reference_file else 'null:0',
-                ),
+                cache_key,
                 'all_imports_{}'.format(1 if include_self else 0),
                 persistent=True,
             )
         ) is not None:
             return x
         self._clear_holders()
-        out = dict(self._get_all_imports(script, include_self))
+        out = dict(self._get_all_imports(script, include_self, ignores))
         cache_maker.save_cache(
-            (
-                script + ':1',
-                reference_file + ':1' if reference_file else 'null:0',
-            ),
+            cache_key,
             'all_imports_{}'.format(1 if include_self else 0),
             out,
             persistent=True,
@@ -76,13 +74,16 @@ class Finder:
         return out
 
     def get_direct_imports(
-        self, script: T.FilePath, include_self: bool = False
+        self,
+        script: T.FilePath,
+        include_self: bool = False,
+        ignores: T.Ignores = (),
     ) -> T.ImportsInfo:
         script = fs.abspath(script)
         parser = FileParser(script)
         if include_self:
             yield parser.module_info, parser.file
-        yield from parser.parse_imports()
+        yield from parser.parse_imports(ignores)
         for path in self._more_imports(parser.module_info):
             x = FileParser(path)
             yield x.module_info, x.file
@@ -91,6 +92,7 @@ class Finder:
         self,
         script: T.FilePath,
         include_self: tp.Optional[bool] = True,
+        ignores: T.Ignores = (),
         _parent_info: tp.Optional[tp.Any] = None,
     ) -> tp.Iterator[tp.Tuple[T.ModuleName, T.FilePath]]:
         # each script can only be resolved once
@@ -112,7 +114,7 @@ class Finder:
             return
 
         parser = FileParser(script)
-        # if parser.module_info.top.lower() in self._global_ignores:
+        # if parser.module_info.top in ignores:
         #     print('ignore', parser.module_info)
         #     return
 
@@ -122,10 +124,8 @@ class Finder:
             yield self_module_name, parser.file
 
         more_files = set()
-        for module, path in parser.parse_imports():
+        for module, path in parser.parse_imports(ignores):
             # print(module, path)
-            if module.top.lower() in self._global_ignores:
-                continue
             self._references[self_module_name].add(module.full_name)
             if path in self._resolved_files:
                 continue

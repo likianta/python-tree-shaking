@@ -28,20 +28,24 @@ class T(T0):
 
 def build_module_graphs(config_file: str, reference_file: str = '') -> None:
     """
-    reference_file: usually passing the path to 'uv.lock' or 'poetry.lock'.
+    Args:
+        reference_file: Usually the path to 'uv.lock' or 'poetry.lock'.
     """
     cfg = parse_config(config_file)
-    finder = Finder(cfg['ignores'])
+    finder = Finder()
 
     for entry_path in cfg['entries']:
         print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
         cache_key = (
             entry_path + ':1',
-            reference_file + ':1' if reference_file else 'null:0',
+            reference_file + ':1' if reference_file else '_:0',
+            str(sorted(cfg['ignores'])) + ':1' if cfg['ignores'] else '_:0',
         )
         if not cache_maker.is_cached(cache_key, 'module_graphs'):
             result = finder.get_all_imports(
-                entry_path, reference_file=reference_file
+                entry_path,
+                reference_file=reference_file,
+                ignores=cfg['ignores'],
             )
             result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result

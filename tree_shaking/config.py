@@ -10,15 +10,14 @@ from .path_scope import path_scope
 class T:
     AnyDirPath = str
     IgnoredName = str
-    #   - must be lower case.
-    #   - use underscore, not hyphen.
-    #   - use correct name.
+    #   regular module name (`[_a-zA-Z0-9]+`).
     #   for example:
-    #       wrong       right
+    #       right       wrong
     #       --------    --------
     #       IPython     ipython
-    #       lk-utils    lk_utils
-    #       pillow      pil
+    #       lk_utils    lk-utils
+    #       pil         pillow
+    #       PySide6     pyside6
     NormPath = str  # absolute path.
     RelPath = str  # relative path, starts from `root`.
     SpecialPath = str  # '$venv' or `$venv/...`
@@ -28,7 +27,7 @@ class T:
         {
             'root': AnyDirPath,
             'search_paths': tp.List[tp.Union[RelPath, SpecialPath]],
-            'entries': tp.List[RelPath],  # must ends with ".py"
+            'entries': tp.List[RelPath],  # must end with ".py"
             'ignores': tp.List[IgnoredName],
             'export': tp.Optional[
                 tp.TypedDict(  # ty: ignore
@@ -49,6 +48,7 @@ class T:
     #       'ignores': (module_name, ...),
     #       #   module_name is case sensitive.
     #   }
+    Ignores = tp.Union[tp.FrozenSet[IgnoredName], tp.Tuple[IgnoredName, ...]]
 
     Config1 = tp.TypedDict(
         'Config1',
@@ -56,7 +56,7 @@ class T:
             'root': NormPath,
             'search_paths': tp.List[NormPath],
             'entries': tp.Tuple[NormPath, ...],
-            'ignores': tp.Union[tp.FrozenSet[str], tp.Tuple[str, ...]],
+            'ignores': Ignores,
             'export': tp.TypedDict(  # ty: ignore
                 'ExportOption1', {'source': NormPath, 'target': NormPath}
             ),

@@ -125,6 +125,7 @@ class ModuleInspector:
     # known_stdlib_module_names: tp.FrozenSet[str]
     module_name_2_file: tp.Dict[T.ModuleId, T.FilePath]
 
+    # TODO: `ignores` can be removed from this module.
     def __init__(self, ignores: tp.Iterable[str] = ()) -> None:
         self.module_name_2_file = {}
         for name in KNOWN_STDLIB_MODULE_NAMES:

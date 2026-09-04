@@ -10,23 +10,22 @@ from lk_utils import fs
 
 from .cache import cache_maker
 from .cache import cache_root
+from .config import T as T0
 from .module import ModuleInfo
 from .module import ModuleInspector
 from .module import ModuleNotFound
 from .module import PathNotFound
-from .module import T as T0
+from .module import T as T1
 from .path_scope import path_scope
 
-# devnote: currently, this is an empty tuple.
-DEFAULT_IGNORES = tuple(fs.load(fs.here('_cache/ignores.txt')).splitlines())
-
 broken_modules = set()
-module_inspector = ModuleInspector(ignores=DEFAULT_IGNORES)
+module_inspector = ModuleInspector()
 new_parsing_triggered = Signal(str)
 
 
-class T(T0):
+class T(T1):
     AstNode = tp.Union[ast.Import, ast.ImportFrom]
+    Ignores = T0.Ignores
     ImportsInfo = tp.Iterable[tp.Tuple[T0.ModuleInfo, T0.FilePath]]
     #   ((module_info, path), ...)
     #       module_info: dataclass ModuleInfo
@@ -74,7 +73,7 @@ class FileParser:
             full_name=module_name,
         )
 
-    def parse_imports(self) -> T.ImportsInfo:
+    def parse_imports(self, ignores: T.Ignores = ()) -> T.ImportsInfo:
         # print(':dv2p', 'start', self.file)
         if (
             x := cache_maker.get_cache(
@@ -86,6 +85,8 @@ class FileParser:
         out = []
         for node, line in self.parse_nodes(self.file):
             for module in self._get_module_info(node, line):
+                if module.top in ignores:
+                    continue
                 try:
                     path = self._get_module_path(module)
                 except (ModuleNotFound, PathNotFound):
