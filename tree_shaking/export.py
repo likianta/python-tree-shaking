@@ -6,31 +6,32 @@ import neoprint as np
 from lk_utils import fs
 
 from .cache import cache_maker
+from .cache import T as T0
 from .config import parse_config
 from .dynamic_analyzer import grab_global_modules
 from .file_parser import file_exists
-from .graph import T as T0
+from .graph import T as T1
 from .patch import ResourcePatch
-from .path_typing import T as T1
+from .path_typing import T as T2
 
 
-class T(T1):
-    Config = T0.Config
+class T(T2):
+    Config = T1.Config
     DryRun = tp.Union[bool, tp.Literal[0, 1, 2]]
     #   0: no dry run
     #   1: no actual file operations, only prints.
     #   2: same as 1, but disable incremental update
-    DumpedModuleGraph = T0.DumpedModuleGraph
-
+    DumpedModuleGraph = T1.DumpedModuleGraph
     Records = tp.TypedDict(
         'Records',
         {
-            'created_directories': tp.FrozenSet[T1.RelDirPath],
-            'resource_records': tp.Dict[T1.RelPath, int],
+            'created_directories': tp.FrozenSet[T2.RelDirPath],
+            'resource_records': tp.Dict[T2.RelPath, int],
         },
     )
-    TodoDirs = tp.Union[tp.Set[T1.RelDirPath]]
-    TodoFiles = tp.Union[tp.Set[T1.RelFilePath]]
+    SideFactors = T0.SideFactors
+    TodoDirs = tp.Union[tp.Set[T2.RelDirPath]]
+    TodoFiles = tp.Union[tp.Set[T2.RelFilePath]]
 
     Resources = tp.Tuple[TodoFiles, TodoDirs]
 
@@ -69,7 +70,15 @@ def dump_tree_from_config(
         files, dirs = _mount_resources(
             config,
             source,
-            graph_lock_reference_file=graph_lock_reference_file,
+            side_factors=(
+                # see also `./graph.py:build_module_graphs:cache_key`.
+                graph_lock_reference_file + ':1'
+                if graph_lock_reference_file
+                else '_:0',
+                str(sorted(config['ignores'])) + ':0'
+                if config['ignores']
+                else '_:0',
+            ),
             verbose=bool(dry_run),
         )
         _dump_single_source(
@@ -351,9 +360,9 @@ def _eliminate_overlapping_resources(
                 if d1.startswith(d0 + '/'):
                     if verbose:
                         print(
-                            'remove files "{}/*" (count={}) that are covered '
-                            'by "{}"'.format(
-                                d1.rstrip('/'), len(temp_dict[d1]), d0
+                            'remove {} files from "{}/*" that are covered by '
+                            '"{}"'.format(
+                                len(temp_dict[d1]), d1.rstrip('/'), d0
                             ),
                             ':i2v',
                         )
@@ -382,7 +391,7 @@ def _grind_down_dirpath(path: str) -> tp.Iterator[str]:
 def _mount_resources(
     config: T.Config,
     source_root: T.AbsDirPath,
-    graph_lock_reference_file: str = '',
+    side_factors: T.SideFactors = (),
     verbose: bool = False,
 ) -> tp.Tuple[T.TodoFiles, T.TodoDirs]:
     files: T.TodoFiles = set()
@@ -393,12 +402,7 @@ def _mount_resources(
         graph = tp.cast(
             T.DumpedModuleGraph,
             cache_maker.get_cache(
-                (
-                    entry_path + ':1',
-                    graph_lock_reference_file + ':1'
-                    if graph_lock_reference_file
-                    else '_:0',
-                ),
+                (entry_path + ':1', *side_factors),
                 'module_graphs',
                 persistent=True,
             ),

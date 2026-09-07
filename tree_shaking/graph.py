@@ -39,13 +39,15 @@ def build_module_graphs(config_file: str, reference_file: str = '') -> None:
         cache_key = (
             entry_path + ':1',
             reference_file + ':1' if reference_file else '_:0',
-            str(sorted(cfg['ignores'])) + ':1' if cfg['ignores'] else '_:0',
+            str(sorted(cfg['ignores'])) + ':0' if cfg['ignores'] else '_:0',
         )
         if not cache_maker.is_cached(cache_key, 'module_graphs'):
             result = finder.get_all_imports(
                 entry_path,
-                reference_file=reference_file,
                 ignores=cfg['ignores'],
+                side_factors=(
+                    reference_file + ':1' if reference_file else '_:0',
+                ),
             )
             result = _reformat_paths(sorted(result.items()), cfg)
             # add refs info to result

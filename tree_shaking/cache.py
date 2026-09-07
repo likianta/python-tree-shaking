@@ -24,6 +24,7 @@ class T:
     #   instead of recursively reading all subfiles' mtimes.
     #   see also `_CacheMaker:_parse_source_factors`.
     AnySourceFactors = tp.Union[SourceFactor, tp.Iterable[SourceFactor]]
+    SideFactors = tp.Iterable[SourceFactor]
     SourceId = str
 
 
@@ -49,7 +50,7 @@ cache_root = _init_cache_root()
 
 # ------------------------------------------------------------------------------
 
-_CACHE_VERSION = '0'
+_CACHE_VERSION = '1'
 #   a simple string of digit, if we change it (usually increment it), all
 #   existing cache files will be invalidated.
 #   TODO: we may remove `_CacheMaker.invalidate_cache` method, and use this

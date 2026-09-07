@@ -3,16 +3,18 @@ from collections import defaultdict
 
 from lk_utils import fs
 
+from .cache import T as T0
 from .cache import cache_maker
-from .config import T as T0
+from .config import T as T1
 from .file_parser import FileParser
-from .file_parser import T as T1
+from .file_parser import T as T2
 from .file_parser import file_exists
 from .patch import patch
 
 
-class T(T1):
-    Ignores = T0.Ignores
+class T(T2):
+    Ignores = T1.Ignores
+    SideFactors = T0.SideFactors
 
 
 class Finder:
@@ -34,7 +36,7 @@ class Finder:
         script: T.FilePath,
         include_self: tp.Optional[bool] = True,
         ignores: T.Ignores = (),
-        reference_file: str = '',
+        side_factors: T.SideFactors = (),
     ) -> tp.Dict[T.ModuleName, T.FilePath]:
         """
         Given a script file ('*.py'), return all direct and indirect modules
@@ -52,8 +54,8 @@ class Finder:
         """
         cache_key = (
             script + ':1',
-            reference_file + ':1' if reference_file else '_:0',
-            str(sorted(ignores)) + ':1' if ignores else '_:0',
+            str(sorted(ignores)) + ':0' if ignores else '_:0',
+            *side_factors,
         )
         if (
             x := cache_maker.get_cache(
@@ -121,6 +123,7 @@ class Finder:
         self_module_name = parser.module_info.full_name
         if include_self:
             assert self_module_name
+            assert parser.module_info.top not in ignores
             yield self_module_name, parser.file
 
         more_files = set()
@@ -130,6 +133,7 @@ class Finder:
             if path in self._resolved_files:
                 continue
             assert module.full_name
+            assert module.top not in ignores
             yield module.full_name, path
 
             # recursive
@@ -165,7 +169,10 @@ class Finder:
 
         for p, s in more_files:  # 'p': path, 's': self included
             yield from self._get_all_imports(
-                p, s, _parent_info=(parser.module_info, parser.file)
+                p,
+                s,
+                ignores=ignores,
+                _parent_info=(parser.module_info, parser.file),
             )
 
     def _clear_holders(self) -> None:

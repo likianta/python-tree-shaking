@@ -26,7 +26,7 @@ new_parsing_triggered = Signal(str)
 class T(T1):
     AstNode = tp.Union[ast.Import, ast.ImportFrom]
     Ignores = T0.Ignores
-    ImportsInfo = tp.Iterable[tp.Tuple[T0.ModuleInfo, T0.FilePath]]
+    ImportsInfo = tp.Iterable[tp.Tuple[T1.ModuleInfo, T1.FilePath]]
     #   ((module_info, path), ...)
     #       module_info: dataclass ModuleInfo
 
@@ -75,9 +75,13 @@ class FileParser:
 
     def parse_imports(self, ignores: T.Ignores = ()) -> T.ImportsInfo:
         # print(':dv2p', 'start', self.file)
+        cache_key = (
+            self.file + ':1',
+            str(sorted(ignores)) + ':0' if ignores else '_:0',
+        )
         if (
             x := cache_maker.get_cache(
-                self.file + ':1', 'ast_parsing_results', persistent=True
+                cache_key, 'ast_parsing_results', persistent=True
             )
         ) is not None:
             return x
@@ -112,7 +116,7 @@ class FileParser:
                     out.append((module, path))
         # print(':vp', 'end', self.file)
         cache_maker.save_cache(
-            self.file + ':1', 'ast_parsing_results', out, persistent=True
+            cache_key, 'ast_parsing_results', out, persistent=True
         )
         return out
 

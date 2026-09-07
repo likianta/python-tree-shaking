@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.4.1 (2026-09-07)
+
+- Fix `ignores`.
+
 ### 0.4.0 (2026-08-18)
 
 - Analyze dependency tree.
