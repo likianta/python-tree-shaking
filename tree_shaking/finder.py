@@ -116,7 +116,10 @@ class Finder:
         self_module_name = parser.module_info.full_name
         if include_self:
             assert self_module_name
-            assert parser.module_info.top not in ignores
+            assert parser.module_info.top not in ignores, parser.module_info
+            #   FIXME: this may happen when `./patches/implicit_import_hooks
+            #   .yaml` triggered some extra imports.
+            #   see also `self._more_imports`.
             yield self_module_name, parser.file
 
         more_files = set()

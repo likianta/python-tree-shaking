@@ -44,6 +44,10 @@ tree_shaking
 
 `source_type=3` 的规模与 `source_type=2` 相当.
 
+二级目录的文件夹数量相对更可控, 一般不会超过几百.
+
+三级文件数量非常少, 大概不超过十个.
+
 ## 关联代码
 
 见 `tree_shaking/cache.py`.

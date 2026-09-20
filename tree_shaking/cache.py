@@ -1,5 +1,5 @@
 """
-Doc: docs/the-cache-system.zh.md
+Doc: docs/the-cache-system.zh.md, tree_shaking/_cache/watch_files/_readme.zh.md.
 """
 
 import atexit
@@ -29,7 +29,7 @@ class T:
     ImpactFactors = tp.Iterable[SourceFactor]
 
 
-EMPTY_FACTOR = '_0'
+EMPTY_FACTOR = '_:0'
 
 
 def _init_cache_root() -> str:
@@ -232,7 +232,7 @@ class _CacheMaker:
     def _parse_source_factors(
         self, any_factor: tp.Union[T.SourceFactor, tp.Iterable[T.SourceFactor]]
     ) -> tp.Tuple[T.SourceId, T.RevisionNumber]:
-        # note: `any_factor` may be empty... but we do not suggest this form, 
+        # note: `any_factor` may be empty... but we do not suggest this form,
         # instead, please use `EMPTY_FACTOR`.
         factors = (
             (EMPTY_FACTOR,)
@@ -242,7 +242,7 @@ class _CacheMaker:
             else any_factor
         )
 
-        assert all(x.endswith((':0', ':1', ':2')) for x in factors)
+        assert all(x.endswith((':0', ':1', ':2')) for x in factors), factors
         source_id = uuid(';'.join(x[:-2] for x in factors))
         revision = uuid(
             ';'.join(

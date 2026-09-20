@@ -11,6 +11,9 @@ altair:
     - ../jsonschema_specifications/schemas/
     # - ../pyarrow/
     - ../rpds/rpds.*.pyd
+depsland_updater:
+  files:
+    - __main__.py
 emei_kit_r6p0:
   files:
     - _regmap_files/
@@ -319,8 +322,8 @@ streamlit:
     - ../uvicorn/lifespan/
     - ../uvicorn/protocols/http/auto.py
 streamlit_canary:
-  imports:
-    - ../streamlit/__main__.py
+  # imports:
+  #   - ../streamlit/__main__.py
   files:
     - ../pyapp_window/__main__.py
 streamlit_extras:
