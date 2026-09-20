@@ -75,10 +75,10 @@ def dump_tree_from_config(
                 # see also `./graph.py:build_module_graphs:cache_key`.
                 graph_lock_reference_file + ':1'
                 if graph_lock_reference_file
-                else '_:0',
+                else EMPTY_FACTOR,
                 str(sorted(config['ignores'])) + ':0'
                 if config['ignores']
-                else '_:0',
+                else EMPTY_FACTOR,
             ),
             verbose=bool(dry_run),
         )

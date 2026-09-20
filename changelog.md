@@ -1,6 +1,10 @@
 # Changelog
 
-### 0.4.2 (WIP)
+### 0.4.3 (WIP)
+
+- Accurately check who is importing/exporting a module.
+
+### 0.4.2 (2026-09-20)
 
 - Optimize cache storage structure.
 - Concise trace prints.
