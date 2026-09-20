@@ -3,6 +3,7 @@
 ### 0.4.2 (WIP)
 
 - Optimize cache storage structure.
+- Concise trace prints.
 
 ### 0.4.1 (2026-09-07)
 

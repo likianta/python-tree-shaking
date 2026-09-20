@@ -20,7 +20,11 @@ class T(T1):
     )
 
 
-def trace(entry_script: T.AnyFilePath, target_module: T.ModuleFullName) -> None:
+def trace(
+    entry_script: T.AnyFilePath,
+    target_module: T.ModuleFullName,
+    concise: bool = False,
+) -> None:
     x = trace_all(entry_script, _quiet=True)
     initial_imports = x['initial_imports']
     graph = x['graph']
@@ -45,10 +49,14 @@ def trace(entry_script: T.AnyFilePath, target_module: T.ModuleFullName) -> None:
         result.extend(find_in_graph(graph[mod], mod))
     if result:
         assert len(result) < 500  # in case printing too long
-        for clue in sorted(result):
-            parts = clue.split(' -> ')
-            for i, p in enumerate(parts):
-                print(':s', '{}-> {}'.format('  ' * (i + 1), p))
+        if concise:
+            for clue in sorted(frozenset(x.split(' -> ')[0] for x in result)):
+                print(clue, ':in')
+        else:
+            for clue in sorted(result):
+                parts = clue.split(' -> ')
+                for i, p in enumerate(parts):
+                    print(':s', '{}-> {}'.format('  ' * (i + 1), p))
     else:
         print('target not found', target_module)
 
