@@ -8,6 +8,7 @@ import neoprint as np
 from lk_utils import Signal
 from lk_utils import fs
 
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .cache import cache_root
 from .config import T as T0
@@ -75,14 +76,13 @@ class FileParser:
 
     def parse_imports(self, ignores: T.Ignores = ()) -> T.ImportsInfo:
         # print(':dv2p', 'start', self.file)
-        cache_key = (
+        cachee = (
             self.file + ':1',
-            str(sorted(ignores)) + ':0' if ignores else '_:0',
+            (str(sorted(ignores)) + ':0' if ignores else EMPTY_FACTOR,),
+            'ast_parsing_results',
         )
         if (
-            x := cache_maker.get_cache(
-                cache_key, 'ast_parsing_results', persistent=True
-            )
+            x := cache_maker.get_cache(*cachee, persistent=True)
         ) is not None:
             return x
         new_parsing_triggered.emit(self.file)
@@ -115,9 +115,7 @@ class FileParser:
                 else:
                     out.append((module, path))
         # print(':vp', 'end', self.file)
-        cache_maker.save_cache(
-            cache_key, 'ast_parsing_results', out, persistent=True
-        )
+        cache_maker.save_cache(*cachee, out, persistent=True)
         return out
 
     def parse_nodes(self, file: str) -> tp.Iterator[tp.Tuple[T.AstNode, str]]:

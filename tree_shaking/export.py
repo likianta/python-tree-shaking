@@ -5,6 +5,7 @@ from collections import defaultdict
 import neoprint as np
 from lk_utils import fs
 
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .cache import T as T0
 from .config import parse_config
@@ -29,7 +30,7 @@ class T(T2):
             'resource_records': tp.Dict[T2.RelPath, int],
         },
     )
-    SideFactors = T0.SideFactors
+    SideFactors = T0.ImpactFactors
     TodoDirs = tp.Union[tp.Set[T2.RelDirPath]]
     TodoFiles = tp.Union[tp.Set[T2.RelFilePath]]
 
@@ -186,6 +187,11 @@ def _dump_single_source(
                 return False
         return True
 
+    cachee = (
+        (root_i + ':0', root_o + ':0'),
+        (EMPTY_FACTOR,),
+        'last_dumped_records',
+    )
     if is_first_time_dump():
         print('first time dump', ':v2d')
         fs.make_dir(root_o)
@@ -227,11 +233,7 @@ def _dump_single_source(
 
     else:
         print('incremental dump', ':v2d')
-        assert (
-            x := cache_maker.get_cache(
-                (root_i + ':0', root_o + ':0'), 'last_dumped_records'
-            )
-        )
+        assert (x := cache_maker.get_cache(*cachee))
         records0: T.Records = x
 
         tree0 = records0['created_directories']
@@ -300,9 +302,7 @@ def _dump_single_source(
             'created_directories': frozenset(tree1),
             'resource_records': res1,
         }
-        cache_maker.save_cache(
-            (root_i + ':0', root_o + ':0'), 'last_dumped_records', records1
-        )
+        cache_maker.save_cache(*cachee, records1)
     print('export done', ':ptv4')
 
 
@@ -402,7 +402,8 @@ def _mount_resources(
         graph = tp.cast(
             T.DumpedModuleGraph,
             cache_maker.get_cache(
-                (entry_path + ':1', *side_factors),
+                entry_path + ':1',
+                side_factors,
                 'module_graphs',
                 persistent=True,
             ),

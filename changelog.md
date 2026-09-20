@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.4.2 (WIP)
+
+- Optimize cache storage structure.
+
 ### 0.4.1 (2026-09-07)
 
 - Fix `ignores`.

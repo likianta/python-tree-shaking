@@ -5,6 +5,7 @@ from lk_utils import textwrap as tw
 from lk_utils import uuid
 from neoprint import format
 
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .cache import cache_root
 from .config import T as T0
@@ -36,17 +37,22 @@ def build_module_graphs(config_file: str, reference_file: str = '') -> None:
 
     for entry_path in cfg['entries']:
         print('entry at {}'.format(fs.relpath(entry_path, cfg['root'])), ':i')
-        cache_key = (
+        cachee = (
             entry_path + ':1',
-            reference_file + ':1' if reference_file else '_:0',
-            str(sorted(cfg['ignores'])) + ':0' if cfg['ignores'] else '_:0',
+            (
+                reference_file + ':1' if reference_file else EMPTY_FACTOR,
+                str(sorted(cfg['ignores'])) + ':0'
+                if cfg['ignores']
+                else EMPTY_FACTOR,
+            ),
+            'module_graphs',
         )
-        if not cache_maker.is_cached(cache_key, 'module_graphs'):
+        if not cache_maker.is_cached(*cachee):
             result = finder.get_all_imports(
                 entry_path,
                 ignores=cfg['ignores'],
                 side_factors=(
-                    reference_file + ':1' if reference_file else '_:0',
+                    reference_file + ':1' if reference_file else EMPTY_FACTOR,
                 ),
             )
             result = _reformat_paths(sorted(result.items()), cfg)
@@ -55,7 +61,7 @@ def build_module_graphs(config_file: str, reference_file: str = '') -> None:
             # result['references'] = {
             #   k: sorted(refs[k]) for k in sorted(refs.keys())
             # }
-            file_c = cache_maker.save_cache(cache_key, 'module_graphs', result)
+            file_c = cache_maker.save_cache(*cachee, result)
 
             print(
                 ':v2ti',

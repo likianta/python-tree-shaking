@@ -3,6 +3,7 @@ from os.path import isabs as is_abspath
 
 from lk_utils import fs
 
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .path_scope import path_scope
 
@@ -77,7 +78,8 @@ def parse_config(file: str, **kwargs) -> T.Config:
     """
     cfg_file: str = fs.abspath(file)
 
-    if x := cache_maker.get_cache(cfg_file + ':1', 'config'):
+    cachee = (cfg_file + ':1', (EMPTY_FACTOR,), 'config')
+    if x := cache_maker.get_cache(*cachee):
         return x
 
     cfg_dir: str = fs.parent(cfg_file)
@@ -135,7 +137,7 @@ def parse_config(file: str, **kwargs) -> T.Config:
         )
 
     # print(cfg1, ':ln')
-    cache_maker.save_cache(cfg_file + ':1', 'config', cfg1)
+    cache_maker.save_cache(*cachee, cfg1)
     return cfg1
 
 

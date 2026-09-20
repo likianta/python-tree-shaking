@@ -23,9 +23,13 @@ class T:
     #   trick: if you mark a dir path with ':1', it will read the folder mtime
     #   instead of recursively reading all subfiles' mtimes.
     #   see also `_CacheMaker:_parse_source_factors`.
-    AnySourceFactors = tp.Union[SourceFactor, tp.Iterable[SourceFactor]]
-    SideFactors = tp.Iterable[SourceFactor]
     SourceId = str
+
+    InitialFactor = tp.Union[SourceFactor, tp.Iterable[SourceFactor]]
+    ImpactFactors = tp.Iterable[SourceFactor]
+
+
+EMPTY_FACTOR = '_0'
 
 
 def _init_cache_root() -> str:
@@ -59,7 +63,7 @@ _CACHE_VERSION = '1'
 
 class _CacheMaker:
     def __init__(self, cache_root: str) -> None:
-        self._bad_mode = False
+        self._bad_mode = False  # DELETE
         self._cache_root = cache_root
         self._quick_fetches = {}
         self._sanitized_files = set()
@@ -67,29 +71,29 @@ class _CacheMaker:
         atexit.register(self._delete_outdated_files)
 
     def is_cached(
-        self, source_factors: T.AnySourceFactors, thread: str
+        self,
+        initiator: T.InitialFactor,
+        impact_factors: T.ImpactFactors,
+        thread: str,
     ) -> bool:
-        source_id, revision = self._parse_source_factors(source_factors)
-        file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, source_id, thread
+        (init_id, init_rev), (impact_id, impact_rev), (dir0, dir1, file) = (
+            self._parse_factor_args(initiator, impact_factors, thread)
         )
         if file in self._tobe_deleted_files:
             return False
         elif self._bad_mode and file not in self._sanitized_files:
             return False
         else:
-            file = '{}/watch_files/{}/{}.pkl'.format(
-                self._cache_root, source_id, thread
-            )
             if fs.exist(file):
-                last_revision = fs.load(file)[0]
-                if last_revision == revision:
-                    return True
-                else:
-                    self._tobe_deleted_files.add(file)
-                    return False
-            else:
-                return False
+                last_init_rev: str = fs.load('{}/revision.pkl'.format(dir0))
+                if last_init_rev == init_rev:
+                    last_impact_rev: str = fs.load(
+                        '{}/revision.pkl'.format(dir1)
+                    )
+                    if last_impact_rev == impact_rev:
+                        return True
+                self._tobe_deleted_files.add(file)
+            return False
 
     def invalidate_cache(self) -> None:
         """
@@ -100,61 +104,67 @@ class _CacheMaker:
 
     def get_cache(
         self,
-        source_factors: T.AnySourceFactors,
+        initiator: T.InitialFactor,
+        impact_factors: T.ImpactFactors,
         thread: str,
         persistent: bool = False,
     ) -> tp.Optional[tp.Any]:
         """
         Args:
-            thread: Characters must be valid filename pattern (without 
+            thread: Characters must be valid filename pattern (without
                 extension).
         Notice: The return value may be an empty list, empty dict or something.
         You should not use the bare pattern of `if data: ...` to check it.
         """
-        source_id, revision = self._parse_source_factors(source_factors)
-
-        if persistent and (source_id, thread) in self._quick_fetches:
-            return self._quick_fetches[(source_id, thread)]
-
-        file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, source_id, thread
+        (init_id, init_rev), (impact_id, impact_rev), (dir0, dir1, file) = (
+            self._parse_factor_args(initiator, impact_factors, thread)
         )
+
+        # negative check
         if file in self._tobe_deleted_files:
             return None
-        if self._bad_mode and file not in self._sanitized_files:
+        elif self._bad_mode and file not in self._sanitized_files:
             return None
+
         if fs.exist(file):
-            last_revision, data = fs.load(file)
-            if last_revision == revision:
-                if persistent:
-                    self._quick_fetches[(source_id, thread)] = data
-                return data
-            else:
-                self._tobe_deleted_files.add(file)
-                return None
-        else:
-            return None
+            # assert fs.exist('{}/revision.pkl'.format(dir0))
+            # assert fs.exist('{}/revision.pkl'.format(dir1))
+            last_init_rev: str = fs.load('{}/revision.pkl'.format(dir0))
+            if last_init_rev == init_rev:
+                last_impact_rev: str = fs.load('{}/revision.pkl'.format(dir1))
+                if last_impact_rev == impact_rev:
+                    data: tp.Any = fs.load(file)
+                    if persistent:
+                        self._quick_fetches[(init_id, impact_id, thread)] = data
+                    return data
+            self._tobe_deleted_files.add(file)
+        return None
 
     def save_cache(
         self,
-        source_factors: T.AnySourceFactors,
+        initiator: T.InitialFactor,
+        impact_factors: T.ImpactFactors,
         thread: str,
         data: tp.Any,
         persistent: bool = False,
     ) -> str:
-        source_id, revision = self._parse_source_factors(source_factors)
-        file = '{}/watch_files/{}/{}.pkl'.format(
-            self._cache_root, source_id, thread
+        (init_id, init_rev), (impact_id, impact_rev), (dir0, dir1, file) = (
+            self._parse_factor_args(initiator, impact_factors, thread)
         )
-        if not fs.exist(fs.parent(file)):
-            fs.make_dir(fs.parent(file))
-        fs.dump((revision, data), file)
+
+        if not fs.exist(dir1):
+            fs.make_dirs(dir1)
+        fs.dump(init_rev, '{}/revision.pkl'.format(dir0))
+        fs.dump(impact_rev, '{}/revision.pkl'.format(dir1))
+        fs.dump(data, file)
+
         if self._bad_mode:
             self._sanitized_files.add(file)
         if file in self._tobe_deleted_files:
             self._tobe_deleted_files.remove(file)
+
         if persistent:
-            self._quick_fetches[(source_id, thread)] = data
+            self._quick_fetches[(init_id, impact_id, thread)] = data
         return file
 
     def _delete_outdated_files(self) -> None:
@@ -168,11 +178,70 @@ class _CacheMaker:
                 fs.remove(file)
             self._tobe_deleted_files.clear()
 
+    def _parse_factor_args(
+        self,
+        initiator: T.InitialFactor,
+        impact_factors: T.ImpactFactors,
+        thread: str,
+    ) -> tp.Tuple[
+        tp.Tuple[T.SourceId, T.RevisionNumber],
+        tp.Tuple[T.SourceId, T.RevisionNumber],
+        tp.Tuple[str, str, str],
+    ]:
+        init_id, init_rev = self._parse_source_factors(initiator)
+
+        dir0_type: tp.Literal['0', '1', '2', '3']
+        if isinstance(initiator, str):
+            dir0_type = initiator[-1]  # type: ignore
+        else:
+            xs = ''.join(sorted(frozenset(x[-1] for x in initiator)))
+            assert xs in ('0', '1', '2', '01', '02', '12', '012'), (
+                initiator,
+                xs,
+            )
+            if xs in ('0', '1', '2', '01', '02'):
+                dir0_type = xs[-1]  # type: ignore
+            else:  # '12', '012'
+                dir0_type = '3'
+
+        dir0 = '{}/watch_files/{}-{}'.format(
+            self._cache_root, dir0_type, init_id
+        )
+        impact_id, impact_rev = self._parse_source_factors(impact_factors)
+        dir1 = '{}/{}'.format(dir0, impact_id)
+        file = '{}/{}.pkl'.format(dir1, thread)
+        return (init_id, init_rev), (impact_id, impact_rev), (dir0, dir1, file)
+
+    # def _parse_source_factor(
+    #     self, factor: T.SourceFactor
+    # ) -> tp.Tuple[T.SourceId, T.RevisionNumber]:
+    #     assert factor.endswith((':0', ':1', ':2'))
+    #     if factor.endswith(':0'):
+    #         return uuid(factor[:-2]), uuid(factor[:-2] + ';' + _CACHE_VERSION)
+    #     elif factor.endswith(':1'):
+    #         return uuid(factor[:-2]), uuid(
+    #             str(fs.mtime(factor[:-2])) + ';' + _CACHE_VERSION
+    #         )
+    #     else:  # ':2'
+    #         return uuid(factor[:-2]), uuid(
+    #             str(fs.mtime(factor[:-2], recursive=True))
+    #             + ';'
+    #             + _CACHE_VERSION
+    #         )
+
     def _parse_source_factors(
-        self, factors: tp.Union[str, tp.Iterable[T.SourceFactor]]
+        self, any_factor: tp.Union[T.SourceFactor, tp.Iterable[T.SourceFactor]]
     ) -> tp.Tuple[T.SourceId, T.RevisionNumber]:
-        if isinstance(factors, str):
-            factors = (factors,)
+        # note: `any_factor` may be empty... but we do not suggest this form, 
+        # instead, please use `EMPTY_FACTOR`.
+        factors = (
+            (EMPTY_FACTOR,)
+            if not any_factor
+            else (any_factor,)
+            if isinstance(any_factor, str)
+            else any_factor
+        )
+
         assert all(x.endswith((':0', ':1', ':2')) for x in factors)
         source_id = uuid(';'.join(x[:-2] for x in factors))
         revision = uuid(

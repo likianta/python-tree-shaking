@@ -4,6 +4,7 @@ from collections import defaultdict
 from lk_utils import fs
 
 from .cache import T as T0
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .config import T as T1
 from .file_parser import FileParser
@@ -14,7 +15,7 @@ from .patch import patch
 
 class T(T2):
     Ignores = T1.Ignores
-    SideFactors = T0.SideFactors
+    SideFactors = T0.ImpactFactors
 
 
 class Finder:
@@ -52,27 +53,19 @@ class Finder:
         Yields:
             ((module_name, file_path), ...)
         """
-        cache_key = (
+        cachee = (
             script + ':1',
-            str(sorted(ignores)) + ':0' if ignores else '_:0',
-            *side_factors,
+            (
+                str(sorted(ignores)) + ':0' if ignores else EMPTY_FACTOR,
+                *side_factors,
+            ),
+            'all_imports_{}'.format(1 if include_self else 0),
         )
-        if (
-            x := cache_maker.get_cache(
-                cache_key,
-                'all_imports_{}'.format(1 if include_self else 0),
-                persistent=True,
-            )
-        ) is not None:
+        if (x := cache_maker.get_cache(*cachee, persistent=True)) is not None:
             return x
         self._clear_holders()
         out = dict(self._get_all_imports(script, include_self, ignores))
-        cache_maker.save_cache(
-            cache_key,
-            'all_imports_{}'.format(1 if include_self else 0),
-            out,
-            persistent=True,
-        )
+        cache_maker.save_cache(*cachee, out, persistent=True)
         return out
 
     def get_direct_imports(

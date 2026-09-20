@@ -3,6 +3,7 @@ import typing as tp
 import neoprint as np
 from lk_utils import fs
 
+from .cache import EMPTY_FACTOR
 from .cache import cache_maker
 from .file_parser import T as T0
 from .finder import Finder
@@ -56,9 +57,8 @@ def trace_all(
     entry_script: T.AnyFilePath, _quiet: bool = False
 ) -> T.DumpedModuleGraph:
     entry_script = fs.abspath(entry_script)
-    # cache_key = (entry_script + ':1', 'v2:0')
-    cache_key = entry_script + ':1'
-    if (x := cache_maker.get_cache(cache_key, 'module_trace')) is not None:
+    cachee = (entry_script + ':1', (EMPTY_FACTOR,), 'module_trace')
+    if (x := cache_maker.get_cache(*cachee)) is not None:
         if not _quiet:
             print('already cached', ':v4')
         return x
@@ -72,7 +72,7 @@ def trace_all(
             'graph': graph,
         }
         print(len(result), ':n')
-        cache_maker.save_cache(cache_key, 'module_trace', result)
+        cache_maker.save_cache(*cachee, result)
         return result
 
 
